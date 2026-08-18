@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import DashboardStats from './components/DashboardStats';
 import AgentSwarmVisualizer from './components/AgentSwarmVisualizer';
@@ -118,8 +118,22 @@ export default function App() {
   const [selectedReviewItem, setSelectedReviewItem] = useState(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
+  useEffect(() => {
+    // Attempt to load from backend API if available
+    fetch('/api/v1/catalog?page=1&page_size=20')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.items && data.items.length > 0) {
+          setItems(data.items);
+          setActiveItem(data.items[0]);
+        }
+      })
+      .catch(() => {
+        // Fallback to seed items
+      });
+  }, []);
+
   const handleExportCSV = () => {
-    // Generate CSV string from items
     if (items.length === 0) return;
     const keys = Object.keys(items[0]).filter(k => !k.startsWith('_'));
     const rows = [
@@ -137,21 +151,25 @@ export default function App() {
   };
 
   const handleSaveReviewedItem = (updatedItem) => {
-    setItems(prev => prev.map(item => 
-      (item.Mfg_Part_Num === updatedItem.Mfg_Part_Num || item.mfg_part_num === updatedItem.mfg_part_num) 
-        ? updatedItem 
-        : item
-    ));
+    const updatedMpn = updatedItem.Mfg_Part_Num || updatedItem.mfg_part_num;
+    setItems(prev => prev.map(item => {
+      const currentMpn = item.Mfg_Part_Num || item.mfg_part_num;
+      return currentMpn === updatedMpn ? updatedItem : item;
+    }));
     setActiveItem(updatedItem);
   };
 
   const handleUploadSuccess = (filename) => {
-    // In demo, confirm upload
-    console.log(`Uploaded ${filename}`);
+    console.log(`Catalog file processed: ${filename}`);
   };
 
-  const avgConfidence = items.reduce((acc, it) => acc + (it._confidence || 1.0), 0) / items.length;
-  const hitlCount = items.filter(it => (it._confidence || 1.0) < 0.85).length;
+  const handleOpenReview = (item) => {
+    setActiveItem(item);
+    setSelectedReviewItem(item);
+  };
+
+  const avgConfidence = items.reduce((acc, it) => acc + (it._confidence !== undefined ? it._confidence : 1.0), 0) / items.length;
+  const hitlCount = items.filter(it => (it._confidence !== undefined ? it._confidence : 1.0) < 0.85).length;
 
   return (
     <div className="min-h-screen bg-background text-slate-100 flex flex-col">
@@ -181,10 +199,7 @@ export default function App() {
         {/* 252-Column Data Grid Table */}
         <Grid252
           items={items}
-          onSelectReviewItem={(item) => {
-            setActiveItem(item);
-            setSelectedReviewItem(item);
-          }}
+          onSelectReviewItem={handleOpenReview}
         />
       </main>
 

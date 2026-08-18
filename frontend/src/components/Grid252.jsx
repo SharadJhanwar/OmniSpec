@@ -38,20 +38,23 @@ export default function Grid252({ items, onSelectReviewItem }) {
         {/* Filter Pills */}
         <div className="flex items-center space-x-2 w-full sm:w-auto overflow-x-auto">
           <button
+            type="button"
             onClick={() => setFilterMode('ALL')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filterMode === 'ALL' ? 'bg-cyan-500 text-slate-950 font-bold' : 'bg-surface text-slate-400 hover:text-slate-200'}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${filterMode === 'ALL' ? 'bg-cyan-500 text-slate-950 font-bold' : 'bg-surface text-slate-400 hover:text-slate-200'}`}
           >
             All Items ({items.length})
           </button>
           <button
+            type="button"
             onClick={() => setFilterMode('HIGH_CONF')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filterMode === 'HIGH_CONF' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-surface text-slate-400 hover:text-slate-200'}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${filterMode === 'HIGH_CONF' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-surface text-slate-400 hover:text-slate-200'}`}
           >
             Verified (100%)
           </button>
           <button
+            type="button"
             onClick={() => setFilterMode('NEEDS_REVIEW')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filterMode === 'NEEDS_REVIEW' ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-surface text-slate-400 hover:text-slate-200'}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${filterMode === 'NEEDS_REVIEW' ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-surface text-slate-400 hover:text-slate-200'}`}
           >
             HITL Review Queue
           </button>
@@ -73,7 +76,7 @@ export default function Grid252({ items, onSelectReviewItem }) {
               <th className="py-3 px-3">Dimensions (L x W x H)</th>
               <th className="py-3 px-3">Primary Image Asset</th>
               <th className="py-3 px-3">Spec Sheet PDF</th>
-              <th className="py-3 px-3">Actions</th>
+              <th className="py-3 px-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-border/60 text-slate-300">
@@ -91,8 +94,10 @@ export default function Grid252({ items, onSelectReviewItem }) {
                 return (
                   <tr 
                     key={index} 
-                    className="hover:bg-surface-elevated/50 transition-colors group cursor-pointer"
-                    onClick={() => onSelectReviewItem(item)}
+                    className="hover:bg-surface-elevated/80 transition-colors group cursor-pointer"
+                    onClick={() => {
+                      if (onSelectReviewItem) onSelectReviewItem(item);
+                    }}
                   >
                     {/* Confidence */}
                     <td className="py-2.5 px-3 sticky left-0 z-10 bg-surface/95 backdrop-blur-sm">
@@ -150,13 +155,14 @@ export default function Grid252({ items, onSelectReviewItem }) {
                     {/* Actions */}
                     <td className="py-2.5 px-3 text-right">
                       <button 
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onSelectReviewItem(item);
+                          if (onSelectReviewItem) onSelectReviewItem(item);
                         }}
-                        className="px-2.5 py-1 rounded bg-surface border border-surface-border text-slate-300 hover:text-white hover:border-cyan-500 text-[11px] flex items-center space-x-1"
+                        className="px-3 py-1.5 rounded-lg bg-surface border border-surface-border text-slate-200 hover:text-white hover:border-cyan-400 hover:bg-cyan-950/40 text-xs font-medium flex items-center space-x-1.5 ml-auto transition-all cursor-pointer shadow-sm"
                       >
-                        <Edit3 className="h-3 w-3" />
+                        <Edit3 className="h-3.5 w-3.5 text-cyan-400" />
                         <span>Review</span>
                       </button>
                     </td>
