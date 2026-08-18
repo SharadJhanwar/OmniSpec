@@ -190,15 +190,19 @@ class DuckDBKnowledgeBase:
             return None
 
         q_clean = query.strip().upper()
-        # Direct exact match
+        # Direct exact match on full string or word boundary
+        import re
         for alias, mfr, brand in self._brand_list_cache:
-            if alias == q_clean or alias in q_clean or q_clean in alias:
+            if alias == q_clean:
+                return mfr, brand, 1.0
+            # Word boundary check for multi-character alias
+            if len(alias) >= 2 and re.search(rf"\b{re.escape(alias)}\b", q_clean):
                 return mfr, brand, 0.98
 
         # Fuzzy match
         choices = [item[0] for item in self._brand_list_cache]
         match = process.extractOne(q_clean, choices, scorer=fuzz.token_sort_ratio)
-        if match and match[1] >= 80:
+        if match and match[1] >= 85:
             matched_alias = match[0]
             for alias, mfr, brand in self._brand_list_cache:
                 if alias == matched_alias:
