@@ -1,9 +1,17 @@
 import time
 import re
+import os
 from typing import Dict, Any, List
 from ..schemas.state_schema import ProductEnrichmentState, AgentTrace
 from ..services.copy_builder import MultiChannelCopyBuilder
 from ..core.logging import logger
+
+try:
+    from langchain_openai import ChatOpenAI
+    from langchain_core.messages import SystemMessage, HumanMessage
+    HAS_OPENAI = bool(os.getenv("OPENAI_API_KEY"))
+except ImportError:
+    HAS_OPENAI = False
 
 
 class MultiChannelCopyAgent:
@@ -11,6 +19,7 @@ class MultiChannelCopyAgent:
     Agent 7: Multi-Channel Formulaic Copy Builder Agent
     Generates 6 distinct copy tiers adhering strictly to character limits,
     word order formulas, and casing rules from Unilog Internal Content Guidelines.
+    Utilizes OpenAI GPT-4o-mini for rich marketing narrative and atomic feature synthesis.
     """
 
     @classmethod
@@ -45,8 +54,14 @@ class MultiChannelCopyAgent:
         elif "Decking" in classpath or "Fascia" in classpath:
             color = dims.get("Color", "HONEY GROVE").upper()
             inv_desc = f"DECKING BOARD 1X6 16FT {color}"[:40].upper()
+        elif "Fittings" in classpath or "Pipe" in classpath:
+            mat = state.attributes.get("ATTRIBUTE_VALUE 4", "BRS")
+            inv_desc = f"CPLG {mat} 150# FNPT {mpn}"[:40].upper()
         else:
             inv_desc = f"{prod_name.upper()} {mpn.upper()}"[:40]
+
+        # Guarantee <= 40 chars uppercase
+        inv_desc = inv_desc[:40].upper()
 
         # -------------------------------------------------------------
         # 2. MOBILE_DESC (60 to 80 chars)
@@ -64,6 +79,8 @@ class MultiChannelCopyAgent:
                 mob_desc = f"{clean_brand}, {prod_name}, {trade or 'Cut-Off'}, {mpn}"
         elif "Decking" in classpath:
             mob_desc = f"{mfr} {clean_brand}, {prod_name}, {trade or 'Enhance'}, {mpn}"
+        elif "Fittings" in classpath:
+            mob_desc = f"{mfr} {clean_brand}, {prod_name}, Brass Fitting, {mpn}"
         else:
             mob_desc = f"{mfr} {clean_brand}, {prod_name}, {mpn}"
 
@@ -149,6 +166,47 @@ class MultiChannelCopyAgent:
                 "Extended wheel life",
                 "Burr-free cuts on stainless steel"
             ]
+        elif "Decking" in classpath:
+            features = [
+                "High-performance composite shell resists staining and fading",
+                "Grooved edge profile for hidden fastener installation",
+                "Authentic natural wood grain finish",
+                "Low maintenance - cleans easily with soap and water"
+            ]
+        elif "Fittings" in classpath:
+            features = [
+                "Durable solid brass construction",
+                "Precision machined female NPT threaded connections",
+                "Rated for 150 psi working pressure",
+                "Corrosion resistant for long service life"
+            ]
+        else:
+            features = [
+                f"Manufactured to {brand} precision standards",
+                "High durability industrial construction",
+                "Designed for reliable long-term performance"
+            ]
+
+        # Optional OpenAI LLM Copy Enrichment for novel items
+        llm_used = False
+        if HAS_OPENAI and "Dishwashers" not in classpath and "Cut-Off" not in classpath and "Decking" not in classpath and "Fittings" not in classpath:
+            try:
+                llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+                prompt = (
+                    f"Given industrial product: Brand: {brand}, MPN: {mpn}, Classpath: {classpath}, Raw Desc: {state.cleaned_part_desc}.\n"
+                    "Generate a concise 2-sentence marketing description and 4 atomic bullet features. Format: MARKETING: <text>\nFEATURES: <f1>|<f2>|<f3>|<f4>"
+                )
+                res = llm.invoke([SystemMessage(content="You are an industrial catalog master copywriter."), HumanMessage(content=prompt)])
+                lines = res.content.strip().split("\n")
+                for line in lines:
+                    if line.startswith("MARKETING:"):
+                        mktg_desc = line.replace("MARKETING:", "").strip()
+                    elif line.startswith("FEATURES:"):
+                        f_raw = line.replace("FEATURES:", "").strip()
+                        features = [f.strip() for f in f_raw.split("|") if f.strip()]
+                llm_used = True
+            except Exception as e:
+                logger.warning(f"OpenAI copy generation fallback used deterministic template: {e}")
 
         trace = AgentTrace(
             agent_name="Agent 7: Multi-Channel Copy Builder",
@@ -156,13 +214,15 @@ class MultiChannelCopyAgent:
             notes=[
                 f"Invoice Desc: '{inv_desc}' ({len(inv_desc)} chars)",
                 f"Mobile Desc: '{mob_desc}' ({len(mob_desc)} chars)",
-                f"Features count: {len(features)}"
+                f"Features count: {len(features)}",
+                f"OpenAI LLM Enrichment: {llm_used}"
             ],
             extracted_data={
                 "invoice_desc": inv_desc,
                 "mobile_desc": mob_desc,
                 "short_desc": short_desc,
-                "features_count": len(features)
+                "features_count": len(features),
+                "llm_used": llm_used
             }
         )
 

@@ -1,9 +1,17 @@
 import time
 import re
+import os
 from typing import Dict, Any, Tuple
 from ..schemas.state_schema import ProductEnrichmentState, AgentTrace
 from ..db.duckdb_client import kb
 from ..core.logging import logger
+
+try:
+    from langchain_openai import ChatOpenAI
+    from langchain_core.messages import SystemMessage, HumanMessage
+    HAS_OPENAI = bool(os.getenv("OPENAI_API_KEY"))
+except ImportError:
+    HAS_OPENAI = False
 
 
 class EntityResolutionAgent:
@@ -11,6 +19,7 @@ class EntityResolutionAgent:
     Agent 2: Brand & Entity Resolution Agent
     Resolves noisy supplier strings and description tokens to canonical UniCat 27K
     Manufacturers and Brands with legal casing and mandatory registered marks (®, ™).
+    Utilizes OpenAI GPT-4o-mini as an intelligent disambiguator for complex unseen vendor feeds.
     """
 
     # MPN Prefix -> Known Brand hints
@@ -94,7 +103,6 @@ class EntityResolutionAgent:
             if not cand:
                 continue
             cand_u = cand.upper()
-            # Skip if candidate is a distributor code or distributor company name
             if cand_u in cls.DISTRIBUTOR_MAP or any(d.upper() in cand_u for d in cls.DISTRIBUTOR_MAP.values()):
                 continue
             brand_match = kb.find_brand(cand)
@@ -135,7 +143,37 @@ class EntityResolutionAgent:
             brand_name = supp_name or "Unbranded"
             conf = 0.40
 
-        # Step 8: Alternate Part Number derivation
+        # Step 8: Optional OpenAI LLM Disambiguator if confidence is low
+        openai_used = False
+        if conf < 0.75 and HAS_OPENAI and desc_text:
+            try:
+                llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+                prompt = (
+                    f"Disambiguate the true OEM Manufacturer and Brand for raw supplier: '{supp_name}', MPN: '{mpn}', Desc: '{desc_text}'.\n"
+                    "Output in exact format: MFR: <Legal Manufacturer Name> | BRAND: <Brand Name with ® or ™>"
+                )
+                res = llm.invoke([
+                    SystemMessage(content="You are an expert industrial master catalog data entity resolver."),
+                    HumanMessage(content=prompt)
+                ])
+                content = res.content.strip()
+                m_match = re.search(r"MFR:\s*([^|]+)\|\s*BRAND:\s*(.+)", content)
+                if m_match:
+                    ai_mfr = m_match.group(1).strip()
+                    ai_brand = m_match.group(2).strip()
+                    # Check if AI brand matches in DuckDB UniCat
+                    kb_check = kb.find_brand(ai_brand)
+                    if kb_check:
+                        mfr_name, brand_name, conf = kb_check
+                    else:
+                        mfr_name = ai_mfr
+                        brand_name = ai_brand
+                        conf = 0.88
+                    openai_used = True
+            except Exception as e:
+                logger.warning(f"OpenAI entity resolution fallback used standard match: {e}")
+
+        # Step 9: Alternate Part Number derivation
         alt_mpn = mpn.replace("-", "").replace(".", "").strip()
         if alt_mpn == mpn:
             alt_mpn = ""
@@ -146,14 +184,16 @@ class EntityResolutionAgent:
             notes=[
                 f"Resolved: '{brand_name}' ({mfr_name}) [Score: {conf*100}%]",
                 f"Trade Name: '{trade_name}'",
-                f"Is Distributor: {is_distributor}"
+                f"Is Distributor: {is_distributor}",
+                f"OpenAI Disambiguated: {openai_used}"
             ],
             extracted_data={
                 "manufacturer_name": mfr_name,
                 "brand_name": brand_name,
                 "trade_name": trade_name,
                 "mfr_part_number": mpn,
-                "alternate_part_number": alt_mpn
+                "alternate_part_number": alt_mpn,
+                "openai_used": openai_used
             }
         )
 
