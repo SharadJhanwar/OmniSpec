@@ -82,3 +82,39 @@ async def enrich_batch_csv(file: UploadFile = File(...)):
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=OmniSpec_Enriched_Delivery_252.csv"}
     )
+
+
+@router.get("/catalog")
+async def get_catalog_items(page: int = 1, page_size: int = 50, search: str = ""):
+    """
+    Returns paginated items from the enriched 1000-item catalog.
+    """
+    from pathlib import Path
+    csv_path = Path(__file__).resolve().parent.parent.parent.parent / "OmniSpec_Enriched_1000_Items_Delivery_252.csv"
+    if not csv_path.exists():
+        return {"items": [], "total": 0, "page": page, "page_size": page_size}
+
+    items = []
+    with open(csv_path, mode="r", encoding="utf-8", errors="ignore") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if search:
+                s_lower = search.lower()
+                if (s_lower in (row.get("Mfg_Part_Num", "")).lower() or 
+                    s_lower in (row.get("BRAND_NAME", "")).lower() or 
+                    s_lower in (row.get("Part_Desc", "")).lower()):
+                    items.append(row)
+            else:
+                items.append(row)
+
+    total = len(items)
+    start = (page - 1) * page_size
+    end = start + page_size
+    paginated = items[start:end]
+
+    return {
+        "items": paginated,
+        "total": total,
+        "page": page,
+        "page_size": page_size
+    }
