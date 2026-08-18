@@ -70,7 +70,9 @@ class IngestionNormalizer:
     @classmethod
     def extract_dimension_triplets(cls, text: str) -> List[str]:
         """
-        Extracts dimension patterns like: 4"x.040"x5/8", 5"x.045"x7/8", 1x12-12'
+        Extracts dimension patterns like: 4-1/2"x.045"x7/8", 5"x.045"x7/8", 1x12-12', 2.75x30
         """
-        pattern = r"\b(\d+(?:[/-]\d+)?(?:\.\d+)?[\"']?\s*[xX]\s*\.?\d+(?:[/-]\d+)?[\"']?(?:\s*[xX]\s*\d+(?:[/-]\d+)?[\"']?)?)\b"
+        # Supports whole numbers, decimals, fractions (3/4), and mixed fractions (4-1/2)
+        dim_part = r"\d+(?:-\d+/\d+)?(?:\.\d+)?(?:/\d+)?"
+        pattern = rf"\b({dim_part}[\"']?\s*[xX]\s*\.?{dim_part}[\"']?(?:\s*[xX]\s*{dim_part}[\"']?)?)\b"
         return [m.strip() for m in re.findall(pattern, text)]
