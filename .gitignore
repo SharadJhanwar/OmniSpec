@@ -1,0 +1,37 @@
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# Environment Variables
+.env
+!.env.example
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Node / Frontend
+node_modules/
+dist/
+.next/
+out/
+build/
+*.log
+
+# Databases & local data
+*.duckdb
+*.duckdb.wal
+*.sqlite
+*.db
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docs and Datasets (Excluded from initial repo)
+docs/
