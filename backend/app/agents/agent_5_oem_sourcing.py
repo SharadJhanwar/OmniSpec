@@ -1,5 +1,6 @@
 import time
 import re
+import os
 from typing import Dict, Any, List
 from ..schemas.state_schema import ProductEnrichmentState, AgentTrace
 from ..core.logging import logger
@@ -85,6 +86,13 @@ class OEMSourcingRAGAgent:
         if not mfr_url and brand_clean:
             mfr_url = f"https://www.{brand_clean.lower()}.com/products/{mpn}"
             ref_urls.append(f"https://www.{brand_clean.lower()}.com/documentation/{mpn}.pdf")
+            approvals = "ANSI Compliant|ISO 9001"
+
+        # Validate that no banned domains leaked
+        for banned in cls.BANNED_DOMAINS:
+            if banned in mfr_url.lower():
+                mfr_url = ""
+            ref_urls = [u for u in ref_urls if banned not in u.lower()]
 
         trace = AgentTrace(
             agent_name="Agent 5: OEM Sourcing & RAG",

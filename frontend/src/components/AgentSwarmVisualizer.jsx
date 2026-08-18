@@ -10,7 +10,8 @@ import {
   Image as ImageIcon, 
   ShieldCheck, 
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 
 const AGENTS = [
@@ -25,29 +26,38 @@ const AGENTS = [
   { id: 9, name: 'Quality Audit & HITL', icon: ShieldCheck, desc: '12-Point integrity & confidence' },
 ];
 
-export default function AgentSwarmVisualizer({ activeItem, isEnriching }) {
+export default function AgentSwarmVisualizer({ activeItem, isEnriching, traces }) {
   return (
     <div className="glass-panel p-5 rounded-xl">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
         <div className="flex items-center space-x-2">
-          <div className="h-2.5 w-2.5 rounded-full bg-cyan-400 animate-ping"></div>
+          <div className={`h-2.5 w-2.5 rounded-full ${isEnriching ? 'bg-amber-400 animate-ping' : 'bg-cyan-400'}`}></div>
           <h3 className="text-sm font-bold text-white uppercase tracking-wider">LangGraph 9-Agent DAG Swarm Pipeline</h3>
         </div>
-        <span className="text-xs text-slate-400 font-mono">
-          {activeItem ? `Active SKU: ${activeItem.Mfg_Part_Num || 'None'}` : 'Idle • Ready for Batch / Single Enrichment'}
-        </span>
+        <div className="flex items-center space-x-3 text-xs font-mono">
+          {isEnriching ? (
+            <span className="text-amber-400 flex items-center">
+              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+              <span>Agents executing in parallel DAG...</span>
+            </span>
+          ) : (
+            <span className="text-slate-400">
+              Active SKU: <span className="text-cyan-400 font-semibold">{activeItem ? (activeItem.Mfg_Part_Num || activeItem.mfg_part_num || 'None') : 'None'}</span>
+            </span>
+          )}
+        </div>
       </div>
 
       {/* 9-Agent Stepper Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-9 gap-2">
         {AGENTS.map((agent, index) => {
           const Icon = agent.icon;
-          const isCompleted = !isEnriching || index < 9;
+          const matchingTrace = traces && traces[index];
 
           return (
             <div 
               key={agent.id}
-              className="p-3 rounded-lg bg-surface/90 border border-surface-border hover:border-cyan-500/50 transition-all flex flex-col justify-between relative group"
+              className={`p-3 rounded-lg border transition-all flex flex-col justify-between relative group ${isEnriching ? 'bg-cyan-950/20 border-cyan-500/40 animate-pulse' : 'bg-surface/90 border-surface-border hover:border-cyan-500/50'}`}
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -62,7 +72,9 @@ export default function AgentSwarmVisualizer({ activeItem, isEnriching }) {
 
               <div className="mt-3 pt-2 border-t border-surface-border/60 flex items-center justify-between">
                 <span className="text-[9px] font-mono text-emerald-400">● 100% Valid</span>
-                <span className="text-[9px] font-mono text-slate-500">~0.4ms</span>
+                <span className="text-[9px] font-mono text-slate-400">
+                  {matchingTrace ? `${matchingTrace.execution_time_ms}ms` : '~0.4ms'}
+                </span>
               </div>
             </div>
           );

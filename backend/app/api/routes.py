@@ -84,6 +84,42 @@ async def enrich_batch_csv(file: UploadFile = File(...)):
     )
 
 
+@router.post("/enrich/batch-json")
+async def enrich_batch_csv_json(file: UploadFile = File(...)):
+    """
+    Upload a CSV file and receive an array of enriched 252-column JSON records.
+    """
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files are supported.")
+
+    content = await file.read()
+    reader = csv.DictReader(io.StringIO(content.decode("utf-8", errors="ignore")))
+
+    enriched_records = []
+    for idx, row in enumerate(reader):
+        initial_state = ProductEnrichmentState(
+            row_id=f"row_{idx+1}",
+            raw_mfg_part_num=row.get("Mfg_Part_Num", row.get("mfg_part_num", "")),
+            raw_part_desc=row.get("Part_Desc", row.get("part_desc", "")),
+            raw_e1_brand=row.get("E1_Brand", row.get("e1_brand", "")),
+            raw_unilog_brand=row.get("Unilog_Brand", row.get("unilog_brand", "")),
+            raw_dib_brand=row.get("DIB_Brand", row.get("dib_brand", "")),
+            raw_part_manuf=row.get("Part_Manuf", row.get("part_manuf", ""))
+        )
+        final_state = pipeline_graph.invoke(initial_state)
+        if final_state.get("delivery_record"):
+            rec_dict = final_state["delivery_record"].to_delivery_dict()
+            rec_dict["_confidence"] = final_state.get("overall_confidence", 1.0)
+            rec_dict["_needs_hitl"] = final_state.get("needs_hitl_review", False)
+            enriched_records.append(rec_dict)
+
+    return {
+        "success": True,
+        "count": len(enriched_records),
+        "records": enriched_records
+    }
+
+
 @router.get("/catalog")
 async def get_catalog_items(page: int = 1, page_size: int = 50, search: str = ""):
     """

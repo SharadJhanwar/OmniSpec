@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import DashboardStats from './components/DashboardStats';
+import SingleSkuSandbox from './components/SingleSkuSandbox';
 import AgentSwarmVisualizer from './components/AgentSwarmVisualizer';
 import Grid252 from './components/Grid252';
 import HITLReviewModal from './components/HITLReviewModal';
@@ -117,6 +118,8 @@ export default function App() {
   const [activeItem, setActiveItem] = useState(SEED_ITEMS[0]);
   const [selectedReviewItem, setSelectedReviewItem] = useState(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [activeTraces, setActiveTraces] = useState(null);
+  const [isEnriching, setIsEnriching] = useState(false);
 
   useEffect(() => {
     // Attempt to load from backend API if available
@@ -159,8 +162,17 @@ export default function App() {
     setActiveItem(updatedItem);
   };
 
-  const handleUploadSuccess = (filename) => {
-    console.log(`Catalog file processed: ${filename}`);
+  const handleUploadSuccess = (newRecords, filename) => {
+    if (newRecords && newRecords.length > 0) {
+      setItems(prev => [...newRecords, ...prev]);
+      setActiveItem(newRecords[0]);
+    }
+  };
+
+  const handleSingleEnrichSuccess = (enrichedItem, traces) => {
+    setItems(prev => [enrichedItem, ...prev]);
+    setActiveItem(enrichedItem);
+    setActiveTraces(traces);
   };
 
   const handleOpenReview = (item) => {
@@ -190,10 +202,16 @@ export default function App() {
           hitlQueueCount={hitlCount}
         />
 
+        {/* Live Single-SKU Sandbox */}
+        <SingleSkuSandbox
+          onEnrichSuccess={handleSingleEnrichSuccess}
+        />
+
         {/* 9-Agent LangGraph Swarm Visualizer */}
         <AgentSwarmVisualizer
           activeItem={activeItem}
-          isEnriching={false}
+          isEnriching={isEnriching}
+          traces={activeTraces}
         />
 
         {/* 252-Column Data Grid Table */}
