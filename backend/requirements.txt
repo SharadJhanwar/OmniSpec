@@ -1,0 +1,29 @@
+# Core Web & API Framework
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.7.0
+pydantic-settings>=2.3.0
+python-dotenv>=1.0.1
+
+# AI & Multi-Agent Orchestration (LangGraph + OpenAI)
+langchain>=0.2.0
+langchain-core>=0.2.0
+langchain-openai>=0.1.8
+langgraph>=0.1.0
+openai>=1.30.0
+
+# Deterministic Matching, Data Engines & Math Lookups
+rapidfuzz>=3.8.0
+duckdb>=1.0.0
+pandas>=2.2.0
+openpyxl>=3.1.2
+
+# Networking & Document Intelligence
+httpx>=0.27.0
+requests>=2.32.0
+beautifulsoup4>=4.12.3
+
+# Utilities & Testing
+pytest>=8.2.0
+colorama>=0.4.6
+tqdm>=4.66.4
