@@ -226,14 +226,17 @@ class MultiChannelCopyAgent:
 
         # Optional OpenAI LLM Copy Enrichment for novel items when enabled
         llm_used = False
+        openai_time_ms = 0.0
         if HAS_OPENAI and state.enable_llm and "Dishwashers" not in classpath and "Cut-Off" not in classpath and "Decking" not in classpath and "Fittings" not in classpath and "LED" not in classpath and "Power Tools" not in classpath:
             try:
+                t_ai_0 = time.perf_counter()
                 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
                 prompt = (
                     f"Given industrial product: Brand: {brand}, MPN: {mpn}, Classpath: {classpath}, Raw Desc: {state.cleaned_part_desc}.\n"
                     "Generate a concise 2-sentence marketing description and 4 atomic bullet features. Format: MARKETING: <text>\nFEATURES: <f1>|<f2>|<f3>|<f4>"
                 )
                 res = llm.invoke([SystemMessage(content="You are an industrial catalog master copywriter."), HumanMessage(content=prompt)])
+                openai_time_ms = round((time.perf_counter() - t_ai_0) * 1000, 2)
                 lines = res.content.strip().split("\n")
                 for line in lines:
                     if line.startswith("MARKETING:"):
@@ -252,14 +255,15 @@ class MultiChannelCopyAgent:
                 f"Invoice Desc: '{inv_desc}' ({len(inv_desc)} chars)",
                 f"Mobile Desc: '{mob_desc}' ({len(mob_desc)} chars)",
                 f"Features count: {len(features)}",
-                f"OpenAI LLM Enrichment: {llm_used}"
+                f"OpenAI LLM Enrichment: {llm_used}" + (f" ({openai_time_ms} ms)" if llm_used else "")
             ],
             extracted_data={
                 "invoice_desc": inv_desc,
                 "mobile_desc": mob_desc,
                 "short_desc": short_desc,
                 "features_count": len(features),
-                "llm_used": llm_used
+                "llm_used": llm_used,
+                "openai_time_ms": openai_time_ms
             }
         )
 

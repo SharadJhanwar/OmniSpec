@@ -33,19 +33,20 @@ BOLD = "\033[1m"
 RESET = "\033[0m"
 
 
-def print_stage_banner(stage_num: int, stage_name: str, agent_desc: str, elapsed_ms: float):
+def print_stage_banner(stage_num: int, stage_name: str, agent_desc: str, elapsed_ms: float, openai_ms: float = 0.0):
+    openai_tag = f" | {YELLOW}⚡ OpenAI API: {openai_ms:>6.2f} ms{CYAN}" if openai_ms > 0 else ""
     print(f"\n{BOLD}{CYAN}-------------------------------------------------------------------------------{RESET}")
-    print(f"{BOLD}{CYAN}[STAGE {stage_num}] {stage_name:<40} (Execution: {elapsed_ms:>6.2f} ms){RESET}")
+    print(f"{BOLD}{CYAN}[STAGE {stage_num}] {stage_name:<36} (Time: {elapsed_ms:>6.2f} ms{openai_tag}){RESET}")
     print(f"{CYAN}{agent_desc}{RESET}")
     print(f"{BOLD}{CYAN}-------------------------------------------------------------------------------{RESET}")
 
 
-def run_stage_by_stage_trace(raw_input: dict):
+def run_stage_by_stage_trace(raw_input: dict, enable_llm: bool = False):
     print(f"\n{BOLD}{MAGENTA}==============================================================================={RESET}")
     print(f"{BOLD}{MAGENTA}         OMNISPEC AI: 9-AGENT STAGE-BY-STAGE TRANSFORMATION TRACER             {RESET}")
     print(f"{BOLD}{MAGENTA}==============================================================================={RESET}")
 
-    print(f"\n{BOLD}{YELLOW}>> RAW INPUT RECORD (STAGE 0):{RESET}")
+    print(f"\n{BOLD}{YELLOW}>> RAW INPUT RECORD (STAGE 0) [Enable LLM: {enable_llm}]:{RESET}")
     for k, v in raw_input.items():
         print(f"  * {k:<18}: {BOLD}{v}{RESET}")
 
@@ -57,7 +58,8 @@ def run_stage_by_stage_trace(raw_input: dict):
         raw_unilog_brand=raw_input.get("Unilog_Brand", ""),
         raw_dib_brand=raw_input.get("DIB_Brand", ""),
         raw_part_manuf=raw_input.get("Part_Manuf", ""),
-        raw_sku=raw_input.get("SKU", "10001")
+        raw_sku=raw_input.get("SKU", "10001"),
+        enable_llm=enable_llm
     )
 
     # -------------------------------------------------------------
@@ -80,12 +82,15 @@ def run_stage_by_stage_trace(raw_input: dict):
     out2 = EntityResolutionAgent.execute(state)
     state = state.model_copy(update=out2)
     ms2 = (time.perf_counter() - t0) * 1000
-    print_stage_banner(2, "Brand & Entity Resolution", "Agent 2: Resolves UniCat 27K legal casing & injects registered marks (®, ™)", ms2)
+    ai_ms2 = state.traces[-1].extracted_data.get("openai_time_ms", 0.0) if state.traces else 0.0
+    print_stage_banner(2, "Brand & Entity Resolution", "Agent 2: Resolves UniCat 27K legal casing & injects registered marks (®, ™)", ms2, ai_ms2)
     print(f"  {GREEN}[+] MANUFACTURER_NAME:{RESET}   {BOLD}{state.manufacturer_name}{RESET}")
     print(f"  {GREEN}[+] BRAND_NAME:{RESET}          {BOLD}{state.brand_name}{RESET}")
     print(f"  {GREEN}[+] TRADE_NAME:{RESET}          {state.trade_name or '—'}")
     print(f"  {GREEN}[+] MPN / ALT_PART_NUM:{RESET}  {state.mfr_part_number} / {state.alt_part_number or '—'}")
     print(f"  {GREEN}[+] Brand Confidence:{RESET}    {state.brand_confidence * 100:.1f}%")
+    if ai_ms2 > 0:
+        print(f"  {YELLOW}[⚡] OpenAI Disambiguation:{RESET} {ai_ms2:.2f} ms")
 
     # -------------------------------------------------------------
     # STAGE 3: TAXONOMY CLASSIFICATION & UNSPSC
@@ -150,12 +155,15 @@ def run_stage_by_stage_trace(raw_input: dict):
     out7 = MultiChannelCopyAgent.execute(state)
     state = state.model_copy(update=out7)
     ms7 = (time.perf_counter() - t0) * 1000
-    print_stage_banner(7, "Multi-Channel Copy Builder", "Agent 7: Generates 6 description tiers adhering to strict character caps & casing", ms7)
+    ai_ms7 = state.traces[-1].extracted_data.get("openai_time_ms", 0.0) if state.traces else 0.0
+    print_stage_banner(7, "Multi-Channel Copy Builder", "Agent 7: Generates 6 description tiers adhering to strict character caps & casing", ms7, ai_ms7)
     print(f"  {GREEN}[+] INVOICE_DESC (<=40 CAPS):{RESET} {YELLOW}{state.invoice_desc}{RESET} ({len(state.invoice_desc)} chars)")
     print(f"  {GREEN}[+] MOBILE_DESC (60-80):{RESET}     {YELLOW}{state.mobile_desc}{RESET} ({len(state.mobile_desc)} chars)")
     print(f"  {GREEN}[+] SHORT_DESC (Title):{RESET}      {BOLD}{state.short_desc}{RESET}")
     print(f"  {GREEN}[+] LONG_DESC1:{RESET}              {state.long_desc1[:140]}...")
     print(f"  {GREEN}[+] Features (1..{len(state.item_features)}):{RESET}        {state.item_features[:3]}")
+    if ai_ms7 > 0:
+        print(f"  {YELLOW}[⚡] OpenAI Copy Synthesis:{RESET} {ai_ms7:.2f} ms")
 
     # -------------------------------------------------------------
     # STAGE 8: DIGITAL ASSET SYNTHESIZER
@@ -261,17 +269,31 @@ if __name__ == "__main__":
                 "DIB_Brand": "-- No DIB Brand --",
                 "SKU": "10006"
             }
+        },
+        {
+            "name": "7. Exotic Uncataloged Item (OpenAI LLM Disambiguator & Copy Demo)",
+            "input": {
+                "Mfg_Part_Num": "HOU-9901-X",
+                "Part_Desc": "Heavy-duty pneumatic industrial rivet gun w/ 4 nosepieces, mandrel collector & carry case",
+                "Part_Manuf": "Houston Industrial Tools",
+                "E1_Brand": "-- Unbranded --",
+                "Unilog_Brand": "-- No Unilog Brand --",
+                "DIB_Brand": "-- No DIB Brand --",
+                "SKU": "10007"
+            }
         }
     ]
+
+    enable_llm_flag = "--llm" in sys.argv or (len(sys.argv) > 1 and sys.argv[1] == "7")
 
     if len(sys.argv) > 1 and sys.argv[1].isdigit():
         choice = int(sys.argv[1]) - 1
         if 0 <= choice < len(presets):
             print(f"\n{BOLD}Selected Preset:{RESET} {presets[choice]['name']}")
-            run_stage_by_stage_trace(presets[choice]["input"])
+            run_stage_by_stage_trace(presets[choice]["input"], enable_llm=enable_llm_flag or (choice == 6))
         else:
             print("Invalid preset index. Running Preset 1 by default.")
-            run_stage_by_stage_trace(presets[0]["input"])
+            run_stage_by_stage_trace(presets[0]["input"], enable_llm=enable_llm_flag)
     else:
         print(f"\n{BOLD}Running Default Stage-by-Stage Trace on Ground-Truth Worked Example:{RESET}")
-        run_stage_by_stage_trace(presets[0]["input"])
+        run_stage_by_stage_trace(presets[0]["input"], enable_llm=enable_llm_flag)

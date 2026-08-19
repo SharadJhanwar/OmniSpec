@@ -176,8 +176,10 @@ class EntityResolutionAgent:
 
         # Step 9: Optional OpenAI LLM Disambiguator if confidence is low and enabled
         openai_used = False
+        openai_time_ms = 0.0
         if conf < 0.75 and HAS_OPENAI and state.enable_llm and desc_text:
             try:
+                t_ai_0 = time.perf_counter()
                 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
                 prompt = (
                     f"Disambiguate the true OEM Manufacturer and Brand for raw supplier: '{supp_name}', MPN: '{mpn}', Desc: '{desc_text}'.\n"
@@ -187,6 +189,7 @@ class EntityResolutionAgent:
                     SystemMessage(content="You are an expert industrial master catalog data entity resolver."),
                     HumanMessage(content=prompt)
                 ])
+                openai_time_ms = round((time.perf_counter() - t_ai_0) * 1000, 2)
                 content = res.content.strip()
                 m_match = re.search(r"MFR:\s*([^|]+)\|\s*BRAND:\s*(.+)", content)
                 if m_match:
@@ -215,7 +218,7 @@ class EntityResolutionAgent:
                 f"Resolved: '{brand_name}' ({mfr_name}) [Score: {conf*100}%]",
                 f"Trade Name: '{trade_name}'",
                 f"Is Distributor: {is_distributor}",
-                f"OpenAI Disambiguated: {openai_used}"
+                f"OpenAI Disambiguated: {openai_used}" + (f" ({openai_time_ms} ms)" if openai_used else "")
             ],
             extracted_data={
                 "manufacturer_name": mfr_name,
@@ -223,7 +226,8 @@ class EntityResolutionAgent:
                 "trade_name": trade_name,
                 "mfr_part_number": mpn,
                 "alternate_part_number": alt_mpn,
-                "openai_used": openai_used
+                "openai_used": openai_used,
+                "openai_time_ms": openai_time_ms
             }
         )
 
