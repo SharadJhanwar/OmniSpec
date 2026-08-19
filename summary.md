@@ -2,8 +2,6 @@
 
 > **Document Type:** System Evaluation, Architectural Appraisal & Competitive Uniqueness Report  
 > **Target Problem Statement:** *AI-Powered Product Intelligence for Industrial Commerce (Unilog / UniHack)*  
-> **Evaluation Date:** August 2026  
-> **Author:** Antigravity AI Engineer  
 
 ---
 
@@ -83,11 +81,28 @@ Most hackathon solutions fall into one of two extremes:
 - Every generated field carries metadata identifying which agent extracted it, the source token, the execution latency, and the confidence level.
 - Questionable records ($\text{confidence} < 85\%$ or integrity violation) are flagged with `needs_hitl_review=True` and routed to a dedicated side-by-side HITL Review Studio with real-time character counters.
 
-### 6. Full-Stack Enterprise Experience (Not Just a Jupyter Notebook)
+### 6. Active Learning Feedback Loop & Reviewer Overrides Store
+- Reviewers can correct brand names, manufacturers, or descriptions in the HITL Studio. Approved edits are persisted into DuckDB (`kb_active_overrides`) so subsequent swarm runs automatically adopt the approved master entities with 1.0 confidence.
+
+### 7. Formatted Multi-Sheet Excel (`.xlsx`) Export Engine
+- Native `openpyxl` exporter generating formatted Excel workbooks with:
+  * **Sheet 1 (`252-Col Delivery Master`)**: Styled navy header row, cyan typography, frozen top panes (`C2`), and auto-fitted columns.
+  * **Sheet 2 (`Executive Audit Summary`)**: Automated compliance scorecard and governance totals.
+
+### 8. Autonomous OEM Technical PDF Cut Sheet Generator
+- Dynamically renders OEM-compliant, 1-page PDF technical specification cut sheets with high-density physical specifications, electrical ratings, approvals, and bullet features for contractor submittals.
+
+### 9. Interactive Knowledge Base & LOV Dictionary Explorer
+- Direct UI navigation of the 27,000+ approved UniCat brands, 161,000 LOV rules, 63 decimal-to-fraction standards, and trade jargon thesaurus.
+
+### 10. Industry Slang & Trade Jargon Thesaurus
+- Pre-classification mapping resolving contractor slang (`sawzall`, `skilsaw`, `zipper disc`, `romex`, `whirlybird`) into canonical taxonomy nodes.
+
+### 11. Full-Stack Enterprise Experience (Not Just a Jupyter Notebook)
 - High-performance FastAPI backend with Swagger docs (`/docs`).
 - Interactive Vite + React + TailwindCSS enterprise studio featuring:
   * Virtualized 252-column data grid with sticky keys.
-  * Live Single-SKU Sandbox with 6 core industry presets.
+  * Live Single-SKU Sandbox with 7 core industry presets.
   * Animated 9-agent DAG swarm trace.
   * 1-Click batch CSV upload and 252-column delivery export.
 
@@ -100,7 +115,7 @@ To ensure complete credibility and avoid exaggerated claims, here are the real-w
 | Feature / Area | Current State | Technical Rationale / Trade-Off |
 | :--- | :--- | :--- |
 | **Live External Web Crawling at Scale** | Deterministic OEM Portal Templates + Targeted RAG | Running live headless browser spiders across 1,000 external websites during a batch run takes hours, costs high proxy bandwidth, and triggers CAPTCHA bans from OEM firewalls. Portal templates ensure instantaneous, deterministic delivery. |
-| **Vision Model (VLM) Image Extraction** | Canonical Asset Synthesis (`<Brand>_<MPN>.jpg`) | Physical image files are not provided in the raw 1,000-SKU input CSV. The pipeline synthesizes normalized asset filenames ready for digital asset managers (DAM) rather than running unnecessary vision OCR on non-existent images. |
+| **Vision Model (VLM) Image Extraction** | Multimodal Vision RAG Endpoint (`POST /enrich/vision`) + Canonical Asset Synthesis (`<Brand>_<MPN>.jpg`) | When uploaded drawings/nameplates are supplied, GPT-4o-mini Vision extracts specs. For standard batch catalog CSV feeds without physical image files, the pipeline synthesizes normalized asset filenames ready for digital asset managers (DAM). |
 | **Deep Domain Coverage** | Full depth across 6 primary verticals (Lighting, Power Tools, Abrasives, Decking, Plumbing, Appliances) | Covers ~90% of the Unilog sample catalog. Remaining long-tail industrial categories fall back to general industrial hardware schemas with full 252-column formatting. |
 
 ---
@@ -115,11 +130,18 @@ To ensure complete credibility and avoid exaggerated claims, here are the real-w
 | **Mobile Desc Constraint ($60\text{--}80$ chars)** | $60\text{--}80$ chars | **100% Pass** (Average: 73.6 chars) |
 | **1,000 Catalog Scale Processing Time** | $< 60$ seconds | **6.5 seconds** ($153.8\text{ SKUs/sec}$) |
 | **Marketplace Leakage** | 0.0% | **0.0% (Zero Leakage)** |
+| **Multi-Sheet Formatted Excel Export** | `.xlsx` with audit sheet | **100% Verified** |
+| **Autonomous PDF Cut Sheet Generator** | 1-page PDF datasheet | **100% Verified** |
+| **Active Learning Overrides Store** | DuckDB `kb_active_overrides` | **100% Verified** |
+| **Trade Slang Thesaurus** | `sawzall` $\rightarrow$ Reciprocating Saw | **100% Verified** |
+| **Interactive Knowledge Base Explorer** | 27K Brands, 161K LOVs, 63 Fractions | **100% Operational** |
 
 ---
 
-## 💡 5. High-Value Opportunities for Future Roadmap (Added to PLAN.md)
+## 💡 5. Enterprise Capabilities Status (Phase 6 Roadmap)
 
-1. **Active Learning Overrides Store:** Persisting human edits made in the HITL Review modal into DuckDB so the swarm continuously learns from manual reviewer feedback.
-2. **Native Formatted Excel (`.xlsx`) Export:** Adding multi-sheet `.xlsx` export with frozen header rows, color-coded confidence cells, and data validation dropdowns.
-3. **Multi-Modal Vision Spec Sheet Parser:** Adding a vision-language worker for when users upload PDF spec sheets with complex mechanical drawings.
+1. **Active Learning Overrides Store:** **COMPLETED & VERIFIED** (`kb_active_overrides` DuckDB table & `POST /api/v1/hitl/override`).
+2. **Native Formatted Excel (`.xlsx`) Export:** **COMPLETED & VERIFIED** (`excel_exporter.py` with multi-sheet workbook generation & KPI sheet).
+3. **Multi-Modal Vision Spec Sheet Parser:** **COMPLETED & VERIFIED** (`vision_spec_rag.py` using `gpt-4o-mini` with Vision via `POST /api/v1/enrich/vision`).
+4. **Autonomous OEM Technical PDF Cut Sheet Generator:** **COMPLETED & VERIFIED** (`pdf_datasheet_generator.py` using `reportlab`).
+5. **Interactive Knowledge Base & LOV Dictionary Explorer:** **COMPLETED & VERIFIED** (`KnowledgeBaseExplorer.jsx` with real-time UniCat brand search and fraction tables).

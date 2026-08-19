@@ -260,11 +260,14 @@ Trace the transformation of any raw SKU across all 9 agents:
 
 ## ✨ Web Studio Features
 
-1. **Live Single-SKU Sandbox**: Type any raw description, select presets, and watch the 9-Agent DAG Swarm execute live with millisecond latencies.
+1. **Live Single-SKU Sandbox**: Type any raw description, select presets (Appliances, Abrasives, Decking, Plumbing, Lighting, Tools, or OpenAI Latency Demo), and watch the 9-Agent DAG Swarm execute live with millisecond latencies.
 2. **Virtualized 252-Column Data Grid**: Scroll across all attributes, dimensions, and asset links with sticky key identifiers.
-3. **HITL Review Studio**: Side-by-side diff comparison, live character counters for `INVOICE_DESC` ($\le 40$) and `MOBILE_DESC` ($60\text{--}80$), and 1-click approvals.
-4. **Drag & Drop CSV Ingestion**: Upload any raw 6-column feed and enrich it across 252 columns.
-5. **1-Click Export**: Download the delivery-ready CSV deliverable (`OmniSpec_Delivery_Enriched_252.csv`).
+3. **HITL Review Studio**: Side-by-side diff comparison, live character counters for `INVOICE_DESC` ($\le 40$) and `MOBILE_DESC` ($60\text{--}80$), active learning feedback persistence, and 1-click approvals.
+4. **1-Click Multi-Sheet Excel (.xlsx) Export**: Generates styled `.xlsx` delivery workbooks with frozen header panes (`C2`), auto-fitted columns, and an executive governance audit sheet.
+5. **Autonomous OEM Technical PDF Datasheet Generator**: 1-click generation of 1-page engineering specification submittals (`<Brand>_<MPN>_Specification_Sheet.pdf`) for contractors.
+6. **Interactive UniCat Knowledge Graph & Rulebook Explorer**: Live visual dictionary browsing 27,000+ UniCat Brands, 161,000 LOVs, 63 Decimal fractions, and the Trade Jargon Thesaurus.
+7. **Drag & Drop CSV Ingestion**: Upload any raw 6-column feed and enrich it across 252 columns.
+8. **1-Click CSV Export**: Download the delivery-ready CSV deliverable (`OmniSpec_Delivery_Enriched_252.csv`).
 
 ---
 
