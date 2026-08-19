@@ -31,6 +31,46 @@ class OEMSourcingRAGAgent:
             "ref_url_template": "https://www.whirlpool.com/content/dam/global/documents/202412/owners-manual-{mpn}.pdf",
             "approvals": "ENERGY STAR Certified|UL Listed"
         },
+        "PHILIPS": {
+            "mfr_url_template": "https://www.lighting.philips.com/main/prof/led-lamps-and-tubes/{mpn}",
+            "ref_url_template": "https://www.lighting.philips.com/specsheets/{mpn}.pdf",
+            "approvals": "Energy Star Certified|cULus Listed|RoHS Compliant|FCC Certified|Title 20 Compliant"
+        },
+        "KICHLER": {
+            "mfr_url_template": "https://www.kichler.com/products/lighting/{mpn}",
+            "ref_url_template": "https://www.kichler.com/spec-sheets/{mpn}.pdf",
+            "approvals": "cETLus Listed|Energy Star Certified|Title 24 Compliant"
+        },
+        "SATCO": {
+            "mfr_url_template": "https://www.satco.com/products/{mpn}",
+            "ref_url_template": "https://www.satco.com/specsheets/{mpn}.pdf",
+            "approvals": "cULus Listed|Energy Star Certified|RoHS Compliant|FCC Compliant"
+        },
+        "DEWALT": {
+            "mfr_url_template": "https://www.dewalt.com/products/{mpn}",
+            "ref_url_template": "https://www.dewalt.com/manuals/{mpn}.pdf",
+            "approvals": "UL Listed|OSHA Compliant|ANSI Standard"
+        },
+        "MAKITA": {
+            "mfr_url_template": "https://www.makitatools.com/products/details/{mpn}",
+            "ref_url_template": "https://www.makitatools.com/products/documents/{mpn}.pdf",
+            "approvals": "UL Listed|ISO 9001|OSHA Compliant"
+        },
+        "FESTOOL": {
+            "mfr_url_template": "https://www.festoolusa.com/products/{mpn}",
+            "ref_url_template": "https://www.festoolusa.com/manuals/{mpn}.pdf",
+            "approvals": "cCSAus Certified|ISO 14001"
+        },
+        "LEVITON": {
+            "mfr_url_template": "https://www.leviton.com/en/products/{mpn}",
+            "ref_url_template": "https://www.leviton.com/en/docs/{mpn}.pdf",
+            "approvals": "cULus Listed|NEMA Compliant|ANSI/UL 20"
+        },
+        "SOUTHWIRE": {
+            "mfr_url_template": "https://www.southwire.com/product/{mpn}",
+            "ref_url_template": "https://www.southwire.com/specs/{mpn}.pdf",
+            "approvals": "UL Listed|RoHS Compliant|ASTM Compliant"
+        },
         "MILWAUKEE": {
             "mfr_url_template": "https://www.milwaukeetool.com/Products/{mpn}",
             "ref_url_template": "https://www.milwaukeetool.com/Products-Accessories/Cutting-Accessories/{mpn}",
@@ -52,6 +92,11 @@ class OEMSourcingRAGAgent:
             "approvals": "ICC-ES Certified|California Wildland Urban Interface (WUI) Approved"
         },
         "AZEK": {
+            "mfr_url_template": "https://www.timbertech.com/products/decking/{mpn}/",
+            "ref_url_template": "https://www.timbertech.com/resources/installation-guides/{mpn}.pdf",
+            "approvals": "Class A Flame Spread Index|ICC-ES ESR-1661"
+        },
+        "TIMBERTECH": {
             "mfr_url_template": "https://www.timbertech.com/products/decking/{mpn}/",
             "ref_url_template": "https://www.timbertech.com/resources/installation-guides/{mpn}.pdf",
             "approvals": "Class A Flame Spread Index|ICC-ES ESR-1661"

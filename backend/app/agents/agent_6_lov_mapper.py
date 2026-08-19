@@ -82,7 +82,39 @@ class ConstrainedLOVMapperAgent:
                 with_features = "With Washing 3rd Rack, Water Repellent Silverware Basket"
 
         # -------------------------------------------------------------
-        # CATEGORY 2: CUT-OFF WHEELS & GRINDING DISCS
+        # CATEGORY 2: LED LIGHT BULBS & LAMPS
+        # -------------------------------------------------------------
+        elif "LED Light Bulbs" in classpath or "Light Bulbs" in classpath:
+            add_attr("Bulb Shape", elec.get("Bulb Shape", "A19"))
+            add_attr("Base Type", elec.get("Base Type", "Medium E26"))
+            if "Color Temperature" in elec:
+                add_attr("Color Temperature", elec["Color Temperature"], elec.get("Color Temperature UOM", "K"))
+            elif "27K" in desc_upper:
+                add_attr("Color Temperature", "2700", "K")
+            elif "50K" in desc_upper:
+                add_attr("Color Temperature", "5000", "K")
+            else:
+                add_attr("Color Temperature", "3000", "K")
+
+            if "Wattage" in elec:
+                add_attr("Wattage", elec["Wattage"], "W")
+            elif "60W" in desc_upper:
+                add_attr("Wattage", "9.5", "W")
+                add_attr("Wattage Equivalent", "60", "W")
+            elif "40W" in desc_upper:
+                add_attr("Wattage", "5.5", "W")
+                add_attr("Wattage Equivalent", "40", "W")
+            elif "100W" in desc_upper:
+                add_attr("Wattage", "14", "W")
+                add_attr("Wattage Equivalent", "100", "W")
+
+            add_attr("Voltage Rating", elec.get("Voltage Rating", "120"), "V")
+            add_attr("Dimmable", "Yes")
+            add_attr("Lumens", "800", "lm")
+            add_attr("Average Life", "15000", "hr")
+
+        # -------------------------------------------------------------
+        # CATEGORY 3: CUT-OFF WHEELS & GRINDING DISCS
         # -------------------------------------------------------------
         elif "Cut-Off Wheels" in classpath or "Abrasives" in classpath:
             if "LENGTH" in dims:
@@ -102,7 +134,45 @@ class ConstrainedLOVMapperAgent:
             add_attr("Max Speed", "13300", "rpm")
 
         # -------------------------------------------------------------
-        # CATEGORY 3: PIPE, TUBE & HOSE FITTINGS (Fittings_LOV)
+        # CATEGORY 4: DECKING & FASCIA BOARDS
+        # -------------------------------------------------------------
+        elif "Decking" in classpath or "Fascia" in classpath or "Siding" in classpath:
+            add_attr("Series", trade or "Enhance Naturals")
+            if "Grooved" in desc_text or "GROOVED" in desc_upper:
+                add_attr("Edge Profile", "Grooved")
+            elif "Sq Edge" in desc_text or "Square" in desc_text or "SQ" in desc_upper:
+                add_attr("Edge Profile", "Square Edge")
+
+            # Color extraction
+            for color_cand in ["Honey Grove", "Tide Pool", "Cinnamon Cove", "Golden Hour", "Pebble Beach", "Malted Barley", "Coastline", "Brownstone", "Slate Gray", "Biscayne", "Island Mist", "Spiced Rum"]:
+                if color_cand.lower() in desc_text.lower():
+                    add_attr("Color", color_cand)
+                    break
+
+            add_attr("Material", "Composite PVC" if "Fascia" in classpath or "AZEK" in brand else "Wood-Plastic Composite")
+            if "HEIGHT" in dims:
+                add_attr("Thickness", dims["HEIGHT"], dims.get("HEIGHT_UOM", "in"))
+            if "WIDTH" in dims:
+                add_attr("Width", dims["WIDTH"], dims.get("WIDTH_UOM", "in"))
+            if "LENGTH" in dims:
+                add_attr("Length", dims["LENGTH"], dims.get("LENGTH_UOM", "ft"))
+
+        # -------------------------------------------------------------
+        # CATEGORY 5: POWER TOOLS & CORDLESS PLATFORMS
+        # -------------------------------------------------------------
+        elif "Power Tools" in classpath or "Saws" in classpath or "Drills" in classpath:
+            add_attr("Voltage Rating", elec.get("Voltage Rating", "20"), "V")
+            add_attr("Motor Type", "Brushless" if "BRUSHLESS" in desc_upper else "Brushed")
+            if "7-1/4" in desc_text or "7.25" in desc_text:
+                add_attr("Blade Diameter", "7-1/4", "in")
+            elif "6-1/2" in desc_text:
+                add_attr("Blade Diameter", "6-1/2", "in")
+            elif "12" in desc_text:
+                add_attr("Blade Diameter", "12", "in")
+            add_attr("Power Source", "Cordless" if "20V" in desc_upper or "18V" in desc_upper else "Corded")
+
+        # -------------------------------------------------------------
+        # CATEGORY 6: PIPE, TUBE & HOSE FITTINGS (Fittings_LOV)
         # -------------------------------------------------------------
         elif "Fittings" in classpath or "Pipe" in classpath or "CPLG" in desc_upper or "COUPLING" in desc_upper:
             # Fitting Type
@@ -149,38 +219,7 @@ class ConstrainedLOVMapperAgent:
                 add_attr("Working Pressure", "300", "psi")
 
         # -------------------------------------------------------------
-        # CATEGORY 4: KITCHEN & BATH FAUCETS (Faucets_LOV)
-        # -------------------------------------------------------------
-        elif "Faucets" in classpath or "FAUCET" in desc_upper:
-            add_attr("Faucet Type", "Pull-Down")
-            add_attr("Number of Handles", "1")
-            add_attr("Flow Rate", "1.5", "gpm")
-            add_attr("Spout Reach", "8-1/2", "in")
-            add_attr("Valve Type", "Ceramic Disc Valve")
-            add_attr("Mounting Type", "Deck Mount")
-            add_attr("Lead Free", "Yes")
-            add_attr("Material", "Brass")
-
-        # -------------------------------------------------------------
-        # CATEGORY 5: DECKING & FASCIA BOARDS
-        # -------------------------------------------------------------
-        elif "Decking" in classpath or "Fascia" in classpath:
-            add_attr("Series", trade or "Enhance Naturals")
-            if "Grooved" in desc_text:
-                add_attr("Edge Profile", "Grooved")
-            elif "Sq Edge" in desc_text or "Square" in desc_text:
-                add_attr("Edge Profile", "Square Edge")
-
-            # Color extraction
-            for color_cand in ["Honey Grove", "Tide Pool", "Cinnamon Cove", "Golden Hour", "Pebble Beach", "Malted Barley", "Coastline", "Brownstone", "Slate Gray", "Biscayne"]:
-                if color_cand.lower() in desc_text.lower():
-                    add_attr("Color", color_cand)
-                    break
-
-            add_attr("Material", "Composite PVC" if "Fascia" in classpath or "AZEK" in brand else "Wood-Plastic Composite")
-
-        # -------------------------------------------------------------
-        # CATEGORY 6: GENERAL / FALLBACK
+        # CATEGORY 7: GENERAL / FALLBACK
         # -------------------------------------------------------------
         else:
             if "LENGTH" in dims:

@@ -21,6 +21,18 @@ export default function SingleSkuSandbox({ onEnrichSuccess }) {
       supp: 'Milwaukee Accessory (4031)'
     },
     {
+      label: 'Philips LED A19 Bulb',
+      mpn: '558213',
+      desc: '9.5A19/LED/827/FR/P/ND 4/2FB LED A19 60W Equivalent 2700K Medium Base 2PK',
+      supp: 'Phillips Lighting (5831)'
+    },
+    {
+      label: 'DEWALT Miter Saw',
+      mpn: 'DCS361B',
+      desc: 'DCS361B DEWALT 20V MAX 7-1/4 IN Cordless Sliding Miter Saw Brushless',
+      supp: 'Black & Decker/dewlt (2585)'
+    },
+    {
       label: 'Trex Decking Board',
       mpn: '1513720',
       desc: '1nx6-16\' Honey Grove Grooved - Trex Enhance Naturals Decking',

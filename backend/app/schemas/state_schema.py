@@ -27,6 +27,7 @@ class ProductEnrichmentState(BaseModel):
     raw_dept: str = ""
     raw_class: str = ""
     raw_fine: str = ""
+    enable_llm: bool = False
 
     # Agent 1: De-noised & Tokenized
     clean_mfg_part_num: str = ""
@@ -52,21 +53,20 @@ class ProductEnrichmentState(BaseModel):
     unspsc: str = ""
     taxonomy_confidence: float = 1.0
 
-    # Agent 4: Spec, Dimensions & UOM
+    # Agent 4: Spec, Dimension & UOM
     dimensions: Dict[str, str] = Field(default_factory=dict)
-    uom_standards: Dict[str, str] = Field(default_factory=dict)
     electrical_specs: Dict[str, str] = Field(default_factory=dict)
     acoustic_specs: Dict[str, str] = Field(default_factory=dict)
     packaging_specs: Dict[str, str] = Field(default_factory=dict)
+    spec_confidence: float = 1.0
 
-    # Agent 5: OEM Sourcing & Docs
+    # Agent 5: OEM Sourcing & RAG
     mfr_url: str = ""
     ref_urls: List[str] = Field(default_factory=list)
-    document_urls: Dict[str, str] = Field(default_factory=dict)
     standard_approvals: str = ""
-    raw_oem_tables: Dict[str, Any] = Field(default_factory=dict)
+    sourcing_confidence: float = 1.0
 
-    # Agent 6: Constrained LOV EAV Mapping
+    # Agent 6: Constrained LOV Attributes (50 Triples = 150 Columns)
     attributes: Dict[str, str] = Field(default_factory=dict)
     with_features: str = ""
     includes: str = ""

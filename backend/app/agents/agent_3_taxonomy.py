@@ -13,9 +13,9 @@ class TaxonomyClassifierAgent:
     assigns 8-digit UNSPSC codes, and triggers dynamic LOV schemas.
     """
 
-    # Comprehensive Classification Taxonomy Rules
+    # Comprehensive Classification Taxonomy Rules across all Industrial Sectors
     TAXONOMY_RULES = [
-        # Dishwashers
+        # 1. Built-In Dishwashers & Major Appliances
         {
             "match": lambda desc, mpn: "DISHWASHER" in desc or mpn.startswith("PDSH") or mpn.startswith("WDTS"),
             "classpath": "Appliances & Consumer Electronics>Kitchen Appliances>Built-In Dishwashers",
@@ -25,9 +25,19 @@ class TaxonomyClassifierAgent:
             "product_name": "Dishwasher",
             "unspsc": "52141505"
         },
-        # Cut-Off Discs & Grinding Wheels
+        # 2. LED Light Bulbs & Lamps
         {
-            "match": lambda desc, mpn: ("CUT OFF" in desc or "CUT-OFF" in desc or "GRIND" in desc) and "DISC" in desc or "WHEEL" in desc,
+            "match": lambda desc, mpn: ("LED" in desc or "BULB" in desc or "LAMP" in desc) and ("MED" in desc or "27K" in desc or "30K" in desc or "40K" in desc or "50K" in desc or "A19" in desc or "BR30" in desc or "PAR38" in desc or "60W" in desc or "40W" in desc or "100W" in desc or "CANDLE" in desc or "WATT" in desc),
+            "classpath": "Lighting & Electrical>Light Bulbs & Lamps>LED Light Bulbs",
+            "dept": "Lighting",
+            "class": "Lamps",
+            "fine": "LED Bulbs",
+            "product_name": "LED Light Bulb",
+            "unspsc": "39101628"
+        },
+        # 3. Cut-Off Discs & Grinding Wheels
+        {
+            "match": lambda desc, mpn: ("CUT OFF" in desc or "CUT-OFF" in desc or "GRIND" in desc) and ("DISC" in desc or "WHEEL" in desc),
             "classpath": "Abrasives & Polishing>Cut-Off & Grinding Wheels>Cut-Off Wheels",
             "dept": "Abrasives",
             "class": "Abrasive Wheels",
@@ -35,9 +45,9 @@ class TaxonomyClassifierAgent:
             "product_name": "Metal Cut-Off Disc",
             "unspsc": "31191500"
         },
-        # Sanding Belts
+        # 4. Sanding Belts
         {
-            "match": lambda desc, mpn: "SANDING BELT" in desc or "BELT" in desc and ("GRIT" in desc or "SANDING" in desc),
+            "match": lambda desc, mpn: "SANDING BELT" in desc or ("BELT" in desc and ("GRIT" in desc or "SANDING" in desc or "ASTS" in mpn)),
             "classpath": "Abrasives & Polishing>Sandpaper & Abrasive Pads>Sanding Belts",
             "dept": "Abrasives",
             "class": "Abrasive Belts",
@@ -45,9 +55,9 @@ class TaxonomyClassifierAgent:
             "product_name": "Sanding Belt",
             "unspsc": "31191500"
         },
-        # Sanding Discs / Film Discs
+        # 5. Sanding Discs / Film Discs
         {
-            "match": lambda desc, mpn: ("STIKIT" in desc or "ABRANET" in desc or "HIOLIT" in desc or "DISC" in desc) and ("FILM" in desc or "GRIT" in desc or "P150" in desc or "P80" in desc or "P120" in desc or "P180" in desc or "P220" in desc or "P320" in desc),
+            "match": lambda desc, mpn: ("STIKIT" in desc or "ABRANET" in desc or "HIOLIT" in desc or "DISC" in desc) and ("FILM" in desc or "GRIT" in desc or "P150" in desc or "P80" in desc or "P120" in desc or "P180" in desc or "P220" in desc or "P320" in desc or "CUBITRON" in desc),
             "classpath": "Abrasives & Polishing>Sandpaper & Abrasive Pads>Sanding Discs",
             "dept": "Abrasives",
             "class": "Abrasive Discs",
@@ -55,17 +65,7 @@ class TaxonomyClassifierAgent:
             "product_name": "Sanding Disc",
             "unspsc": "31191500"
         },
-        # Sanding Sponges
-        {
-            "match": lambda desc, mpn: "SPONGE" in desc and "SANDING" in desc,
-            "classpath": "Abrasives & Polishing>Sandpaper & Abrasive Pads>Sanding Sponges & Blocks",
-            "dept": "Abrasives",
-            "class": "Abrasive Sponges",
-            "fine": "Sanding Sponges",
-            "product_name": "Sanding Sponge",
-            "unspsc": "31191500"
-        },
-        # Fascia Boards
+        # 6. Fascia Boards
         {
             "match": lambda desc, mpn: "FASCIA" in desc or "PVC FASCIA" in desc,
             "classpath": "Building Materials>Decking & Railing>Fascia Boards",
@@ -73,19 +73,59 @@ class TaxonomyClassifierAgent:
             "class": "Decking",
             "fine": "Fascia Boards",
             "product_name": "Fascia Board",
-            "unspsc": "30103600"
+            "unspsc": "30151501"
         },
-        # Decking Boards
+        # 7. Decking Boards
         {
-            "match": lambda desc, mpn: "DECKING" in desc or "TREX" in desc and ("GROOVED" in desc or "SQ EDGE" in desc or "SQUARE EDGE" in desc),
+            "match": lambda desc, mpn: "DECKING" in desc or ("TREX" in desc or "TIMBERTECH" in desc or "AZEK" in desc) and ("GROOVED" in desc or "SQ EDGE" in desc or "SQUARE EDGE" in desc or "1NX6" in desc or "1X6" in desc),
             "classpath": "Building Materials>Decking & Railing>Decking Boards",
             "dept": "Building Materials",
             "class": "Decking",
             "fine": "Composite Decking",
             "product_name": "Decking Board",
-            "unspsc": "30103600"
+            "unspsc": "30151500"
         },
-        # Pipe & Tube Fittings
+        # 8. Siding & Engineered Wood Trim
+        {
+            "match": lambda desc, mpn: "SMARTSIDE" in desc or "HARDIE" in desc or "SIDING" in desc or "LAP SIDING" in desc,
+            "classpath": "Building Materials>Siding & Trim>Engineered Siding",
+            "dept": "Building Materials",
+            "class": "Siding",
+            "fine": "Lap Siding",
+            "product_name": "Siding Board",
+            "unspsc": "30151800"
+        },
+        # 9. Power Saws (Circular, Miter, Reciprocating)
+        {
+            "match": lambda desc, mpn: ("SAW" in desc or "MITER" in desc or "RECIP" in desc or "CIRCULAR" in desc) and not "DISC" in desc and not "WHEEL" in desc,
+            "classpath": "Tools & Instruments>Power Tools>Saws & Blades>Circular & Miter Saws",
+            "dept": "Tools",
+            "class": "Power Saws",
+            "fine": "Miter & Circular Saws",
+            "product_name": "Power Saw",
+            "unspsc": "27112700"
+        },
+        # 10. Power Drills & Drivers
+        {
+            "match": lambda desc, mpn: ("DRILL" in desc or "IMPACT" in desc or "DRIVER" in desc or "HAMMER" in desc) and not "BIT" in desc,
+            "classpath": "Tools & Instruments>Power Tools>Drills & Drivers>Cordless Drills & Drivers",
+            "dept": "Tools",
+            "class": "Power Drills",
+            "fine": "Impact Drivers & Drills",
+            "product_name": "Cordless Drill/Driver",
+            "unspsc": "27112700"
+        },
+        # 11. Electrical Switches & Receptacles
+        {
+            "match": lambda desc, mpn: "SWITCH" in desc or "RECEPTACLE" in desc or "OUTLET" in desc or "DECORA" in desc or "DUPLEX" in desc,
+            "classpath": "Lighting & Electrical>Wiring Devices & Supplies>Switches & Outlets",
+            "dept": "Electrical",
+            "class": "Wiring Devices",
+            "fine": "Switches & Outlets",
+            "product_name": "Wiring Device",
+            "unspsc": "39122200"
+        },
+        # 12. Pipe & Tube Fittings
         {
             "match": lambda desc, mpn: "CPLG" in desc or "COUPLING" in desc or "ELBOW" in desc or "TEE" in desc or "ADAPTER" in desc or "FITTING" in desc,
             "classpath": "Plumbing>Pipe, Tube & Hose Fittings>Pipe Fittings",
@@ -95,7 +135,7 @@ class TaxonomyClassifierAgent:
             "product_name": "Pipe Coupling",
             "unspsc": "40171500"
         },
-        # Kitchen & Bath Faucets
+        # 13. Kitchen & Bath Faucets
         {
             "match": lambda desc, mpn: "FAUCET" in desc or "SINK FAUCET" in desc,
             "classpath": "Plumbing>Commercial & Residential Faucets>Kitchen Sink Faucets",
@@ -105,9 +145,9 @@ class TaxonomyClassifierAgent:
             "product_name": "Kitchen Sink Faucet",
             "unspsc": "30181702"
         },
-        # Screwdriver / Driver Bits
+        # 14. Driver Bits & Fasteners
         {
-            "match": lambda desc, mpn: "SCREWDRIVER" in desc or "BIT SET" in desc or "DRIVE BIT" in desc or "SCREW SETTER" in desc,
+            "match": lambda desc, mpn: "SCREWDRIVER" in desc or "BIT SET" in desc or "DRIVE BIT" in desc or "SCREW SETTER" in desc or ("BIT" in desc and "DEWALT" in desc),
             "classpath": "Tools & Hardware>Fasteners & Screwdriving>Driver Bits",
             "dept": "Hardware",
             "class": "Fasteners",

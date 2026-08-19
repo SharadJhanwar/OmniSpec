@@ -28,6 +28,7 @@ CYAN = "\033[96m"
 GREEN = "\033[92m"
 YELLOW = "\033[93m"
 MAGENTA = "\033[95m"
+BLUE = "\033[94m"
 BOLD = "\033[1m"
 RESET = "\033[0m"
 
@@ -235,6 +236,30 @@ if __name__ == "__main__":
                 "Unilog_Brand": "-- No Unilog Brand --",
                 "DIB_Brand": "-- No DIB Brand --",
                 "SKU": "10004"
+            }
+        },
+        {
+            "name": "5. Lighting & Luminaires (Philips LED A19 Bulb)",
+            "input": {
+                "Mfg_Part_Num": "558213",
+                "Part_Desc": "9.5A19/LED/827/FR/P/ND 4/2FB LED A19 60W Equivalent 2700K Medium Base 2PK",
+                "Part_Manuf": "Phillips Lighting (5831)",
+                "E1_Brand": "-- Unbranded --",
+                "Unilog_Brand": "-- No Unilog Brand --",
+                "DIB_Brand": "-- No DIB Brand --",
+                "SKU": "10005"
+            }
+        },
+        {
+            "name": "6. Power Tools & Saws (DEWALT 20V MAX Miter Saw)",
+            "input": {
+                "Mfg_Part_Num": "DCS361B",
+                "Part_Desc": "DCS361B DEWALT 20V MAX 7-1/4 IN Cordless Sliding Miter Saw Brushless",
+                "Part_Manuf": "Black & Decker/dewlt (2585)",
+                "E1_Brand": "-- Unbranded --",
+                "Unilog_Brand": "-- No Unilog Brand --",
+                "DIB_Brand": "-- No DIB Brand --",
+                "SKU": "10006"
             }
         }
     ]

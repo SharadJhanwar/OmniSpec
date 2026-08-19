@@ -19,7 +19,7 @@ class MultiChannelCopyAgent:
     Agent 7: Multi-Channel Formulaic Copy Builder Agent
     Generates 6 distinct copy tiers adhering strictly to character limits,
     word order formulas, and casing rules from Unilog Internal Content Guidelines.
-    Utilizes OpenAI GPT-4o-mini for rich marketing narrative and atomic feature synthesis.
+    Utilizes OpenAI GPT-4o-mini for rich marketing narrative and atomic feature synthesis when enabled.
     """
 
     @classmethod
@@ -46,6 +46,12 @@ class MultiChannelCopyAgent:
                 inv_desc = "DISHWASHER LEG 5 SST 120V 15A 50-1/4IN"
             else:
                 inv_desc = "DISHWASHER BLTLN SST SST 120V 10A 41DBA"
+        elif "LED Light Bulbs" in classpath or "Light Bulbs" in classpath:
+            shape = elec.get("Bulb Shape", "A19")
+            cct = elec.get("Color Temperature", "2700")
+            cct_k = f"{cct[:2]}K" if len(cct) >= 4 else "27K"
+            w = elec.get("Wattage", "60W")
+            inv_desc = f"LED {shape} {w} {cct_k} MED {mpn}"[:40].upper()
         elif "Cut-Off Wheels" in classpath or "Abrasives" in classpath:
             l = dims.get("LENGTH", "5")
             w = dims.get("WIDTH", ".045")
@@ -54,6 +60,8 @@ class MultiChannelCopyAgent:
         elif "Decking" in classpath or "Fascia" in classpath:
             color = dims.get("Color", "HONEY GROVE").upper()
             inv_desc = f"DECKING BOARD 1X6 16FT {color}"[:40].upper()
+        elif "Power Tools" in classpath or "Saws" in classpath:
+            inv_desc = f"SAW {trade.upper()} 20V BL {mpn}"[:40].upper()
         elif "Fittings" in classpath or "Pipe" in classpath:
             mat = state.attributes.get("ATTRIBUTE_VALUE 4", "BRS")
             inv_desc = f"CPLG {mat} 150# FNPT {mpn}"[:40].upper()
@@ -71,6 +79,9 @@ class MultiChannelCopyAgent:
                 mob_desc = "Rheem Manufacturing FRIGIDAIRE, Dishwasher, Professional Series, PDSH4816AF"
             else:
                 mob_desc = "Whirlpool, Dishwasher, Eco Series, WDTS7024RZ, Built-in Mounting"
+        elif "LED Light Bulbs" in classpath:
+            shape = elec.get("Bulb Shape", "A19")
+            mob_desc = f"{mfr} {clean_brand}, {prod_name}, {shape} LED Lamp, {mpn}"
         elif "Cut-Off Wheels" in classpath or "Abrasives" in classpath:
             mob_desc = f"{mfr} {clean_brand}, {prod_name}, {mpn}"
             if len(mob_desc) < 60 and trade:
@@ -79,6 +90,8 @@ class MultiChannelCopyAgent:
                 mob_desc = f"{clean_brand}, {prod_name}, {trade or 'Cut-Off'}, {mpn}"
         elif "Decking" in classpath:
             mob_desc = f"{mfr} {clean_brand}, {prod_name}, {trade or 'Enhance'}, {mpn}"
+        elif "Power Tools" in classpath:
+            mob_desc = f"{mfr} {clean_brand}, {prod_name}, {trade or 'Cordless Tool'}, {mpn}"
         elif "Fittings" in classpath:
             mob_desc = f"{mfr} {clean_brand}, {prod_name}, Brass Fitting, {mpn}"
         else:
@@ -98,6 +111,10 @@ class MultiChannelCopyAgent:
                 short_desc = "FRIGIDAIRE® Professional Series PDSH4816AF Dishwasher With CleanBoost™, Leg Mounting, 5-Wash Cycle, Stainless Steel"
             else:
                 short_desc = "Whirlpool® Eco Series WDTS7024RZ Dishwasher, Built-in Mounting, Stainless Steel, Stainless Steel"
+        elif "LED Light Bulbs" in classpath:
+            shape = elec.get("Bulb Shape", "A19")
+            cct = elec.get("Color Temperature", "2700 K")
+            short_desc = f"{brand} {mpn} {prod_name}, {shape} Shape, {cct}, Medium E26 Base"
         elif "Cut-Off Wheels" in classpath:
             l = dims.get("LENGTH", "5")
             w = dims.get("WIDTH", ".045")
@@ -105,6 +122,8 @@ class MultiChannelCopyAgent:
             short_desc = f"{brand} {trade or 'Performance+'} {mpn} {l} in x {w} in x {h} in {prod_name}"
         elif "Decking" in classpath:
             short_desc = f"{brand} {trade or 'Enhance Naturals'} {mpn} {prod_name}, Composite Wood"
+        elif "Power Tools" in classpath:
+            short_desc = f"{brand} {trade or 'MAX*'} {mpn} {prod_name}, Brushless Motor"
         else:
             short_desc = f"{brand} {trade} {mpn} {prod_name}".strip()
 
@@ -116,6 +135,8 @@ class MultiChannelCopyAgent:
                 long_desc = "FRIGIDAIRE® Dishwasher With CleanBoost™, Professional Series, 5 Wash Cycles, 120 V, 15 A, Leg Mounting, 24 in W x 24-1/4 in D, 50-1/4 in Depth With Door Open, 8-1/2 in Upper Rack, 11-1/4 in Lower Rack Minimum Height, 10-3/8 in Upper Rack, 13-1/4 in Lower Rack Maximum Height, 47 dBA Sound Level, Stainless Steel, Additional Information: 240 kW-hr Annual Energy, 1 to 12 hr Delay Start Hours"
             else:
                 long_desc = "Whirlpool® Dishwasher, Eco Series, 120 V, 10 A, Built-in Mounting, 33-7/16 in H x 23-7/8 in W x 22-5/8 in D, 50-3/16 in Depth With Door Open, 33-7/16 in Minimum Height, 41 dBA Sound Level, Stainless Steel, Stainless Steel, Additional Information: Folding Tines, Leak Detection System, Moisture Repellent Silverware Basket, Normal Cycle, Quick Wash Cycle, Sani Rinse Option, Sensor Cycle, Triple Wash Spray"
+        elif "LED Light Bulbs" in classpath:
+            long_desc = f"{short_desc}, Energy-efficient solid state lighting designed for long lifespan and high color rendering index."
         else:
             long_desc = f"{short_desc}, Engineered for heavy-duty industrial performance and maximum service life."
 
@@ -129,6 +150,9 @@ class MultiChannelCopyAgent:
             else:
                 retail_desc = "Eco Series Dishwasher, Built-in Mounting, Stainless Steel, Stainless Steel"
                 mktg_desc = "Load more and run less with our quietest and largest capacity dishwasher. A 3rd Rack provides dedicated space for mugs and bowls, while an adjustable 2nd Rack helps fit all the dishes and pans your family piles up."
+        elif "LED Light Bulbs" in classpath:
+            retail_desc = f"{brand} LED Lamp"
+            mktg_desc = f"Upgrade your lighting with energy efficient LED bulbs from {brand}, delivering crisp illumination and long-lasting durability."
         else:
             retail_desc = f"{trade or clean_brand} {prod_name}"
             mktg_desc = f"Industrial grade {prod_name} from {brand} offering high precision and durability."
@@ -159,6 +183,13 @@ class MultiChannelCopyAgent:
                 "Stainless Steel Tub",
                 "Energy Star Certified"
             ]
+        elif "LED Light Bulbs" in classpath:
+            features = [
+                "Energy efficient LED technology reduces power consumption",
+                "Dimmable with compatible LED dimmers",
+                "Rated for 15000 hours average operating life",
+                "Instant-on full brightness with zero warm-up time"
+            ]
         elif "Cut-Off" in classpath:
             features = [
                 "Fast cutting ceramic blend",
@@ -172,6 +203,12 @@ class MultiChannelCopyAgent:
                 "Grooved edge profile for hidden fastener installation",
                 "Authentic natural wood grain finish",
                 "Low maintenance - cleans easily with soap and water"
+            ]
+        elif "Power Tools" in classpath:
+            features = [
+                "High-efficiency brushless motor delivers extended runtime",
+                "Ergonomic compact design for comfort and control",
+                "Heavy-duty construction for demanding jobsite use"
             ]
         elif "Fittings" in classpath:
             features = [
@@ -187,9 +224,9 @@ class MultiChannelCopyAgent:
                 "Designed for reliable long-term performance"
             ]
 
-        # Optional OpenAI LLM Copy Enrichment for novel items
+        # Optional OpenAI LLM Copy Enrichment for novel items when enabled
         llm_used = False
-        if HAS_OPENAI and "Dishwashers" not in classpath and "Cut-Off" not in classpath and "Decking" not in classpath and "Fittings" not in classpath:
+        if HAS_OPENAI and state.enable_llm and "Dishwashers" not in classpath and "Cut-Off" not in classpath and "Decking" not in classpath and "Fittings" not in classpath and "LED" not in classpath and "Power Tools" not in classpath:
             try:
                 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
                 prompt = (
