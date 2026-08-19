@@ -1,7 +1,7 @@
 import React from 'react';
-import { Layers, Cpu, ShieldCheck, Sparkles, Download, Upload, Terminal } from 'lucide-react';
+import { Layers, Cpu, ShieldCheck, Sparkles, Download, Upload, FileSpreadsheet } from 'lucide-react';
 
-export default function Navbar({ onUploadClick, onExportClick, isProcessing, totalRows }) {
+export default function Navbar({ onUploadClick, onExportClick, onExportExcelClick, isProcessing, totalRows }) {
   return (
     <header className="sticky top-0 z-40 border-b border-surface-border glass-panel">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -22,28 +22,37 @@ export default function Navbar({ onUploadClick, onExportClick, isProcessing, tot
         </div>
 
         {/* Live Swarm Status & Actions */}
-        <div className="flex items-center space-x-3">
-          <div className="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-surface border border-surface-border text-xs font-mono text-slate-300">
+        <div className="flex items-center space-x-2.5">
+          <div className="hidden lg:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-surface border border-surface-border text-xs font-mono text-slate-300">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span>DuckDB + RapidFuzz Engine</span>
             <span className="text-slate-500">|</span>
-            <span className="text-cyan-400 font-medium">278 SKUs/s</span>
+            <span className="text-cyan-400 font-medium">154 SKUs/s</span>
           </div>
 
           <button
             onClick={onUploadClick}
-            className="flex items-center space-x-2 px-3.5 py-2 rounded-lg bg-surface hover:bg-surface-elevated border border-surface-border text-xs font-medium text-slate-200 transition-all shadow-sm"
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-surface hover:bg-surface-elevated border border-surface-border text-xs font-medium text-slate-200 transition-all shadow-sm cursor-pointer"
           >
             <Upload className="h-4 w-4 text-slate-400" />
-            <span>Upload CSV</span>
+            <span className="hidden sm:inline">Upload Feed</span>
+          </button>
+
+          <button
+            onClick={onExportExcelClick}
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-emerald-950/80 hover:bg-emerald-900/90 border border-emerald-700/60 text-emerald-300 font-semibold text-xs transition-all shadow-sm cursor-pointer"
+            title="Export formatted multi-sheet Excel workbook with frozen panes and compliance audit"
+          >
+            <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
+            <span>Excel (.xlsx)</span>
           </button>
 
           <button
             onClick={onExportClick}
-            className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-sky-500 hover:from-cyan-400 hover:to-sky-400 text-slate-950 font-semibold text-xs transition-all shadow-md shadow-cyan-500/20"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-sky-500 hover:from-cyan-400 hover:to-sky-400 text-slate-950 font-semibold text-xs transition-all shadow-md shadow-cyan-500/20 cursor-pointer"
           >
             <Download className="h-4 w-4" />
-            <span>Export 252-Col CSV</span>
+            <span>Export CSV</span>
           </button>
         </div>
       </div>

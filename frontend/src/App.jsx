@@ -44,6 +44,34 @@ const SEED_ITEMS = [
     _confidence: 1.0
   },
   {
+    "Mfg_Part_Num": "558213",
+    "Part_Desc": "9.5A19/LED/827/FR/P/ND 4/2FB LED A19 60W Equivalent 2700K Medium Base 2PK",
+    "Part_Manuf": "Phillips Lighting (5831)",
+    "MANUFACTURER_NAME": "Signify North America Corporation",
+    "BRAND_NAME": "Philips®",
+    "Classpath": "Lighting & Electrical>Light Bulbs & Lamps>LED Light Bulbs",
+    "SHORT_DESC": "Philips® 558213 LED Light Bulb, A19 Shape, 2700 K, Medium E26 Base",
+    "INVOICE_DESC": "LED A19 60 27K MED 558213",
+    "MOBILE_DESC": "Signify North America Corporation Philips, LED Light Bulb, A19 LED Lamp, 558213",
+    "Product Image": "PHILIPS_558213.jpg",
+    "Specification Sheet": "PHILIPS_558213_Specification_Sheet.pdf",
+    _confidence: 1.0
+  },
+  {
+    "Mfg_Part_Num": "DCS361B",
+    "Part_Desc": "DCS361B DEWALT 20V MAX 7-1/4 IN Cordless Sliding Miter Saw Brushless",
+    "Part_Manuf": "Black & Decker/dewlt (2585)",
+    "MANUFACTURER_NAME": "Stanley Black & Decker Inc",
+    "BRAND_NAME": "DEWALT®",
+    "Classpath": "Tools & Instruments>Power Tools>Saws & Blades>Circular & Miter Saws",
+    "SHORT_DESC": "DEWALT® MAX* DCS361B Power Saw, Brushless Motor",
+    "INVOICE_DESC": "SAW MAX* 20V BL DCS361B",
+    "MOBILE_DESC": "Stanley Black & Decker Inc DEWALT, Power Saw, Cordless Tool, DCS361B",
+    "Product Image": "DEWALT_DCS361B.jpg",
+    "Specification Sheet": "DEWALT_DCS361B_Specification_Sheet.pdf",
+    _confidence: 0.98
+  },
+  {
     "Mfg_Part_Num": "49-94-0013",
     "Part_Desc": "49-94-0013 Milw 5\"x.045\"x7/8\" Metal Cut Off Disc",
     "Part_Manuf": "Milwaukee Accessory (4031)",
@@ -76,64 +104,33 @@ const SEED_ITEMS = [
     "Product Image": "TREX_1513720.jpg",
     "Specification Sheet": "TREX_1513720_Specification_Sheet.pdf",
     _confidence: 1.0
-  },
-  {
-    "Mfg_Part_Num": "ADR5117512CS",
-    "Part_Desc": "1x12-12' Coastline - Vintage Azek PVC Fascia",
-    "Part_Manuf": "Parksite (6151)",
-    "MANUFACTURER_NAME": "The AZEK Company LLC",
-    "BRAND_NAME": "AZEK®",
-    "Classpath": "Building Materials>Decking & Railing>Fascia Boards",
-    "SHORT_DESC": "AZEK® Vintage ADR5117512CS Fascia Board, Composite PVC",
-    "INVOICE_DESC": "FASCIA BOARD 1X12 12FT COASTLINE",
-    "MOBILE_DESC": "The AZEK Company LLC AZEK, Fascia Board, Vintage, ADR5117512CS",
-    "LENGTH": "12",
-    "WIDTH": "12",
-    "HEIGHT": "1",
-    "Product Image": "AZEK_ADR5117512CS.jpg",
-    "Specification Sheet": "AZEK_ADR5117512CS_Specification_Sheet.pdf",
-    _confidence: 0.98
-  },
-  {
-    "Mfg_Part_Num": "3MABR-7100075678",
-    "Part_Desc": "3M 775L Stikit Film P150 - Cubitron II 50 Disc/Box",
-    "Part_Manuf": "Jam Industrial Supply LLC (JAMIN)",
-    "MANUFACTURER_NAME": "3M Co",
-    "BRAND_NAME": "3M™",
-    "Classpath": "Abrasives & Polishing>Sandpaper & Abrasive Pads>Sanding Discs",
-    "SHORT_DESC": "3M™ Cubitron™ II 7100075678 Sanding Film Disc, P150 Grit",
-    "INVOICE_DESC": "DISC SANDING FILM P150 50PK",
-    "MOBILE_DESC": "3M Co 3M, Sanding Disc, Cubitron II, 7100075678",
-    "LENGTH": "5",
-    "WIDTH": "5",
-    "HEIGHT": "",
-    "Product Image": "3M_7100075678.jpg",
-    "Specification Sheet": "3M_7100075678_Specification_Sheet.pdf",
-    _confidence: 0.98
   }
 ];
 
 export default function App() {
   const [items, setItems] = useState(SEED_ITEMS);
   const [activeItem, setActiveItem] = useState(SEED_ITEMS[0]);
+  const [activeTraces, setActiveTraces] = useState([]);
+  const [isEnriching, setIsEnriching] = useState(false);
   const [selectedReviewItem, setSelectedReviewItem] = useState(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [activeTraces, setActiveTraces] = useState(null);
-  const [isEnriching, setIsEnriching] = useState(false);
 
+  // Load server catalog on initial mount
   useEffect(() => {
-    // Attempt to load from backend API if available
-    fetch('/api/v1/catalog?page=1&page_size=20')
+    fetch('/api/v1/catalog?page=1&page_size=50')
       .then(res => res.json())
       .then(data => {
         if (data && data.items && data.items.length > 0) {
-          setItems(data.items);
-          setActiveItem(data.items[0]);
+          const loaded = data.items.map(it => ({
+            ...it,
+            _confidence: 1.0,
+            _needs_hitl: false
+          }));
+          setItems(loaded);
+          setActiveItem(loaded[0]);
         }
       })
-      .catch(() => {
-        // Fallback to seed items
-      });
+      .catch(err => console.log('Using initial seed items:', err));
   }, []);
 
   const handleExportCSV = () => {
@@ -151,6 +148,27 @@ export default function App() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      const response = await fetch('/api/v1/enrich/export-excel', {
+        method: 'POST'
+      });
+      if (!response.ok) {
+        throw new Error(`Excel export failed with status: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'OmniSpec_Enriched_1000_Catalog_Master_252.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Error downloading excel:', err);
+    }
   };
 
   const handleSaveReviewedItem = (updatedItem) => {
@@ -189,6 +207,7 @@ export default function App() {
       <Navbar
         onUploadClick={() => setIsUploadOpen(true)}
         onExportClick={handleExportCSV}
+        onExportExcelClick={handleExportExcel}
         totalRows={items.length}
       />
 
