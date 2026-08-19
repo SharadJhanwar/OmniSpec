@@ -6,6 +6,7 @@ import AgentSwarmVisualizer from './components/AgentSwarmVisualizer';
 import Grid252 from './components/Grid252';
 import HITLReviewModal from './components/HITLReviewModal';
 import BatchUploadModal from './components/BatchUploadModal';
+import KnowledgeBaseExplorer from './components/KnowledgeBaseExplorer';
 
 // Initial Ground-Truth Seed Items for instant interactive showcase
 const SEED_ITEMS = [
@@ -238,6 +239,9 @@ export default function App() {
           items={items}
           onSelectReviewItem={handleOpenReview}
         />
+
+        {/* UniCat Knowledge Graph & Controlled Vocabularies Explorer */}
+        <KnowledgeBaseExplorer />
       </main>
 
       {/* HITL Review Modal */}

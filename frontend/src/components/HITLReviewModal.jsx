@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertTriangle, ShieldCheck, FileText, ArrowRight, Save, Sparkles } from 'lucide-react';
+import { X, CheckCircle, AlertTriangle, ShieldCheck, FileText, ArrowRight, Save, Download } from 'lucide-react';
 
 export default function HITLReviewModal({ item, onClose, onSave }) {
   if (!item) return null;
@@ -11,6 +11,7 @@ export default function HITLReviewModal({ item, onClose, onSave }) {
   const [mfrName, setMfrName] = useState('');
   const [reviewerNotes, setReviewerNotes] = useState('Manual verification in HITL Studio');
   const [isSaving, setIsSaving] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   useEffect(() => {
     if (item) {
@@ -24,6 +25,38 @@ export default function HITLReviewModal({ item, onClose, onSave }) {
 
   const conf = item._confidence !== undefined ? item._confidence : 1.0;
   const isHighConf = conf >= 0.85;
+
+  const handleDownloadPDF = async () => {
+    setIsDownloadingPdf(true);
+    try {
+      const response = await fetch('/api/v1/datasheet/generate-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...item,
+          BRAND_NAME: brandName,
+          MANUFACTURER_NAME: mfrName,
+          INVOICE_DESC: invoiceDesc,
+          MOBILE_DESC: mobileDesc,
+          SHORT_DESC: shortDesc
+        })
+      });
+      if (!response.ok) throw new Error('PDF generation failed');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      const mpn = item["Mfg_Part_Num"] || item["mfg_part_num"] || "SpecSheet";
+      link.setAttribute('download', `${mpn}_Specification_Sheet.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      console.error('Download PDF error:', e);
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -88,7 +121,7 @@ export default function HITLReviewModal({ item, onClose, onSave }) {
                   {(conf * 100).toFixed(0)}% Confidence
                 </span>
                 <span className="text-[10px] font-mono uppercase bg-cyan-950 text-cyan-400 border border-cyan-800 px-2 py-0.5 rounded">
-                  Active Learning Enabled
+                  Active Learning
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-mono">SKU / MPN: <span className="text-cyan-400 font-semibold">{item["Mfg_Part_Num"] || item["mfg_part_num"]}</span></p>
@@ -213,12 +246,23 @@ export default function HITLReviewModal({ item, onClose, onSave }) {
 
         {/* Footer Actions */}
         <div className="p-4 border-t border-surface-border bg-surface-elevated flex items-center justify-between">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-surface hover:bg-surface-border border border-surface-border text-xs font-medium text-slate-300 cursor-pointer"
-          >
-            Cancel
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg bg-surface hover:bg-surface-border border border-surface-border text-xs font-medium text-slate-300 cursor-pointer"
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={handleDownloadPDF}
+              disabled={isDownloadingPdf}
+              className="flex items-center space-x-1.5 px-4 py-2 rounded-lg bg-sky-950 hover:bg-sky-900 border border-sky-700/60 text-sky-300 text-xs font-semibold cursor-pointer disabled:opacity-50"
+            >
+              <Download className="h-4 w-4 text-sky-400" />
+              <span>{isDownloadingPdf ? 'Generating PDF...' : 'Download PDF Cut Sheet'}</span>
+            </button>
+          </div>
 
           <button
             onClick={handleSave}
