@@ -11,6 +11,7 @@ from ..schemas.delivery_schema import DeliveryProductRecord
 from ..db.duckdb_client import kb
 from ..services.excel_exporter import ExcelDeliveryExporter
 from ..services.vision_spec_rag import VisionSpecSheetRAG
+from ..services.pdf_datasheet_generator import PDFDatasheetGenerator
 
 router = APIRouter()
 pipeline_graph = create_omnispec_graph()
@@ -156,6 +157,20 @@ async def export_excel_workbook():
     )
 
 
+@router.post("/datasheet/generate-pdf")
+async def generate_datasheet_pdf(record: Dict[str, Any]):
+    """
+    Generates a 1-page engineering PDF specification cut sheet for an enriched item.
+    """
+    pdf_bytes = PDFDatasheetGenerator.generate_datasheet(record)
+    mpn = record.get("Mfg_Part_Num", record.get("mfg_part_number", "SpecSheet")).replace("/", "_")
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={mpn}_Specification_Sheet.pdf"}
+    )
+
+
 @router.post("/hitl/override")
 async def save_reviewer_override(payload: ReviewerOverridePayload):
     """
@@ -202,6 +217,38 @@ async def extract_from_vision_spec(file: UploadFile = File(...)):
     mime = file.content_type or "image/jpeg"
     result = VisionSpecSheetRAG.extract_from_image_bytes(image_bytes, mime)
     return result
+
+
+@router.get("/kb/stats")
+async def get_kb_statistics():
+    """
+    Returns aggregate statistics across master knowledge tables.
+    """
+    return kb.get_kb_stats()
+
+
+@router.get("/kb/brands")
+async def search_kb_brands(q: str = ""):
+    """
+    Search canonical UniCat brands table.
+    """
+    return {"brands": kb.search_kb_brands(q)}
+
+
+@router.get("/kb/fractions")
+async def get_kb_fractions():
+    """
+    Returns 63 exact fraction lookup standards.
+    """
+    return {"fractions": kb.get_all_fractions()}
+
+
+@router.get("/kb/thesaurus")
+async def get_kb_thesaurus():
+    """
+    Returns trade jargon thesaurus terms.
+    """
+    return {"terms": kb.get_all_thesaurus()}
 
 
 @router.get("/catalog")

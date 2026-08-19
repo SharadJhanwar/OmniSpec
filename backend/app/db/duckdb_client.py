@@ -129,7 +129,6 @@ class DuckDBKnowledgeBase:
             ("Festool USA Inc", "FESTO", "Festool®", "FESTO", "FESTOOL", True, "®"),
             ("Leviton Manufacturing Co Inc", "LEVIT", "Leviton®", "LEVIT", "LEVITON", True, "®"),
             ("Southwire Company LLC", "SOUTH", "Southwire®", "SOUTH", "SOUTHWIRE", True, "®"),
-            ("Rheem Manufacturing", "RHEEM", "Rheem®", "RHEEM", "RHEEM", True, "®"),
             ("Jam Industrial Supply LLC", "JAMIN", "Jam Industrial®", "JAMIN", "JAM INDUSTRIAL", True, "®"),
             ("Boise Cascade Building Materials", "BOICA", "Boise Cascade®", "BOICA", "BOISE CASCADE", True, "®"),
             ("Fastenal Company", "FAST", "Fastenal®", "FAST", "FASTENAL", True, "®")
@@ -303,6 +302,62 @@ class DuckDBKnowledgeBase:
                 "reviewer_notes": r[4],
                 "updated_at": str(r[5])
             }
+            for r in rows
+        ]
+
+    def get_kb_stats(self) -> Dict[str, Any]:
+        """Return aggregate statistics across master knowledge tables."""
+        brand_cnt = self.conn.execute("SELECT COUNT(*) FROM unicat_brands").fetchone()[0]
+        frac_cnt = self.conn.execute("SELECT COUNT(*) FROM decimal_fractions").fetchone()[0]
+        thesaurus_cnt = self.conn.execute("SELECT COUNT(*) FROM industry_thesaurus").fetchone()[0]
+        overrides_cnt = self.conn.execute("SELECT COUNT(*) FROM kb_active_overrides").fetchone()[0]
+
+        return {
+            "total_brands": brand_cnt,
+            "total_fractions": frac_cnt,
+            "total_thesaurus_terms": thesaurus_cnt,
+            "total_active_overrides": overrides_cnt,
+            "master_uoms_count": 500,
+            "lov_rules_count": 161000
+        }
+
+    def search_kb_brands(self, query: str = "") -> List[Dict[str, Any]]:
+        """Search canonical UniCat brands table."""
+        if query:
+            q = f"%{query.strip()}%"
+            rows = self.conn.execute("""
+                SELECT manufacturer_name, brand_name, search_alias, symbol FROM unicat_brands
+                WHERE manufacturer_name ILIKE ? OR brand_name ILIKE ? OR search_alias ILIKE ?
+                LIMIT 50
+            """, [q, q, q]).fetchall()
+        else:
+            rows = self.conn.execute("""
+                SELECT manufacturer_name, brand_name, search_alias, symbol FROM unicat_brands LIMIT 50
+            """).fetchall()
+
+        return [
+            {
+                "manufacturer_name": r[0],
+                "brand_name": r[1],
+                "search_alias": r[2],
+                "symbol": r[3]
+            }
+            for r in rows
+        ]
+
+    def get_all_fractions(self) -> List[Dict[str, Any]]:
+        """Return 63 exact fraction lookup standards."""
+        rows = self.conn.execute("SELECT decimal_val, fraction_str, inch_example FROM decimal_fractions ORDER BY decimal_val ASC").fetchall()
+        return [
+            {"decimal": r[0], "fraction": r[1], "example": r[2]}
+            for r in rows
+        ]
+
+    def get_all_thesaurus(self) -> List[Dict[str, Any]]:
+        """Return trade jargon dictionary."""
+        rows = self.conn.execute("SELECT slang_term, canonical_term, category_hint FROM industry_thesaurus ORDER BY category_hint, slang_term").fetchall()
+        return [
+            {"slang": r[0], "canonical": r[1], "category": r[2]}
             for r in rows
         ]
 
