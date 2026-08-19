@@ -19,7 +19,8 @@ class EntityResolutionAgent:
     Agent 2: Brand & Entity Resolution Agent
     Resolves noisy supplier strings and description tokens to canonical UniCat 27K
     Manufacturers and Brands with legal casing and mandatory registered marks (®, ™).
-    Utilizes OpenAI GPT-4o-mini as an intelligent disambiguator for complex unseen vendor feeds.
+    Checks active human reviewer feedback overrides first, then uses in-memory DuckDB lookups
+    and falls back to OpenAI GPT-4o-mini for unseen complex feeds.
     """
 
     # MPN Prefix -> Known Brand hints
@@ -103,6 +104,43 @@ class EntityResolutionAgent:
         supp_name = state.clean_supplier_name or ""
         vendor_code = (state.supplier_vendor_code or "").upper()
         mpn = (state.clean_mfg_part_num or "").strip()
+
+        # Step 0: Check Active Reviewer Overrides Store (HITL Feedback Loop)
+        override = kb.get_override(mpn)
+        if override and override.get("brand_name"):
+            mfr_name = override.get("manufacturer_name", "")
+            brand_name = override.get("brand_name", "")
+            conf = 1.0
+            trade_name = override.get("trade_name", "")
+            alt_mpn = mpn.replace("-", "").replace(".", "").strip()
+            if alt_mpn == mpn:
+                alt_mpn = ""
+
+            trace = AgentTrace(
+                agent_name="Agent 2: Brand & Entity Resolution",
+                execution_time_ms=round((time.perf_counter() - t0) * 1000, 2),
+                notes=[
+                    f"Applied Active Reviewer Override: '{brand_name}' ({mfr_name})",
+                    f"Reviewer notes: {override.get('reviewer_notes', 'Approved by human specialist')}"
+                ],
+                extracted_data={
+                    "manufacturer_name": mfr_name,
+                    "brand_name": brand_name,
+                    "trade_name": trade_name,
+                    "mfr_part_number": mpn,
+                    "alternate_part_number": alt_mpn,
+                    "active_override_applied": True
+                }
+            )
+            return {
+                "manufacturer_name": mfr_name,
+                "brand_name": brand_name,
+                "trade_name": trade_name,
+                "mfr_part_number": mpn,
+                "alt_part_number": alt_mpn,
+                "brand_confidence": 1.0,
+                "traces": state.traces + [trace]
+            }
 
         mfr_name = ""
         brand_name = ""

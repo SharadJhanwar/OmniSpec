@@ -4,6 +4,7 @@ import hashlib
 from typing import Dict, Any, List, Tuple
 from ..schemas.state_schema import ProductEnrichmentState, AgentTrace
 from ..services.normalizer import IngestionNormalizer
+from ..db.duckdb_client import kb
 from ..core.logging import logger
 
 
@@ -11,7 +12,7 @@ class IngestionAgent:
     """
     Agent 1: Ingestion, De-Noising & Tokenizer Agent
     Eradicates placeholders, normalizes corrupted dimension strings,
-    isolates vendor ERP codes, and structures raw token bags.
+    isolates vendor ERP codes, resolves trade jargon, and structures raw token bags.
     """
 
     @classmethod
@@ -45,35 +46,46 @@ class IngestionAgent:
             if cand and cand not in brand_candidates:
                 brand_candidates.append(cand)
 
+        # 8. Check Trade Jargon & Slang Thesaurus (e.g. 'sawzall' -> Reciprocating Saw)
+        thesaurus_match = kb.lookup_thesaurus(clean_desc)
+
         # Generate unique row fingerprint
         row_hash = hashlib.sha256(f"{clean_mpn}:{state.raw_part_desc}".encode("utf-8")).hexdigest()
+
+        notes = [
+            f"Row hash: {row_hash[:8]}",
+            f"Extracted {len(dim_tokens)} dimension blocks",
+            f"Supplier: '{clean_supp}' (Vendor Code: '{vendor_code}')"
+        ]
+        if thesaurus_match:
+            notes.append(f"Trade Jargon mapped: '{thesaurus_match[0]}' ({thesaurus_match[1]})")
 
         trace = AgentTrace(
             agent_name="Agent 1: Ingestion & De-Noising",
             execution_time_ms=round((time.perf_counter() - t0) * 1000, 2),
-            notes=[
-                f"Row hash: {row_hash[:8]}",
-                f"Extracted {len(dim_tokens)} dimension blocks",
-                f"Supplier: '{clean_supp}' (Vendor Code: '{vendor_code}')"
-            ],
+            notes=notes,
             extracted_data={
                 "clean_mpn": clean_mpn,
-                "clean_desc": clean_desc,
+                "clean_supplier": clean_supp,
+                "vendor_code": vendor_code,
+                "brand_candidates": brand_candidates,
                 "dimensions": dim_tokens,
-                "pack_qty": pack_qty
+                "pack_qty": pack_qty,
+                "thesaurus_canonical": thesaurus_match[0] if thesaurus_match else None,
+                "thesaurus_category": thesaurus_match[1] if thesaurus_match else None
             }
         )
 
         return {
             "clean_mfg_part_num": clean_mpn,
+            "cleaned_part_desc": clean_desc,
             "clean_supplier_name": clean_supp,
             "supplier_vendor_code": vendor_code,
-            "cleaned_part_desc": clean_desc,
             "token_bag": {
+                "brand_candidates": brand_candidates,
                 "dimensions": dim_tokens,
                 "pack_qty": pack_qty,
-                "brand_candidates": brand_candidates,
-                "row_hash": row_hash
+                "thesaurus": thesaurus_match
             },
-            "traces": state.traces + [trace]
+            "traces": [trace]
         }
