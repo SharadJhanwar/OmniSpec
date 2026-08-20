@@ -173,6 +173,22 @@ class DuckDBKnowledgeBase:
             INSERT INTO category_fittings_materials VALUES (?, ?)
         """, seed_mat)
 
+        # 4. Seed Core UniCat LOV schemas (Dishwashers, Saws, Cut-Off Wheels, Bulbs, Decking, Fittings)
+        seed_lov = [
+            ("Appliances & Consumer Electronics>Kitchen Appliances>Built-In Dishwashers", "Built-In Dishwashers", "Y", "Mounting Type", "Built-in|Freestanding|Portable", "Mounting Type", "Built-in|Freestanding|Portable", "", "Mounting placement configuration"),
+            ("Appliances & Consumer Electronics>Kitchen Appliances>Built-In Dishwashers", "Built-In Dishwashers", "Y", "Finish", "Stainless Steel|Black|White|Panel Ready", "Finish", "Stainless Steel|Black|White|Panel Ready", "", "Appliance exterior finish"),
+            ("Appliances & Consumer Electronics>Kitchen Appliances>Built-In Dishwashers", "Built-In Dishwashers", "N", "Sound Level", "41|42|44|47|50", "Sound Level", "41|42|44|47|50", "dBA", "Operational noise rating in decibels"),
+            ("Appliances & Consumer Electronics>Kitchen Appliances>Built-In Dishwashers", "Built-In Dishwashers", "N", "Voltage", "120|240", "Voltage", "120|240", "V", "Electrical operating voltage"),
+            ("Abrasives & Polishing>Cut-Off & Grinding Wheels>Cut-Off Wheels", "Cut-Off Wheels", "Y", "Diameter", "4-1/2|5|6|7|9|14", "Diameter", "4-1/2|5|6|7|9|14", "in", "Wheel outer diameter"),
+            ("Abrasives & Polishing>Cut-Off & Grinding Wheels>Cut-Off Wheels", "Cut-Off Wheels", "Y", "Arbor Hole Size", "7/8|5/8|1/4", "Arbor Hole Size", "7/8|5/8|1/4", "in", "Arbor mounting hole size"),
+            ("Lighting & Electrical>Light Bulbs & Lamps>LED Light Bulbs", "LED Light Bulbs", "Y", "Bulb Base Type", "Medium E26|Candelabra E12|Mogul E39", "Bulb Base Type", "Medium E26|Candelabra E12|Mogul E39", "", "Lamp socket base standard"),
+            ("Lighting & Electrical>Light Bulbs & Lamps>LED Light Bulbs", "LED Light Bulbs", "Y", "Bulb Shape", "A19|A21|BR30|PAR38", "Bulb Shape", "A19|A21|BR30|PAR38", "", "ANSI bulb envelope geometry"),
+            ("Lighting & Electrical>Light Bulbs & Lamps>LED Light Bulbs", "LED Light Bulbs", "N", "Color Temperature", "2700|3000|4000|5000", "Color Temperature", "2700|3000|4000|5000", "K", "Correlated color temperature")
+        ]
+        self.conn.executemany("""
+            INSERT INTO unicat_lov VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, seed_lov)
+
         # 4. Seed Industry Slang & Trade Jargon Thesaurus
         seed_thesaurus = [
             ("sawzall", "Reciprocating Saw", "Power Tools"),
@@ -191,9 +207,19 @@ class DuckDBKnowledgeBase:
             INSERT OR REPLACE INTO industry_thesaurus VALUES (?, ?, ?)
         """, seed_thesaurus)
 
-        # Cache Brand List for C++ RapidFuzz matching
-        rows = self.conn.execute("SELECT search_alias, manufacturer_name, brand_name FROM unicat_brands").fetchall()
-        self._brand_list_cache = [(r[0], r[1], r[2]) for r in rows]
+        # Cache Brand List for C++ RapidFuzz matching (aliases, vendor codes, and brand names)
+        rows = self.conn.execute("SELECT search_alias, brand_code, manufacturer_code, brand_name, manufacturer_name FROM unicat_brands").fetchall()
+        self._brand_list_cache = []
+        for alias, bcode, mcode, bname, mfr in rows:
+            clean_bname = bname.replace("®", "").replace("™", "").strip().upper()
+            if alias:
+                self._brand_list_cache.append((alias.upper(), mfr, bname))
+            if bcode and bcode.upper() != (alias or "").upper():
+                self._brand_list_cache.append((bcode.upper(), mfr, bname))
+            if mcode and mcode.upper() != (alias or "").upper() and mcode.upper() != (bcode or "").upper():
+                self._brand_list_cache.append((mcode.upper(), mfr, bname))
+            if clean_bname and clean_bname != (alias or "").upper():
+                self._brand_list_cache.append((clean_bname, mfr, bname))
 
         logger.info("[OmniSpec] Master Knowledge Base seeding complete.")
 

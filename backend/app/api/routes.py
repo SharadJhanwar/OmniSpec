@@ -12,6 +12,9 @@ from ..db.duckdb_client import kb
 from ..services.excel_exporter import ExcelDeliveryExporter
 from ..services.vision_spec_rag import VisionSpecSheetRAG
 from ..services.pdf_datasheet_generator import PDFDatasheetGenerator
+from ..services.dbom_service import DBOMService
+from ..services.defect_risk_scorer import DefectRiskScorer
+from ..services.compatibility_engine import CompatibilityEngine
 
 router = APIRouter()
 pipeline_graph = create_omnispec_graph()
@@ -284,3 +287,100 @@ async def get_catalog_items(page: int = 1, page_size: int = 50, search: str = ""
         "page": page,
         "page_size": page_size
     }
+
+
+# ==========================================
+# PHASE 7 ENDPOINTS (Provenance, DPI, Compatibility)
+# ==========================================
+
+@router.post("/provenance/dbom")
+async def get_product_dbom(item: Dict[str, Any]):
+    """
+    Task 19: Generates complete Data Bill of Materials (DBOM) with cell-level provenance.
+    """
+    initial_state = ProductEnrichmentState(
+        row_id=item.get("row_id", "row_dbom"),
+        raw_mfg_part_num=item.get("Mfg_Part_Num", item.get("mfg_part_num", "")),
+        raw_part_desc=item.get("Part_Desc", item.get("part_desc", "")),
+        raw_e1_brand=item.get("E1_Brand", item.get("e1_brand", "")),
+        raw_unilog_brand=item.get("Unilog_Brand", item.get("unilog_brand", "")),
+        raw_dib_brand=item.get("DIB_Brand", item.get("dib_brand", "")),
+        raw_part_manuf=item.get("Part_Manuf", item.get("part_manuf", "")),
+        raw_sku=item.get("SKU", item.get("sku", "")),
+        enable_llm=item.get("enable_llm", False)
+    )
+
+    final_state_dict = pipeline_graph.invoke(initial_state)
+    state = ProductEnrichmentState(**final_state_dict)
+
+    # Evaluate DPI risk score
+    risk_result = DefectRiskScorer.evaluate_risk(state)
+    
+    # Generate DBOM
+    dbom = DBOMService.generate_dbom(
+        state=state,
+        dpi_score=risk_result.dpi_score,
+        risk_tier=risk_result.risk_tier
+    )
+
+    return {
+        "success": True,
+        "dbom": dbom.dict(),
+        "risk_evaluation": risk_result.dict()
+    }
+
+
+@router.post("/audit/dpi")
+async def evaluate_defect_probability(item: Dict[str, Any]):
+    """
+    Task 20: Evaluates Defect Probability Index (DPI) & Risk Queue factors for a SKU.
+    """
+    initial_state = ProductEnrichmentState(
+        row_id=item.get("row_id", "row_dpi"),
+        raw_mfg_part_num=item.get("Mfg_Part_Num", item.get("mfg_part_num", "")),
+        raw_part_desc=item.get("Part_Desc", item.get("part_desc", "")),
+        raw_e1_brand=item.get("E1_Brand", item.get("e1_brand", "")),
+        raw_unilog_brand=item.get("Unilog_Brand", item.get("unilog_brand", "")),
+        raw_dib_brand=item.get("DIB_Brand", item.get("dib_brand", "")),
+        raw_part_manuf=item.get("Part_Manuf", item.get("part_manuf", "")),
+        raw_sku=item.get("SKU", item.get("sku", ""))
+    )
+
+    final_state_dict = pipeline_graph.invoke(initial_state)
+    state = ProductEnrichmentState(**final_state_dict)
+    risk_result = DefectRiskScorer.evaluate_risk(state)
+
+    return {
+        "success": True,
+        "mpn": state.mfr_part_number or state.clean_mfg_part_num,
+        "brand_name": state.brand_name,
+        "dpi": risk_result.dict()
+    }
+
+
+@router.post("/compatibility/evaluate")
+async def evaluate_product_compatibility(payload: Dict[str, Any]):
+    """
+    Task 21: Evaluates mechanical, electrical, and dimensional compatibility between Product A and Product B.
+    """
+    product_a = payload.get("product_a", {})
+    product_b = payload.get("product_b", {})
+    
+    result = CompatibilityEngine.evaluate_compatibility(product_a, product_b)
+    return {
+        "success": True,
+        "result": result.dict()
+    }
+
+
+@router.get("/compatibility/substitutes")
+async def get_product_substitutes(mpn: str = "", brand: str = "", desc: str = ""):
+    """
+    Task 21: Discovers direct OEM cross-brand substitutes and functional equivalents.
+    """
+    substitutes_resp = CompatibilityEngine.find_cross_brand_substitutes(mpn=mpn, brand=brand, desc=desc)
+    return {
+        "success": True,
+        "data": substitutes_resp.dict()
+    }
+
