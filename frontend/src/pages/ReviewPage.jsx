@@ -78,9 +78,10 @@ export default function ReviewPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          mpn: activeItem.Mfg_Part_Num || activeItem.mfg_part_num,
-          brand_name: formData.BRAND_NAME,
-          corrected_fields: formData,
+          mpn: activeItem.Mfg_Part_Num || activeItem.mfg_part_num || '',
+          brand_name: formData.BRAND_NAME || '',
+          manufacturer_name: activeItem.MANUFACTURER_NAME || activeItem.manufacturer_name || activeItem.Part_Manuf || '',
+          override_data: formData,
           reviewer_notes: feedbackNotes || 'Approved in HITL Review Station'
         })
       });
@@ -167,15 +168,15 @@ export default function ReviewPage() {
           </div>
 
           <div className="space-y-2 max-h-[260px] lg:max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
-            {displayedItems.map((it) => {
-              const mpn = it.Mfg_Part_Num || it.mfg_part_num;
+            {displayedItems.map((it, idx) => {
+              const mpn = it.Mfg_Part_Num || it.mfg_part_num || `item-${idx}`;
               const isSelected = mpn === (activeItem?.Mfg_Part_Num || activeItem?.mfg_part_num);
               const conf = it._confidence !== undefined ? it._confidence : 1.0;
               const needsReview = conf < 0.90 || it._needs_hitl;
 
               return (
                 <div
-                  key={mpn}
+                  key={`${mpn}-${idx}`}
                   onClick={() => handleSelectSKU(it)}
                   className={`p-3.5 rounded-xl border transition-all cursor-pointer space-y-1.5 ${
                     isSelected
