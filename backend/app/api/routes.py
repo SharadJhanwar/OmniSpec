@@ -25,11 +25,13 @@ pipeline_graph = create_omnispec_graph()
 
 class ReviewerOverridePayload(BaseModel):
     mpn: str
-    brand_name: str
-    manufacturer_name: str
+    brand_name: Optional[str] = ""
+    manufacturer_name: Optional[str] = ""
     trade_name: Optional[str] = ""
     override_data: Optional[Dict[str, Any]] = None
+    corrected_fields: Optional[Dict[str, Any]] = None
     reviewer_notes: Optional[str] = "Human reviewer manual validation"
+
 
 
 @router.post("/enrich/single", response_model=Dict[str, Any])
@@ -183,7 +185,7 @@ async def save_reviewer_override(payload: ReviewerOverridePayload):
     Active Learning Feedback Loop: Saves manual human corrections into DuckDB
     so subsequent swarm executions automatically adopt the approved master entities.
     """
-    override_dict = payload.override_data or {}
+    override_dict = payload.override_data or payload.corrected_fields or {}
     if payload.trade_name:
         override_dict["trade_name"] = payload.trade_name
 
