@@ -145,18 +145,22 @@ OmniSpec/
 │       │   ├── agent_8_digital_assets.py
 │       │   ├── agent_9_quality_audit.py
 │       │   └── graph.py
-│       ├── api/                 # FastAPI REST Endpoints (Single, Batch, Excel, PDF, Overrides, KB, DBOM, Compatibility)
+│       ├── api/                 # FastAPI REST Endpoints (Single, Batch, Excel, PDF, Overrides, KB, DBOM, Compatibility, Parametric Search, Families)
 │       │   └── routes.py
 │       ├── db/                  # In-Memory DuckDB Knowledge Base Client & Seed Tables
 │       │   └── duckdb_client.py
-│       ├── schemas/             # Pydantic 252-Column Delivery, State, and Provenance Schemas
+│       ├── schemas/             # Pydantic 252-Column Delivery, State, Provenance, Search, and Family Schemas
 │       │   ├── delivery_schema.py
 │       │   ├── provenance_schema.py
+│       │   ├── search_schema.py
+│       │   ├── family_schema.py
 │       │   └── state_schema.py
-│       ├── services/            # Intelligence Services (DBOM, DPI, Compatibility, Excel, PDF, Vision RAG)
+│       ├── services/            # Intelligence Services (DBOM, DPI, Compatibility, Search, Family Induction, Excel, PDF, Vision RAG)
 │       │   ├── dbom_service.py
 │       │   ├── defect_risk_scorer.py
 │       │   ├── compatibility_engine.py
+│       │   ├── parametric_search_engine.py
+│       │   ├── family_clustering_engine.py
 │       │   ├── excel_exporter.py
 │       │   ├── pdf_datasheet_generator.py
 │       │   ├── vision_spec_rag.py
@@ -164,7 +168,7 @@ OmniSpec/
 │       └── main.py              # FastAPI Application Entrypoint
 ├── frontend/                    # Vite + React Modern Web Studio
 │   ├── src/
-│   │   ├── components/          # Virtualized 252-Grid, Swarm Visualizer, DBOM Inspector, Compatibility Modal
+│   │   ├── components/          # Virtualized 252-Grid, Swarm Visualizer, DBOM Inspector, Compatibility Modal, Parametric Search, Product Families
 │   │   │   ├── AgentSwarmVisualizer.jsx
 │   │   │   ├── BatchUploadModal.jsx
 │   │   │   ├── CompatibilityMatrixModal.jsx
@@ -174,12 +178,20 @@ OmniSpec/
 │   │   │   ├── HITLReviewModal.jsx
 │   │   │   ├── KnowledgeBaseExplorer.jsx
 │   │   │   ├── Navbar.jsx
+│   │   │   ├── ParametricSearchModal.jsx
+│   │   │   ├── ProductFamilyModal.jsx
 │   │   │   └── SingleSkuSandbox.jsx
 │   │   ├── App.jsx
 │   │   └── index.css
 │   └── package.json
+├── models/                      # 🔬 Offline Model Research & AST Grammar Lab
+│   ├── dpi_risk_model/          # Scikit-Learn DPI Model & Isotonic Calibration
+│   ├── parametric_search/       # AST Grammar Parser & Benchmark Harness
+│   └── variant_family_clusterer/# MPN Decomposition & Variant Induction Lab
 ├── tests/                       # Automated Pytest Capability Suites
-│   └── test_phase7_capabilities.py
+│   ├── test_phase7_capabilities.py
+│   ├── test_phase8_capabilities.py
+│   └── test_phase9_capabilities.py
 ├── eval/                        # Benchmark & Evaluation Suite
 │   ├── benchmark_ground_truth.py
 │   ├── run_1000_batch_enrichment.py
@@ -292,8 +304,10 @@ Trace the transformation of any raw SKU across all 9 agents:
 7. **Cell-Level Data Bill of Materials (DBOM) & Lineage Inspector**: Detailed audit breakdown of every delivery attribute with source type badges, document locators, extraction methods, and SHA-256 cryptographic lineage proof.
 8. **Defect Probability Index (DPI) & Risk Queue Meter**: Multi-variable defect risk scoring with top risk factors and automated HITL routing flags.
 9. **Industrial Compatibility & Substitute Matrix**: Pairwise mechanical and electrical constraint evaluator (arbor match, voltage platform, pipe thread) and cross-brand functional equivalent finder.
-10. **Drag & Drop CSV Ingestion**: Upload any raw 6-column feed and enrich it across 252 columns.
-11. **1-Click CSV Export**: Download the delivery-ready CSV deliverable (`OmniSpec_Delivery_Enriched_252.csv`).
+10. **Natural Language Parametric Constraint Search Studio**: Sub-millisecond AST compiler ($0.14\text{ ms}$) translating freeform engineering queries (e.g. *"Dishwasher under 45 dBA stainless steel 120V"*) into DuckDB SQL with side-by-side Qualified vs. Disqualified trade-off explanations.
+11. **Parent Product Family & Variant Induction Studio**: Clusters flat, fragmented SKUs into canonical Parent PDPs with multi-axis variant switchers (Configuration, Finish, Sizing) and evidence-backed fractional assortment gap detection (`CONFIRMED_MANUFACTURER_GAP` vs `POTENTIAL_GAP_DETECTED`).
+12. **Drag & Drop CSV Ingestion**: Upload any raw 6-column feed and enrich it across 252 columns.
+13. **1-Click CSV Export**: Download the delivery-ready CSV deliverable (`OmniSpec_Delivery_Enriched_252.csv`).
 
 ---
 

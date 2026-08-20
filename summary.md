@@ -142,7 +142,7 @@ To ensure complete credibility and avoid exaggerated claims, here are the real-w
 
 ---
 
-## 💡 5. Enterprise Capabilities Status (Phases 6 & 7 Roadmap)
+## 💡 5. Enterprise Capabilities Status (Phases 6, 7, 8 & 9 Roadmap)
 
 1. **Active Learning Overrides Store:** **COMPLETED & VERIFIED** (`kb_active_overrides` DuckDB table & `POST /api/v1/hitl/override`).
 2. **Native Formatted Excel (`.xlsx`) Export:** **COMPLETED & VERIFIED** (`excel_exporter.py` with multi-sheet workbook generation & KPI sheet).
@@ -152,4 +152,8 @@ To ensure complete credibility and avoid exaggerated claims, here are the real-w
 6. **Data Bill of Materials (DBOM) & Cell Provenance Inspector:** **COMPLETED & VERIFIED** (`dbom_service.py`, `POST /api/v1/provenance/dbom`, and `DBOMModal.jsx` with SHA-256 cryptographic lineage hash).
 7. **Defect Probability Index (DPI) & Risk Queue Scorer:** **COMPLETED & VERIFIED** (`defect_risk_scorer.py` and `POST /api/v1/audit/dpi` for calibrated review risk prioritization).
 8. **Industrial Compatibility & Substitute Matrix Engine:** **COMPLETED & VERIFIED** (`compatibility_engine.py` and `CompatibilityMatrixModal.jsx` evaluating mechanical/electrical constraints and direct OEM substitutes).
+9. **Natural Language Parametric AST Search & Disqualification Explainer:** **COMPLETED & VERIFIED** (`parametric_search_engine.py`, `POST /api/v1/search/parametric`, and `ParametricSearchModal.jsx` with $0.14\text{ ms}$ fast-path AST compiler and transparent numerical delta trade-offs).
+10. **Product Family Discovery & Assortment Sequence Gap Detector:** **COMPLETED & VERIFIED** (`family_clustering_engine.py`, `GET /api/v1/families`, and `ProductFamilyModal.jsx` with deterministic MPN series decomposition, multi-axis variant induction, and evidence-backed fractional sequence gap detection).
+
+
 
