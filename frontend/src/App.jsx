@@ -7,6 +7,8 @@ import Grid252 from './components/Grid252';
 import HITLReviewModal from './components/HITLReviewModal';
 import BatchUploadModal from './components/BatchUploadModal';
 import KnowledgeBaseExplorer from './components/KnowledgeBaseExplorer';
+import DBOMModal from './components/DBOMModal';
+import CompatibilityMatrixModal from './components/CompatibilityMatrixModal';
 
 // Initial Ground-Truth Seed Items for instant interactive showcase
 const SEED_ITEMS = [
@@ -115,6 +117,12 @@ export default function App() {
   const [isEnriching, setIsEnriching] = useState(false);
   const [selectedReviewItem, setSelectedReviewItem] = useState(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  
+  // Phase 7 Modals
+  const [isDbomModalOpen, setIsDbomModalOpen] = useState(false);
+  const [dbomData, setDbomData] = useState(null);
+  const [isDbomLoading, setIsDbomLoading] = useState(false);
+  const [isCompatibilityModalOpen, setIsCompatibilityModalOpen] = useState(false);
 
   // Load server catalog on initial mount
   useEffect(() => {
@@ -172,6 +180,33 @@ export default function App() {
     }
   };
 
+  const handleOpenDbom = async (item) => {
+    setIsDbomLoading(true);
+    setIsDbomModalOpen(true);
+    try {
+      const payload = {
+        Mfg_Part_Num: item.Mfg_Part_Num || item.mfg_part_num || "",
+        Part_Desc: item.Part_Desc || item.part_desc || item.SHORT_DESC || "",
+        Part_Manuf: item.Part_Manuf || item.part_manuf || item.MANUFACTURER_NAME || "",
+        E1_Brand: item.E1_Brand || "",
+        Unilog_Brand: item.Unilog_Brand || item.BRAND_NAME || ""
+      };
+      const res = await fetch('/api/v1/provenance/dbom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDbomData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching DBOM:', err);
+    } finally {
+      setIsDbomLoading(false);
+    }
+  };
+
   const handleSaveReviewedItem = (updatedItem) => {
     const updatedMpn = updatedItem.Mfg_Part_Num || updatedItem.mfg_part_num;
     setItems(prev => prev.map(item => {
@@ -209,6 +244,7 @@ export default function App() {
         onUploadClick={() => setIsUploadOpen(true)}
         onExportClick={handleExportCSV}
         onExportExcelClick={handleExportExcel}
+        onCompatibilityClick={() => setIsCompatibilityModalOpen(true)}
         totalRows={items.length}
       />
 
@@ -225,6 +261,7 @@ export default function App() {
         {/* Live Single-SKU Sandbox */}
         <SingleSkuSandbox
           onEnrichSuccess={handleSingleEnrichSuccess}
+          onInspectDbomClick={handleOpenDbom}
         />
 
         {/* 9-Agent LangGraph Swarm Visualizer */}
@@ -238,6 +275,7 @@ export default function App() {
         <Grid252
           items={items}
           onSelectReviewItem={handleOpenReview}
+          onInspectDbom={handleOpenDbom}
         />
 
         {/* UniCat Knowledge Graph & Controlled Vocabularies Explorer */}
@@ -252,6 +290,20 @@ export default function App() {
           onSave={handleSaveReviewedItem}
         />
       )}
+
+      {/* Data Bill of Materials (DBOM) & Lineage Modal */}
+      <DBOMModal
+        isOpen={isDbomModalOpen}
+        onClose={() => setIsDbomModalOpen(false)}
+        dbomData={dbomData}
+        isLoading={isDbomLoading}
+      />
+
+      {/* Industrial Compatibility & Substitute Matrix Modal */}
+      <CompatibilityMatrixModal
+        isOpen={isCompatibilityModalOpen}
+        onClose={() => setIsCompatibilityModalOpen(false)}
+      />
 
       {/* Batch Upload Modal */}
       <BatchUploadModal

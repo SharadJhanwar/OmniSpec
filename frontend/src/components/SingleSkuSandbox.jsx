@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Sparkles, Play, Terminal, ArrowRight, Loader2 } from 'lucide-react';
+import { Sparkles, Play, Terminal, ArrowRight, Loader2, ShieldCheck, ShieldAlert, CheckCircle2, AlertTriangle } from 'lucide-react';
 
-export default function SingleSkuSandbox({ onEnrichSuccess }) {
+export default function SingleSkuSandbox({ onEnrichSuccess, onInspectDbomClick }) {
   const [mfgPartNum, setMfgPartNum] = useState('PDSH4816AF');
   const [partDesc, setPartDesc] = useState('PDSH4816AF Dishwasher SS - Display Only 24 in W x 24.25 in D 120V 15A 47dBA');
   const [supplier, setSupplier] = useState('Appliance Dealers Cooperative (APPDE)');
   const [isRunning, setIsRunning] = useState(false);
+  const [lastDpi, setLastDpi] = useState(null);
 
   const presets = [
     {
@@ -16,8 +17,8 @@ export default function SingleSkuSandbox({ onEnrichSuccess }) {
     },
     {
       label: 'Milwaukee Cut-Off Disc',
-      mpn: '49-94-0013',
-      desc: '49-94-0013 Milw 5"x.045"x7/8" Metal Cut Off Disc',
+      mpn: '49-94-0101',
+      desc: '49-94-0101 Milw 4-1/2"x.045"x7/8" Perform+ Metal Cut Off Disc 10pc',
       supp: 'Milwaukee Accessory (4031)'
     },
     {
@@ -79,6 +80,9 @@ export default function SingleSkuSandbox({ onEnrichSuccess }) {
           _traces: data.traces || []
         };
         onEnrichSuccess(enrichedItem, data.traces);
+
+        // Fetch DPI risk score in background
+        fetchDpiScore(payload);
       }
     } catch (err) {
       console.error('Error running swarm:', err);
@@ -87,9 +91,25 @@ export default function SingleSkuSandbox({ onEnrichSuccess }) {
     }
   };
 
+  const fetchDpiScore = async (payload) => {
+    try {
+      const res = await fetch('/api/v1/audit/dpi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if (json.success) {
+        setLastDpi(json.dpi);
+      }
+    } catch (e) {
+      console.error('Error fetching DPI:', e);
+    }
+  };
+
   return (
-    <div className="glass-panel p-4 rounded-xl border border-cyan-500/30">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3">
+    <div className="glass-panel p-4 rounded-xl border border-cyan-500/30 space-y-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div className="flex items-center space-x-2">
           <Sparkles className="h-4 w-4 text-cyan-400" />
           <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono">Live Single-SKU Sandbox</h3>
@@ -150,12 +170,12 @@ export default function SingleSkuSandbox({ onEnrichSuccess }) {
           />
         </div>
 
-        <div className="sm:col-span-2 flex items-end">
+        <div className="sm:col-span-2 flex items-end space-x-1.5">
           <button
             type="button"
             onClick={handleRunSwarm}
             disabled={isRunning || !partDesc}
-            className="w-full h-[38px] flex items-center justify-center space-x-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-sky-500 hover:from-cyan-400 hover:to-sky-400 disabled:opacity-50 text-slate-950 font-bold text-xs shadow-md shadow-cyan-500/20 cursor-pointer transition-all"
+            className="flex-1 h-[38px] flex items-center justify-center space-x-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-sky-500 hover:from-cyan-400 hover:to-sky-400 disabled:opacity-50 text-slate-950 font-bold text-xs shadow-md shadow-cyan-500/20 cursor-pointer transition-all"
           >
             {isRunning ? (
               <>
@@ -170,6 +190,34 @@ export default function SingleSkuSandbox({ onEnrichSuccess }) {
             )}
           </button>
         </div>
+      </div>
+
+      {/* Phase 7 Quick Inspection Bar */}
+      <div className="pt-2 border-t border-surface-border/60 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="flex items-center space-x-2">
+          <button
+            type="button"
+            onClick={() => onInspectDbomClick({ Mfg_Part_Num: mfgPartNum, Part_Desc: partDesc, Part_Manuf: supplier })}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-800 text-cyan-300 font-semibold font-mono text-[11px] transition-all cursor-pointer shadow-sm"
+          >
+            <ShieldCheck className="h-4 w-4 text-cyan-400" />
+            <span>Inspect Data BOM (DBOM) & Lineage</span>
+          </button>
+        </div>
+
+        {lastDpi && (
+          <div className="flex items-center space-x-2 font-mono text-[11px]">
+            <span className="text-slate-400">Defect Probability Index (DPI):</span>
+            <span className="font-bold text-cyan-400">{Math.round(lastDpi.dpi_score * 100)}%</span>
+            <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+              lastDpi.risk_tier === 'LOW' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' :
+              lastDpi.risk_tier === 'ELEVATED' ? 'bg-amber-950 text-amber-400 border border-amber-800' :
+              'bg-rose-950 text-rose-400 border border-rose-800'
+            }`}>
+              {lastDpi.risk_tier} RISK
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

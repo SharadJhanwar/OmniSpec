@@ -1,7 +1,7 @@
 import React from 'react';
-import { Layers, Cpu, ShieldCheck, Sparkles, Download, Upload, FileSpreadsheet } from 'lucide-react';
+import { Layers, Cpu, ShieldCheck, Sparkles, Download, Upload, FileSpreadsheet, GitCompare } from 'lucide-react';
 
-export default function Navbar({ onUploadClick, onExportClick, onExportExcelClick, isProcessing, totalRows }) {
+export default function Navbar({ onUploadClick, onExportClick, onExportExcelClick, onCompatibilityClick, isProcessing, totalRows }) {
   return (
     <header className="sticky top-0 z-40 border-b border-surface-border glass-panel">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -29,6 +29,15 @@ export default function Navbar({ onUploadClick, onExportClick, onExportExcelClic
             <span className="text-slate-500">|</span>
             <span className="text-cyan-400 font-medium">154 SKUs/s</span>
           </div>
+
+          <button
+            onClick={onCompatibilityClick}
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-purple-950/80 hover:bg-purple-900/90 border border-purple-700/60 text-purple-300 font-semibold text-xs transition-all shadow-sm cursor-pointer"
+            title="Open Industrial Compatibility & Cross-Brand Substitute Matrix"
+          >
+            <GitCompare className="h-4 w-4 text-purple-400" />
+            <span className="hidden sm:inline">Compatibility Matrix</span>
+          </button>
 
           <button
             onClick={onUploadClick}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Search, Filter, AlertTriangle, CheckCircle, ExternalLink, Edit3, Eye } from 'lucide-react';
+import { Search, Filter, AlertTriangle, CheckCircle, ExternalLink, Edit3, Eye, ShieldCheck } from 'lucide-react';
 
-export default function Grid252({ items, onSelectReviewItem }) {
+export default function Grid252({ items, onSelectReviewItem, onInspectDbom }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMode, setFilterMode] = useState('ALL'); // ALL, HIGH_CONF, NEEDS_REVIEW
 
@@ -61,70 +61,72 @@ export default function Grid252({ items, onSelectReviewItem }) {
         </div>
       </div>
 
-      {/* Virtualized 252-Column Data Grid Table */}
-      <div className="overflow-x-auto max-h-[560px]">
-        <table className="w-full text-left text-xs border-collapse">
-          <thead className="sticky top-0 z-20 bg-surface-elevated/95 backdrop-blur-md border-b border-surface-border text-slate-400 uppercase font-mono text-[10px] tracking-wider">
-            <tr>
-              <th className="py-3 px-3 sticky left-0 z-30 bg-surface-elevated">Confidence</th>
-              <th className="py-3 px-3 sticky left-24 z-30 bg-surface-elevated">Mfg Part Num</th>
-              <th className="py-3 px-3">Canonical Brand</th>
-              <th className="py-3 px-3">Classpath (Taxonomy)</th>
-              <th className="py-3 px-3 min-w-[280px]">Product Title (SHORT_DESC)</th>
-              <th className="py-3 px-3 min-w-[220px]">INVOICE_DESC (&le;40)</th>
-              <th className="py-3 px-3 min-w-[220px]">MOBILE_DESC (60-80)</th>
-              <th className="py-3 px-3">Dimensions (L x W x H)</th>
-              <th className="py-3 px-3">Primary Image Asset</th>
-              <th className="py-3 px-3">Spec Sheet PDF</th>
-              <th className="py-3 px-3 text-right">Actions</th>
+      {/* Grid Table Container */}
+      <div className="overflow-x-auto max-h-[520px]">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-slate-900/90 border-b border-surface-border text-[11px] font-mono text-slate-400 uppercase tracking-wider sticky top-0 z-20 backdrop-blur-md">
+              <th className="py-3 px-3 w-12 text-center">Status</th>
+              <th className="py-3 px-3 min-w-[140px]">MPN</th>
+              <th className="py-3 px-3 min-w-[150px]">Brand (®, ™)</th>
+              <th className="py-3 px-3 min-w-[180px]">Manufacturer</th>
+              <th className="py-3 px-3 min-w-[240px]">Classpath (4-Tier)</th>
+              <th className="py-3 px-3 min-w-[220px]">Invoice Desc (≤40)</th>
+              <th className="py-3 px-3 min-w-[220px]">Mobile Desc (60-80)</th>
+              <th className="py-3 px-3 min-w-[140px]">Dimensions (L×W×H)</th>
+              <th className="py-3 px-3 min-w-[160px]">Product Image</th>
+              <th className="py-3 px-3 min-w-[180px]">Specification Sheet</th>
+              <th className="py-3 px-3 min-w-[150px] text-right sticky right-0 bg-slate-900/95 z-30">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-surface-border/60 text-slate-300">
+          <tbody className="divide-y divide-surface-border text-xs">
             {filteredItems.length === 0 ? (
               <tr>
-                <td colSpan={11} className="py-12 text-center text-slate-500 font-mono text-xs">
-                  No records match the active filter criteria.
+                <td colSpan="11" className="py-12 text-center text-slate-500">
+                  No products match the selected criteria.
                 </td>
               </tr>
             ) : (
-              filteredItems.map((item, index) => {
+              filteredItems.map((item, idx) => {
                 const conf = item._confidence !== undefined ? item._confidence : 1.0;
-                const isHighConf = conf >= 0.85;
+                const isVerified = conf >= 0.85;
 
                 return (
                   <tr 
-                    key={index} 
-                    className="hover:bg-surface-elevated/80 transition-colors group cursor-pointer"
-                    onClick={() => {
-                      if (onSelectReviewItem) onSelectReviewItem(item);
-                    }}
+                    key={idx}
+                    className="hover:bg-slate-900/50 transition-colors group cursor-default"
                   >
-                    {/* Confidence */}
-                    <td className="py-2.5 px-3 sticky left-0 z-10 bg-surface/95 backdrop-blur-sm">
-                      <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${isHighConf ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}`}>
-                        {isHighConf ? <CheckCircle className="h-3 w-3 mr-0.5" /> : <AlertTriangle className="h-3 w-3 mr-0.5" />}
-                        <span>{(conf * 100).toFixed(0)}%</span>
-                      </span>
+                    {/* Status Badge */}
+                    <td className="py-2.5 px-3 text-center">
+                      {isVerified ? (
+                        <div className="flex items-center justify-center text-emerald-400" title="100% Verified Ground Truth">
+                          <CheckCircle className="h-4 w-4" />
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center text-amber-400" title="Flagged for HITL Review">
+                          <AlertTriangle className="h-4 w-4" />
+                        </div>
+                      )}
                     </td>
 
                     {/* MPN */}
-                    <td className="py-2.5 px-3 font-mono font-bold text-cyan-400 sticky left-24 z-10 bg-surface/95 backdrop-blur-sm">
-                      {item["Mfg_Part_Num"] || item["mfg_part_num"]}
+                    <td className="py-2.5 px-3 font-mono font-bold text-cyan-400">
+                      {item["Mfg_Part_Num"] || item["mfg_part_num"] || item["PART_NUMBER"] || '—'}
                     </td>
 
                     {/* Brand */}
                     <td className="py-2.5 px-3 font-semibold text-white">
-                      {item["BRAND_NAME"] || item["brand_name"]}
+                      {item["BRAND_NAME"] || item["brand_name"] || '—'}
+                    </td>
+
+                    {/* Manufacturer */}
+                    <td className="py-2.5 px-3 text-slate-300">
+                      {item["MANUFACTURER_NAME"] || item["manufacturer_name"] || '—'}
                     </td>
 
                     {/* Classpath */}
-                    <td className="py-2.5 px-3 font-mono text-[11px] text-slate-400 max-w-[200px] truncate" title={item["Classpath"] || item["classpath"]}>
-                      {item["Classpath"] || item["classpath"]}
-                    </td>
-
-                    {/* SHORT_DESC */}
-                    <td className="py-2.5 px-3 font-medium text-slate-200 max-w-[300px] truncate" title={item["SHORT_DESC"] || item["short_desc"]}>
-                      {item["SHORT_DESC"] || item["short_desc"]}
+                    <td className="py-2.5 px-3 text-slate-400 text-[11px] max-w-[240px] truncate" title={item["Classpath"] || item["classpath"]}>
+                      {item["Classpath"] || item["classpath"] || '—'}
                     </td>
 
                     {/* INVOICE_DESC */}
@@ -153,18 +155,34 @@ export default function Grid252({ items, onSelectReviewItem }) {
                     </td>
 
                     {/* Actions */}
-                    <td className="py-2.5 px-3 text-right">
-                      <button 
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (onSelectReviewItem) onSelectReviewItem(item);
-                        }}
-                        className="px-3 py-1.5 rounded-lg bg-surface border border-surface-border text-slate-200 hover:text-white hover:border-cyan-400 hover:bg-cyan-950/40 text-xs font-medium flex items-center space-x-1.5 ml-auto transition-all cursor-pointer shadow-sm"
-                      >
-                        <Edit3 className="h-3.5 w-3.5 text-cyan-400" />
-                        <span>Review</span>
-                      </button>
+                    <td className="py-2.5 px-3 text-right sticky right-0 bg-slate-950/90 group-hover:bg-slate-900/90 transition-colors z-10">
+                      <div className="flex items-center justify-end space-x-1.5">
+                        {onInspectDbom && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onInspectDbom(item);
+                            }}
+                            className="px-2 py-1.5 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-800 text-cyan-300 text-xs font-mono font-semibold flex items-center space-x-1 transition-all cursor-pointer"
+                            title="Inspect Data Bill of Materials (DBOM) and Lineage"
+                          >
+                            <ShieldCheck className="h-3.5 w-3.5" />
+                            <span>DBOM</span>
+                          </button>
+                        )}
+                        <button 
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onSelectReviewItem) onSelectReviewItem(item);
+                          }}
+                          className="px-2.5 py-1.5 rounded-lg bg-surface border border-surface-border text-slate-200 hover:text-white hover:border-cyan-400 hover:bg-cyan-950/40 text-xs font-medium flex items-center space-x-1 transition-all cursor-pointer shadow-sm"
+                        >
+                          <Edit3 className="h-3.5 w-3.5 text-cyan-400" />
+                          <span>Review</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
