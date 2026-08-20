@@ -15,6 +15,9 @@ from ..services.pdf_datasheet_generator import PDFDatasheetGenerator
 from ..services.dbom_service import DBOMService
 from ..services.defect_risk_scorer import DefectRiskScorer
 from ..services.compatibility_engine import CompatibilityEngine
+from ..services.parametric_search_engine import ParametricSearchEngine
+from ..services.family_clustering_engine import FamilyClusteringEngine
+
 
 router = APIRouter()
 pipeline_graph = create_omnispec_graph()
@@ -383,4 +386,130 @@ async def get_product_substitutes(mpn: str = "", brand: str = "", desc: str = ""
         "success": True,
         "data": substitutes_resp.dict()
     }
+
+
+# ==========================================
+# PHASE 8 ENDPOINTS (Parametric Search & Trade-Off Explainer)
+# ==========================================
+
+@router.post("/search/parametric")
+async def search_catalog_parametric(payload: Dict[str, Any]):
+    """
+    Tasks 22 & 23: Compiles Natural Language into Parametric AST, queries catalog items,
+    and returns Qualified matches alongside Disqualified trade-off explanations.
+    """
+    query = payload.get("query", "")
+    enable_llm = payload.get("enable_llm", False)
+
+    # Load master catalog items
+    csv_path = Path(__file__).resolve().parent.parent.parent.parent / "OmniSpec_Enriched_1000_Items_Delivery_252.csv"
+    items = []
+    if csv_path.exists():
+        with open(csv_path, mode="r", encoding="utf-8", errors="ignore") as f:
+            reader = csv.DictReader(f)
+            items = list(reader)
+
+    # If no CSV on disk, use fallback seed items
+    if not items:
+        items = [
+            {
+                "Mfg_Part_Num": "PDSH4816AF",
+                "BRAND_NAME": "FRIGIDAIRE®",
+                "Classpath": "Appliances & Consumer Electronics>Kitchen Appliances>Built-In Dishwashers",
+                "SHORT_DESC": "FRIGIDAIRE® Professional Series PDSH4816AF Dishwasher With CleanBoost™, Leg Mounting, 5-Wash Cycle, Stainless Steel 47 dBA 120V 15A",
+                "Part_Desc": "PDSH4816AF Dishwasher SS - Display Only 24 in W x 24.25 in D 120V 15A 47dBA"
+            },
+            {
+                "Mfg_Part_Num": "WDTS7024RZ",
+                "BRAND_NAME": "Whirlpool®",
+                "Classpath": "Appliances & Consumer Electronics>Kitchen Appliances>Built-In Dishwashers",
+                "SHORT_DESC": "Whirlpool® Eco Series WDTS7024RZ Dishwasher, Built-in Mounting, Stainless Steel 41 dBA 120V 10A",
+                "Part_Desc": "WDTS7024RZ Dishwasher SS - Display Only 120V 10A 41DBA"
+            },
+            {
+                "Mfg_Part_Num": "SHX78B75UC",
+                "BRAND_NAME": "Bosch®",
+                "Classpath": "Appliances & Consumer Electronics>Kitchen Appliances>Built-In Dishwashers",
+                "SHORT_DESC": "Bosch® 800 Series 24 in Built-In Dishwasher Stainless Steel 42 dBA 120V 12A",
+                "Part_Desc": "Bosch 800 Series Dishwasher 42 dBA Stainless Steel 120V"
+            },
+            {
+                "Mfg_Part_Num": "49-94-0101",
+                "BRAND_NAME": "Milwaukee®",
+                "Classpath": "Abrasives & Polishing>Cut-Off & Grinding Wheels>Cut-Off Wheels",
+                "SHORT_DESC": "Milwaukee® 4-1/2 in x .045 in x 7/8 in Metal Cut-Off Disc 13300 RPM",
+                "Part_Desc": "4-1/2 in x .045 in x 7/8 in Cut Off Disc 13300 RPM"
+            },
+            {
+                "Mfg_Part_Num": "DCS361B",
+                "BRAND_NAME": "DEWALT®",
+                "Classpath": "Tools & Instruments>Power Tools>Saws & Blades>Circular & Miter Saws",
+                "SHORT_DESC": "DEWALT® 20V MAX* 7-1/4 IN Cordless Sliding Miter Saw Brushless 31.6 lbs",
+                "Part_Desc": "DEWALT 20V MAX 7-1/4 IN Cordless Sliding Miter Saw Brushless 31.6 lbs"
+            },
+            {
+                "Mfg_Part_Num": "558213",
+                "BRAND_NAME": "Philips®",
+                "Classpath": "Lighting & Electrical>Light Bulbs & Lamps>LED Light Bulbs",
+                "SHORT_DESC": "Philips® 558213 LED Light Bulb, A19 Shape, 2700 K, Medium E26 Base 9.5W",
+                "Part_Desc": "9.5W A19 LED 2700K Medium Base 60W Equivalent E26"
+            },
+            {
+                "Mfg_Part_Num": "CPLG-38-BRS",
+                "BRAND_NAME": "Mueller Industries®",
+                "Classpath": "Plumbing & Pumps>Pipe Fittings>Couplings",
+                "SHORT_DESC": "Mueller® 3/8 in Brass Pipe Coupling 150# NPT Threaded",
+                "Part_Desc": "3/8 CPLG BRS 150# Female NPT Coupler"
+            }
+        ]
+
+    response = ParametricSearchEngine.execute_search(
+        query=query,
+        catalog_items=items,
+        enable_llm=enable_llm
+    )
+
+    return {
+        "success": True,
+        "data": response.dict()
+    }
+
+
+# ==========================================
+# PHASE 9 ENDPOINTS (Product Families & Assortment Gap Detector)
+# ==========================================
+
+@router.get("/families")
+async def get_all_product_families():
+    """
+    Tasks 25 & 26: Discovers canonical Parent Product Families, decomposes MPN series,
+    and flags missing contractor assortment sequence gaps.
+    """
+    csv_path = Path(__file__).resolve().parent.parent.parent.parent / "OmniSpec_Enriched_1000_Items_Delivery_252.csv"
+    items = []
+    if csv_path.exists():
+        with open(csv_path, mode="r", encoding="utf-8", errors="ignore") as f:
+            reader = csv.DictReader(f)
+            items = list(reader)
+
+    # If no CSV, use rich multi-family demonstration items
+    if not items or len(items) < 5:
+        items = [
+            {"Mfg_Part_Num": "DCG413B", "BRAND_NAME": "DEWALT®", "Classpath": "Tools & Instruments>Power Tools>Grinders>Angle Grinders", "SHORT_DESC": "DEWALT® 20V MAX* XR 4-1/2 in Brushless Angle Grinder (Tool Only)"},
+            {"Mfg_Part_Num": "DCG413P2", "BRAND_NAME": "DEWALT®", "Classpath": "Tools & Instruments>Power Tools>Grinders>Angle Grinders", "SHORT_DESC": "DEWALT® 20V MAX* XR 4-1/2 in Brushless Angle Grinder Kit (2x 5.0Ah Batteries)"},
+            {"Mfg_Part_Num": "DCG413R2", "BRAND_NAME": "DEWALT®", "Classpath": "Tools & Instruments>Power Tools>Grinders>Angle Grinders", "SHORT_DESC": "DEWALT® 20V/60V MAX* FlexVolt 4-1/2 in Grinder Kit (2x 6.0Ah Batteries)"},
+            {"Mfg_Part_Num": "SHX78B75UC", "BRAND_NAME": "Bosch®", "Classpath": "Appliances & Consumer Electronics>Kitchen Appliances>Built-In Dishwashers", "SHORT_DESC": "Bosch® 800 Series 24 in Built-In Dishwasher Stainless Steel 42 dBA"},
+            {"Mfg_Part_Num": "SHX78B76UC", "BRAND_NAME": "Bosch®", "Classpath": "Appliances & Consumer Electronics>Kitchen Appliances>Built-In Dishwashers", "SHORT_DESC": "Bosch® 800 Series 24 in Built-In Dishwasher Black Stainless Steel 42 dBA"},
+            {"Mfg_Part_Num": "CPLG-14-BRS", "BRAND_NAME": "Mueller Industries®", "Classpath": "Plumbing & Pumps>Pipe Fittings>Couplings", "SHORT_DESC": "Mueller® 1/4 in Brass Pipe Coupling 150# NPT Threaded"},
+            {"Mfg_Part_Num": "CPLG-38-BRS", "BRAND_NAME": "Mueller Industries®", "Classpath": "Plumbing & Pumps>Pipe Fittings>Couplings", "SHORT_DESC": "Mueller® 3/8 in Brass Pipe Coupling 150# NPT Threaded"},
+            {"Mfg_Part_Num": "CPLG-34-BRS", "BRAND_NAME": "Mueller Industries®", "Classpath": "Plumbing & Pumps>Pipe Fittings>Couplings", "SHORT_DESC": "Mueller® 3/4 in Brass Pipe Coupling 150# NPT Threaded"}
+        ]
+
+    resp = FamilyClusteringEngine.discover_product_families(items)
+    return {
+        "success": True,
+        "data": resp.dict()
+    }
+
+
 
