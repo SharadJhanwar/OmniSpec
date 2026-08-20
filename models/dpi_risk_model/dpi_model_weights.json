@@ -1,0 +1,36 @@
+{
+  "model_type": "LogisticRegression + IsotonicCalibration",
+  "feature_names": [
+    "brand_confidence_delta",
+    "missing_trademark_symbol",
+    "invoice_desc_overflow",
+    "mobile_desc_bounds_delta",
+    "integrity_violations_count",
+    "sourcing_confidence_delta",
+    "unverified_mfr_url"
+  ],
+  "intercept": -5.2867,
+  "feature_weights": {
+    "brand_confidence_delta": 1.9154,
+    "missing_trademark_symbol": 2.5,
+    "invoice_desc_overflow": 1.0703,
+    "mobile_desc_bounds_delta": 0.7397,
+    "integrity_violations_count": 2.4107,
+    "sourcing_confidence_delta": 2.4427,
+    "unverified_mfr_url": 1.4751
+  },
+  "risk_thresholds": {
+    "low_risk_max": 0.25,
+    "elevated_risk_max": 0.55,
+    "critical_risk_min": 0.55
+  },
+  "recommended_actions": {
+    "LOW": "AUTO_APPROVE",
+    "ELEVATED": "SECONDARY_AUDIT",
+    "CRITICAL": "IMMEDIATE_HITL_REQUIRED"
+  },
+  "evaluation_metrics": {
+    "roc_auc": 1.0,
+    "brier_score": 0.0
+  }
+}
