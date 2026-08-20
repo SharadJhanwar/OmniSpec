@@ -1,13 +1,7 @@
-import sys
-from pathlib import Path
-
-backend_dir = Path(__file__).resolve().parent.parent / "backend"
-sys.path.insert(0, str(backend_dir))
-
-from app.schemas.state_schema import ProductEnrichmentState
-from app.agents.agent_1_ingestion import IngestionAgent
-from app.agents.agent_2_entity_resolution import EntityResolutionAgent
-from app.core.logging import logger
+from backend.app.schemas.state_schema import ProductEnrichmentState
+from backend.app.agents.agent_1_ingestion import IngestionAgent
+from backend.app.agents.agent_2_entity_resolution import EntityResolutionAgent
+from backend.app.core.logging import logger
 
 
 def test_agents_1_and_2():

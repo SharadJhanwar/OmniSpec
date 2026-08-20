@@ -1,4 +1,5 @@
 import pytest
+from backend.app.core.logging import logger
 from backend.app.schemas.state_schema import ProductEnrichmentState
 from backend.app.agents.graph import create_omnispec_graph
 from backend.app.services.dbom_service import DBOMService
@@ -15,6 +16,7 @@ def test_task19_cell_level_provenance_dbom(graph):
     """
     Test Task 19: Generates Data Bill of Materials (DBOM) with fine-grained lineage metadata.
     """
+    logger.info("Executing Task 19: Cell-Level Provenance & DBOM Lineage Test...")
     initial_state = ProductEnrichmentState(
         row_id="test_dbom_1",
         raw_mfg_part_num="PDSH4816AF",
@@ -49,6 +51,7 @@ def test_task20_defect_probability_index():
     """
     Test Task 20: Evaluates Defect Probability Index (DPI) and risk tiers.
     """
+    logger.info("Executing Task 20: Defect Probability Index (DPI) Risk Audit Test...")
     # Clean, valid state
     clean_state = ProductEnrichmentState(
         brand_name="Milwaukee®",
@@ -87,6 +90,7 @@ def test_task21_compatibility_and_substitutes():
     """
     Test Task 21: Evaluates engineering compatibility and cross-brand substitutes.
     """
+    logger.info("Executing Task 21: Pairwise Compatibility & Cross-Brand Substitutes Test...")
     # 1. Matching Arbor Compatibility
     tool_grinder = {"SHORT_DESC": "DEWALT® 4-1/2 in Small Angle Grinder 11A 7/8 in Arbor 11000 RPM"}
     disc_compatible = {"SHORT_DESC": "Milwaukee® 4-1/2 in x .045 in x 7/8 in Metal Cut-Off Disc"}

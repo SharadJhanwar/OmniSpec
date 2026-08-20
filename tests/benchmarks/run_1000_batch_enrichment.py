@@ -3,12 +3,9 @@ import csv
 import time
 from pathlib import Path
 
-backend_dir = Path(__file__).resolve().parent.parent / "backend"
-sys.path.insert(0, str(backend_dir))
-
-from app.schemas.state_schema import ProductEnrichmentState
-from app.agents.graph import create_omnispec_graph
-from app.core.logging import logger
+from backend.app.schemas.state_schema import ProductEnrichmentState
+from backend.app.agents.graph import create_omnispec_graph
+from backend.app.core.logging import logger
 
 
 def run_batch_1000():
@@ -16,8 +13,8 @@ def run_batch_1000():
     logger.info("OMNISPEC AI: PROCESSING 1,000 CATALOG ROWS AT SCALE")
     logger.info("=================================================================")
 
-    input_file = Path(__file__).resolve().parent.parent / "docs" / "dataset" / "Unihack_ Sample Dataset - Input.csv"
-    output_file = Path(__file__).resolve().parent.parent / "OmniSpec_Enriched_1000_Items_Delivery_252.csv"
+    input_file = Path(__file__).resolve().parent.parent.parent / "docs" / "dataset" / "Unihack_ Sample Dataset - Input.csv"
+    output_file = Path(__file__).resolve().parent.parent.parent / "OmniSpec_Enriched_1000_Items_Delivery_252.csv"
 
     if not input_file.exists():
         logger.error(f"Input file not found at: {input_file}")

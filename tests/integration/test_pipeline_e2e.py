@@ -1,13 +1,6 @@
-import sys
-from pathlib import Path
-
-# Add backend directory to sys.path
-backend_dir = Path(__file__).resolve().parent.parent / "backend"
-sys.path.insert(0, str(backend_dir))
-
-from app.schemas.state_schema import ProductEnrichmentState
-from app.agents.graph import create_omnispec_graph
-from app.core.logging import logger
+from backend.app.schemas.state_schema import ProductEnrichmentState
+from backend.app.agents.graph import create_omnispec_graph
+from backend.app.core.logging import logger
 
 def test_pipeline():
     logger.info("Initializing OmniSpec AI 9-Agent LangGraph Swarm...")

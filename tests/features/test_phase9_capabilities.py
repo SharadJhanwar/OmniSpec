@@ -1,4 +1,5 @@
 import pytest
+from backend.app.core.logging import logger
 from backend.app.services.family_clustering_engine import FamilyClusteringEngine
 from backend.app.schemas.family_schema import ParentProductFamily, FamilyDiscoveryResponse
 
@@ -7,6 +8,7 @@ def test_task25_mpn_decomposition():
     """
     Test Task 25: Deterministic MPN decomposition across power tools, appliances, and fittings.
     """
+    logger.info("Executing Task 25: MPN Decomposition & Variant Suffix Parser Test...")
     # 1. Power Tool Kit Suffixes
     base_1, axes_1 = FamilyClusteringEngine.decompose_mpn("DCG413B")
     assert base_1 == "DCG413"
@@ -35,6 +37,7 @@ def test_task25_family_discovery_clustering():
     """
     Test Task 25: Catalog-wide parent product family discovery and variant induction.
     """
+    logger.info("Executing Task 25: Product Family Discovery & Variant Induction Test...")
     items = [
         {"Mfg_Part_Num": "DCG413B", "BRAND_NAME": "DEWALT®", "Classpath": "Tools & Instruments>Power Tools>Grinders>Angle Grinders", "SHORT_DESC": "DEWALT® 20V MAX* XR 4-1/2 in Brushless Angle Grinder (Tool Only)"},
         {"Mfg_Part_Num": "DCG413P2", "BRAND_NAME": "DEWALT®", "Classpath": "Tools & Instruments>Power Tools>Grinders>Angle Grinders", "SHORT_DESC": "DEWALT® 20V MAX* XR 4-1/2 in Brushless Angle Grinder Kit (2x 5.0Ah Batteries)"},
@@ -60,6 +63,7 @@ def test_task26_assortment_gap_detection():
     """
     Test Task 26: Evidence-backed fractional dimensional sequence gap detection.
     """
+    logger.info("Executing Task 26: Fractional Sequence Assortment Gap Detector Test...")
     items = [
         {"Mfg_Part_Num": "CPLG-14-BRS", "BRAND_NAME": "Mueller Industries®", "Classpath": "Plumbing & Pumps>Pipe Fittings>Couplings", "SHORT_DESC": "Mueller® 1/4 in Brass Pipe Coupling 150# NPT Threaded"},
         {"Mfg_Part_Num": "CPLG-38-BRS", "BRAND_NAME": "Mueller Industries®", "Classpath": "Plumbing & Pumps>Pipe Fittings>Couplings", "SHORT_DESC": "Mueller® 3/8 in Brass Pipe Coupling 150# NPT Threaded"},

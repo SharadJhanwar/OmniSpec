@@ -4,12 +4,9 @@ import io
 from pathlib import Path
 from rapidfuzz import fuzz
 
-backend_dir = Path(__file__).resolve().parent.parent / "backend"
-sys.path.insert(0, str(backend_dir))
-
-from app.schemas.state_schema import ProductEnrichmentState
-from app.agents.graph import create_omnispec_graph
-from app.core.logging import logger
+from backend.app.schemas.state_schema import ProductEnrichmentState
+from backend.app.agents.graph import create_omnispec_graph
+from backend.app.core.logging import logger
 
 
 def run_ground_truth_benchmark():
@@ -17,7 +14,7 @@ def run_ground_truth_benchmark():
     logger.info("OMNISPEC AI: 252-COLUMN GROUND TRUTH BENCHMARK HARNESS")
     logger.info("=================================================================")
 
-    ground_truth_file = Path(__file__).resolve().parent.parent / "docs" / "dataset" / "Unihack_ Expected Output - Delivery Format.csv"
+    ground_truth_file = Path(__file__).resolve().parent.parent.parent / "docs" / "dataset" / "Unihack_ Expected Output - Delivery Format.csv"
     if not ground_truth_file.exists():
         logger.error(f"Ground truth file not found at: {ground_truth_file}")
         return

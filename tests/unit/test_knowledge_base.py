@@ -1,11 +1,5 @@
-import sys
-from pathlib import Path
-
-backend_dir = Path(__file__).resolve().parent.parent / "backend"
-sys.path.insert(0, str(backend_dir))
-
-from app.db.duckdb_client import kb
-from app.core.logging import logger
+from backend.app.db.duckdb_client import kb
+from backend.app.core.logging import logger
 
 def test_kb():
     logger.info("==================================================")

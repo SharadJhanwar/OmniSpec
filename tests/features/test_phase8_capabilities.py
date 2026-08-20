@@ -1,4 +1,5 @@
 import pytest
+from backend.app.core.logging import logger
 from backend.app.services.parametric_search_engine import ParametricSearchEngine
 from backend.app.schemas.search_schema import ParametricAST, SearchCandidateResult
 
@@ -7,6 +8,7 @@ def test_task22_ast_compilation_deterministic():
     """
     Test Task 22: Natural Language -> Parametric Abstract Syntax Tree (AST) compilation.
     """
+    logger.info("Executing Task 22: Deterministic Parametric AST Compiler Test...")
     # 1. Multi-variable Appliance Query
     query_1 = "Dishwasher under 45 dBA stainless steel 120V 15A"
     ast_1 = ParametricSearchEngine.compile_query_to_ast(query_1)
@@ -41,6 +43,7 @@ def test_task23_disqualification_and_tradeoff_explainer():
     """
     Test Task 23: Multi-variable constraint evaluation and delta explanations.
     """
+    logger.info("Executing Task 23: Disqualification & Trade-off Delta Explainer Test...")
     query = "Dishwasher under 45 dBA stainless steel 120V"
     ast = ParametricSearchEngine.compile_query_to_ast(query)
 
@@ -79,6 +82,7 @@ def test_task23_end_to_end_parametric_search():
     """
     Test End-to-End Parametric Search Execution across catalog items.
     """
+    logger.info("Executing Task 23: End-to-End Parametric Constraint Search Test...")
     catalog = [
         {
             "Mfg_Part_Num": "SHX78B75UC",

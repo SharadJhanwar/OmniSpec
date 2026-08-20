@@ -1,20 +1,16 @@
-import sys
-from pathlib import Path
-
-backend_dir = Path(__file__).resolve().parent.parent / "backend"
-sys.path.insert(0, str(backend_dir))
-
-from app.schemas.state_schema import ProductEnrichmentState
-from app.agents.agent_1_ingestion import IngestionAgent
-from app.agents.agent_2_entity_resolution import EntityResolutionAgent
-from app.agents.agent_3_taxonomy import TaxonomyClassifierAgent
-from app.agents.agent_4_spec_uom import SpecUOMExtractorAgent
-from app.core.logging import logger
+from backend.app.schemas.state_schema import ProductEnrichmentState
+from backend.app.agents.agent_1_ingestion import IngestionAgent
+from backend.app.agents.agent_2_entity_resolution import EntityResolutionAgent
+from backend.app.agents.agent_3_taxonomy import TaxonomyClassifierAgent
+from backend.app.agents.agent_4_spec_uom import SpecUOMExtractorAgent
+from backend.app.agents.agent_5_oem_sourcing import OEMSourcingRAGAgent
+from backend.app.agents.agent_6_lov_mapper import ConstrainedLOVMapperAgent
+from backend.app.core.logging import logger
 
 
-def test_agents_3_and_4():
+def test_agents_5_and_6():
     logger.info("==================================================")
-    logger.info("TESTING AGENTS 3 & 4 (TAXONOMY & SPEC/UOM PARSER)")
+    logger.info("TESTING AGENTS 5 & 6 (OEM SOURCING & CONSTRAINED LOV MAPPER)")
     logger.info("==================================================")
 
     test_samples = [
@@ -27,20 +23,20 @@ def test_agents_3_and_4():
             "part_manuf": "Appliance Dealers Cooperative (APPDE)"
         },
         {
-            "mfg_part_num": "49-94-0101",
-            "part_desc": "49-94-0101 Milw 4-1/2\"x.045\"x7/8\" Perform+ Metal Cut Off Disc 10pc",
+            "mfg_part_num": "WDTS7024RZ",
+            "part_desc": "WDTS7024RZ Dishwasher SS - Display Only",
+            "e1_brand": "-- Unbranded --",
+            "unilog_brand": "-- No Unilog Brand --",
+            "dib_brand": "-- No DIB Brand --",
+            "part_manuf": "Appliance Dealers Cooperative (APPDE)"
+        },
+        {
+            "mfg_part_num": "49-94-0013",
+            "part_desc": "49-94-0013 Milw 5\"x.045\"x7/8\" Metal Cut Off Disc",
             "e1_brand": "-- Unbranded --",
             "unilog_brand": "-- No Unilog Brand --",
             "dib_brand": "-- No DIB Brand --",
             "part_manuf": "Milwaukee Accessory (4031)"
-        },
-        {
-            "mfg_part_num": "3MABR-7100075678",
-            "part_desc": "3M 775L Stikit Film P150 - Cubitron II 50 Disc/Box",
-            "e1_brand": "-- Unbranded --",
-            "unilog_brand": "-- No Unilog Brand --",
-            "dib_brand": "-- No DIB Brand --",
-            "part_manuf": "Jam Industrial Supply LLC (JAMIN)"
         },
         {
             "mfg_part_num": "1513720",
@@ -63,29 +59,36 @@ def test_agents_3_and_4():
             raw_part_manuf=sample["part_manuf"]
         )
 
-        # Execute Agents 1 to 4 sequentially
+        # Sequential execution
         state = state.model_copy(update=IngestionAgent.execute(state))
         state = state.model_copy(update=EntityResolutionAgent.execute(state))
         state = state.model_copy(update=TaxonomyClassifierAgent.execute(state))
         state = state.model_copy(update=SpecUOMExtractorAgent.execute(state))
+        state = state.model_copy(update=OEMSourcingRAGAgent.execute(state))
+        state = state.model_copy(update=ConstrainedLOVMapperAgent.execute(state))
 
         logger.info(f"\n--- Item {idx}: {sample['mfg_part_num']} ---")
-        logger.info(f"Brand / MFR:     {state.brand_name} ({state.manufacturer_name})")
-        logger.info(f"Classpath:       {state.classpath}")
-        logger.info(f"UNSPSC:          {state.unspsc}")
-        logger.info(f"Product Name:    {state.product_name}")
-        logger.info(f"Dimensions:      {state.dimensions}")
-        logger.info(f"Electrical:      {state.electrical_specs}")
-        logger.info(f"Acoustic:        {state.acoustic_specs}")
-        logger.info(f"Packaging:       {state.packaging_specs}")
+        logger.info(f"MFR URL:          {state.mfr_url}")
+        logger.info(f"Approvals:        {state.standard_approvals}")
+        logger.info(f"With Features:    {state.with_features}")
+        logger.info(f"Warranty:         {state.warranty}")
 
-        assert state.classpath != "", "Classpath must not be empty"
-        assert state.unspsc != "", "UNSPSC code must be assigned"
+        # Display first 8 allocated attribute slots
+        logger.info("Allocated Attributes (1..8):")
+        for a_idx in range(1, 9):
+            lbl = state.attributes.get(f"ATTRIBUTE_LABEL {a_idx}")
+            val = state.attributes.get(f"ATTRIBUTE_VALUE {a_idx}")
+            uom = state.attributes.get(f"ATTRIBUTE_UOM {a_idx}")
+            if lbl:
+                logger.info(f"  [{a_idx}] {lbl} = '{val}' (UOM: '{uom}')")
+
+        assert state.mfr_url != "", "MFR URL must be populated"
+        assert len(state.attributes) == 150, "Must contain exactly 150 attribute columns (50 triples)"
 
     logger.info("\n==================================================")
-    logger.info("TASK 3 VERIFICATION SUCCESSFUL: AGENTS 3 & 4 PASSED WITH 100% ACCURACY!")
+    logger.info("TASK 4 VERIFICATION SUCCESSFUL: AGENTS 5 & 6 OPERATING WITH FULL SCHEMA CONFORMANCE!")
     logger.info("==================================================")
 
 
 if __name__ == "__main__":
-    test_agents_3_and_4()
+    test_agents_5_and_6()

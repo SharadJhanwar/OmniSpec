@@ -1,19 +1,13 @@
-import sys
-from pathlib import Path
-
-backend_dir = Path(__file__).resolve().parent.parent / "backend"
-sys.path.insert(0, str(backend_dir))
-
-from app.schemas.state_schema import ProductEnrichmentState
-from app.agents.agent_1_ingestion import IngestionAgent
-from app.agents.agent_2_entity_resolution import EntityResolutionAgent
-from app.agents.agent_3_taxonomy import TaxonomyClassifierAgent
-from app.agents.agent_4_spec_uom import SpecUOMExtractorAgent
-from app.agents.agent_5_oem_sourcing import OEMSourcingRAGAgent
-from app.agents.agent_6_lov_mapper import ConstrainedLOVMapperAgent
-from app.agents.agent_7_copy_builder import MultiChannelCopyAgent
-from app.agents.agent_8_digital_assets import DigitalAssetAgent
-from app.core.logging import logger
+from backend.app.schemas.state_schema import ProductEnrichmentState
+from backend.app.agents.agent_1_ingestion import IngestionAgent
+from backend.app.agents.agent_2_entity_resolution import EntityResolutionAgent
+from backend.app.agents.agent_3_taxonomy import TaxonomyClassifierAgent
+from backend.app.agents.agent_4_spec_uom import SpecUOMExtractorAgent
+from backend.app.agents.agent_5_oem_sourcing import OEMSourcingRAGAgent
+from backend.app.agents.agent_6_lov_mapper import ConstrainedLOVMapperAgent
+from backend.app.agents.agent_7_copy_builder import MultiChannelCopyAgent
+from backend.app.agents.agent_8_digital_assets import DigitalAssetAgent
+from backend.app.core.logging import logger
 
 
 def test_agents_7_and_8():
