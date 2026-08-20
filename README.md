@@ -122,7 +122,7 @@ OMNISPEC AI: 252-COLUMN GROUND TRUTH BENCHMARK HARNESS
 
 - **AI & Multi-Agent Swarm:** LangGraph, LangChain, OpenAI GPT-4o-mini (Generative fallback & Vision RAG)
 - **Database & Search Engine:** DuckDB (In-Memory Relational Engine), RapidFuzz (C++ string matching)
-- **Backend API & Exporters:** FastAPI, Uvicorn, Pydantic v2, openpyxl (Multi-Sheet Excel), reportlab (Autonomous PDF Generator)
+- **Backend API & Intelligence Services:** FastAPI, Uvicorn, Pydantic v2, scikit-learn, openpyxl (Excel), reportlab (Autonomous PDF Generator)
 - **Frontend Studio:** Vite, React 18, TailwindCSS, Lucide Icons, Glassmorphism UI
 - **Languages & Runtime:** Python 3.11+, Node.js v18+
 
@@ -145,14 +145,18 @@ OmniSpec/
 │       │   ├── agent_8_digital_assets.py
 │       │   ├── agent_9_quality_audit.py
 │       │   └── graph.py
-│       ├── api/                 # FastAPI REST Endpoints (Single, Batch, Excel, PDF, Overrides, KB)
+│       ├── api/                 # FastAPI REST Endpoints (Single, Batch, Excel, PDF, Overrides, KB, DBOM, Compatibility)
 │       │   └── routes.py
 │       ├── db/                  # In-Memory DuckDB Knowledge Base Client & Seed Tables
 │       │   └── duckdb_client.py
-│       ├── schemas/             # Pydantic 252-Column Delivery & State Schemas
+│       ├── schemas/             # Pydantic 252-Column Delivery, State, and Provenance Schemas
 │       │   ├── delivery_schema.py
+│       │   ├── provenance_schema.py
 │       │   └── state_schema.py
-│       ├── services/            # Excel Exporter, PDF Datasheet Generator, Vision Spec RAG
+│       ├── services/            # Intelligence Services (DBOM, DPI, Compatibility, Excel, PDF, Vision RAG)
+│       │   ├── dbom_service.py
+│       │   ├── defect_risk_scorer.py
+│       │   ├── compatibility_engine.py
 │       │   ├── excel_exporter.py
 │       │   ├── pdf_datasheet_generator.py
 │       │   ├── vision_spec_rag.py
@@ -160,10 +164,12 @@ OmniSpec/
 │       └── main.py              # FastAPI Application Entrypoint
 ├── frontend/                    # Vite + React Modern Web Studio
 │   ├── src/
-│   │   ├── components/          # Virtualized 252-Grid, Swarm Visualizer, HITL Modal, KB Explorer
+│   │   ├── components/          # Virtualized 252-Grid, Swarm Visualizer, DBOM Inspector, Compatibility Modal
 │   │   │   ├── AgentSwarmVisualizer.jsx
 │   │   │   ├── BatchUploadModal.jsx
+│   │   │   ├── CompatibilityMatrixModal.jsx
 │   │   │   ├── DashboardStats.jsx
+│   │   │   ├── DBOMModal.jsx
 │   │   │   ├── Grid252.jsx
 │   │   │   ├── HITLReviewModal.jsx
 │   │   │   ├── KnowledgeBaseExplorer.jsx
@@ -172,6 +178,8 @@ OmniSpec/
 │   │   ├── App.jsx
 │   │   └── index.css
 │   └── package.json
+├── tests/                       # Automated Pytest Capability Suites
+│   └── test_phase7_capabilities.py
 ├── eval/                        # Benchmark & Evaluation Suite
 │   ├── benchmark_ground_truth.py
 │   ├── run_1000_batch_enrichment.py
@@ -281,8 +289,11 @@ Trace the transformation of any raw SKU across all 9 agents:
 4. **1-Click Multi-Sheet Excel (.xlsx) Export**: Generates styled `.xlsx` delivery workbooks with frozen header panes (`C2`), auto-fitted columns, and an executive governance audit sheet.
 5. **Autonomous OEM Technical PDF Datasheet Generator**: 1-click generation of 1-page engineering specification submittals (`<Brand>_<MPN>_Specification_Sheet.pdf`) for contractors.
 6. **Interactive UniCat Knowledge Graph & Rulebook Explorer**: Live visual dictionary browsing 27,000+ UniCat Brands, 161,000 LOVs, 63 Decimal fractions, and the Trade Jargon Thesaurus.
-7. **Drag & Drop CSV Ingestion**: Upload any raw 6-column feed and enrich it across 252 columns.
-8. **1-Click CSV Export**: Download the delivery-ready CSV deliverable (`OmniSpec_Delivery_Enriched_252.csv`).
+7. **Cell-Level Data Bill of Materials (DBOM) & Lineage Inspector**: Detailed audit breakdown of every delivery attribute with source type badges, document locators, extraction methods, and SHA-256 cryptographic lineage proof.
+8. **Defect Probability Index (DPI) & Risk Queue Meter**: Multi-variable defect risk scoring with top risk factors and automated HITL routing flags.
+9. **Industrial Compatibility & Substitute Matrix**: Pairwise mechanical and electrical constraint evaluator (arbor match, voltage platform, pipe thread) and cross-brand functional equivalent finder.
+10. **Drag & Drop CSV Ingestion**: Upload any raw 6-column feed and enrich it across 252 columns.
+11. **1-Click CSV Export**: Download the delivery-ready CSV deliverable (`OmniSpec_Delivery_Enriched_252.csv`).
 
 ---
 

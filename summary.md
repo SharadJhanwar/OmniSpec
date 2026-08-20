@@ -142,10 +142,14 @@ To ensure complete credibility and avoid exaggerated claims, here are the real-w
 
 ---
 
-## 💡 5. Enterprise Capabilities Status (Phase 6 Roadmap)
+## 💡 5. Enterprise Capabilities Status (Phases 6 & 7 Roadmap)
 
 1. **Active Learning Overrides Store:** **COMPLETED & VERIFIED** (`kb_active_overrides` DuckDB table & `POST /api/v1/hitl/override`).
 2. **Native Formatted Excel (`.xlsx`) Export:** **COMPLETED & VERIFIED** (`excel_exporter.py` with multi-sheet workbook generation & KPI sheet).
 3. **Multi-Modal Vision Spec Sheet Parser:** **COMPLETED & VERIFIED** (`vision_spec_rag.py` using `gpt-4o-mini` with Vision via `POST /api/v1/enrich/vision`).
 4. **Autonomous OEM Technical PDF Cut Sheet Generator:** **COMPLETED & VERIFIED** (`pdf_datasheet_generator.py` using `reportlab`).
 5. **Interactive Knowledge Base & LOV Dictionary Explorer:** **COMPLETED & VERIFIED** (`KnowledgeBaseExplorer.jsx` with real-time UniCat brand search and fraction tables).
+6. **Data Bill of Materials (DBOM) & Cell Provenance Inspector:** **COMPLETED & VERIFIED** (`dbom_service.py`, `POST /api/v1/provenance/dbom`, and `DBOMModal.jsx` with SHA-256 cryptographic lineage hash).
+7. **Defect Probability Index (DPI) & Risk Queue Scorer:** **COMPLETED & VERIFIED** (`defect_risk_scorer.py` and `POST /api/v1/audit/dpi` for calibrated review risk prioritization).
+8. **Industrial Compatibility & Substitute Matrix Engine:** **COMPLETED & VERIFIED** (`compatibility_engine.py` and `CompatibilityMatrixModal.jsx` evaluating mechanical/electrical constraints and direct OEM substitutes).
+
