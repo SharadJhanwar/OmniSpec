@@ -49,7 +49,7 @@ export default function AgentSwarmVisualizer({ activeItem, isEnriching, traces }
       </div>
 
       {/* 9-Agent Stepper Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-9 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-2">
         {AGENTS.map((agent, index) => {
           const Icon = agent.icon;
           const matchingTrace = traces && traces[index];
