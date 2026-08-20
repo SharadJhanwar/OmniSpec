@@ -15,7 +15,7 @@
 
 ## 🏗️ System Architecture & 9-Agent DAG Swarm
 
-OmniSpec AI uses a **hybrid neuro-symbolic multi-agent architecture** orchestrated via **LangGraph**. A high-speed relational knowledge base in **DuckDB** and C++ fuzzy matching via **RapidFuzz** handle deterministic lookups in sub-milliseconds, while an **OpenAI GPT-4o-mini** layer provides intelligent entity disambiguation, rich marketing copywriting, and deep reasoning.
+OmniSpec AI uses a **hybrid neuro-symbolic multi-agent architecture** orchestrated via **LangGraph**. A high-speed relational knowledge base in **DuckDB** and C++ fuzzy matching via **RapidFuzz** handle deterministic lookups in sub-milliseconds, while an **OpenAI GPT-4o-mini** layer provides intelligent entity disambiguation, rich marketing copywriting, and multimodal vision RAG.
 
 ```
                                       [ Raw Messy Supplier Feed ]
@@ -23,12 +23,12 @@ OmniSpec AI uses a **hybrid neuro-symbolic multi-agent architecture** orchestrat
                                                    │
                                                    ▼
                                 ┌──────────────────────────────────────┐
-                                │ Agent 1: Ingestion & De-Noising       │  <── Strips placeholders & parses vendor codes
+                                │ Agent 1: Ingestion & De-Noising       │  <── Strips placeholders & resolves trade slang thesaurus
                                 └──────────────────┬───────────────────┘
                                                    │
                                                    ▼
                                 ┌──────────────────────────────────────┐
-                                │ Agent 2: Brand & Entity Resolution   │  <── UniCat 27K DuckDB + RapidFuzz (®, ™)
+                                │ Agent 2: Brand & Entity Resolution   │  <── Checks Active Overrides, UniCat 27K DuckDB (®, ™)
                                 └──────────────────┬───────────────────┘
                                                    │
                                                    ▼
@@ -48,7 +48,7 @@ OmniSpec AI uses a **hybrid neuro-symbolic multi-agent architecture** orchestrat
                                                    │
                                                    ▼
                                 ┌──────────────────────────────────────┐
-                                │ Agent 6: Constrained LOV Mapper      │  <── 150-Col EAV (Dishwashers/Fittings/Faucets)
+                                │ Agent 6: Constrained LOV Mapper      │  <── 150-Col EAV (Lighting/Tools/Decking/Fittings/Appliances)
                                 └──────────────────┬───────────────────┘
                                                    │
                                                    ▼
@@ -63,7 +63,7 @@ OmniSpec AI uses a **hybrid neuro-symbolic multi-agent architecture** orchestrat
                                                    │
                                                    ▼
                                 ┌──────────────────────────────────────┐
-                                │ Agent 9: Quality Audit & HITL Gate   │  <── 12 Integrity Rules & Provenance Tracer
+                                │ Agent 9: Quality Audit & HITL Gate   │  <── 12 Integrity Rules & Cell Provenance Lineage
                                 └──────────────────┬───────────────────┘
                                                    │
                                                    ▼
@@ -76,15 +76,15 @@ OmniSpec AI uses a **hybrid neuro-symbolic multi-agent architecture** orchestrat
 
 | Agent | Name | Primary Responsibilities |
 | :--- | :--- | :--- |
-| **Agent 1** | **Ingestion & De-Noising** | Strips non-data placeholders (`-- Unbranded --`, `-- No DIB Brand --`), unescapes HTML entities, isolates raw dimension tokens, and extracts vendor codes (`APPDE`, `JAMIN`, `BOICA`). |
-| **Agent 2** | **UniCat Entity Resolution** | Resolves noisy supplier strings against 27,000+ approved UniCat entities with legal casing (`Inc`, `LLC`, `Co`) and mandatory registered marks (`FRIGIDAIRE®`, `Milwaukee®`, `3M™`, `AZEK®`). |
-| **Agent 3** | **Taxonomy & UNSPSC** | Traverses 4-tier category leaf node hierarchies, assigns 8-digit UNSPSC codes, and triggers dynamic LOV schema validation. |
-| **Agent 4** | **Spec, Dim & UOM Extractor** | Parses dimension triplets (`L x W x H`), converts decimals to 63 exact fractions (`50.25` $\rightarrow$ `50-1/4 in`), and enforces single-space UOM standards (`24 in`, not `24in`). |
+| **Agent 1** | **Ingestion & De-Noising** | Strips non-data placeholders (`-- Unbranded --`, `-- No DIB Brand --`), unescapes HTML entities, isolates raw dimension tokens, extracts vendor codes (`APPDE`, `JAMIN`, `BOICA`), and resolves contractor trade jargon (`sawzall`, `zipper disc`, `romex`). |
+| **Agent 2** | **UniCat Entity Resolution** | Checks active reviewer overrides first, then resolves supplier strings against 27,000+ approved UniCat entities with legal casing (`Inc`, `LLC`, `Co`) and mandatory registered marks (`FRIGIDAIRE®`, `Milwaukee®`, `3M™`, `Philips®`, `DEWALT®`). |
+| **Agent 3** | **Taxonomy & UNSPSC** | Traverses 4-tier category leaf node hierarchies (Lighting, Power Tools, Wiring Devices, Decking, Abrasives, Plumbing, Appliances), assigns 8-digit leaf UNSPSC codes, and triggers dynamic LOV schema validation. |
+| **Agent 4** | **Spec, Dim & UOM Extractor** | Parses dimension triplets (`L x W x H`), lumber notations (`1nx6-16'`), lighting color temperatures (`27K` $\rightarrow$ `2700 K`), wattages, converts decimals to 63 exact fractions (`50.25` $\rightarrow$ `50-1/4 in`), and enforces single-space UOM standards (`24 in`, not `24in`). |
 | **Agent 5** | **OEM Sourcing RAG** | Discovers authoritative manufacturer portals, official PDF spec sheets, and regulatory approvals (`ASSE`, `cUL`, `ENERGY STAR`, `ANSI`), while strictly blocking prohibited marketplaces (Amazon, Grainger, etc.). |
 | **Agent 6** | **Constrained LOV Mapper** | Maps extracted specs into 50 structured attribute triples (`ATTRIBUTE_LABEL 1..50`, `ATTRIBUTE_VALUE 1..50`, `ATTRIBUTE_UOM 1..50` = 150 columns) adhering strictly to controlled vocabularies. |
 | **Agent 7** | **Multi-Channel Copy Builder** | Constructs 6 distinct copy tiers adhering to strict character caps and Unilog formulas: `INVOICE_DESC` ($\le 40$ chars ALL CAPS), `MOBILE_DESC` ($60\text{--}80$ chars), `SHORT_DESC` (PDP Title), `LONG_DESC1`, and `ITEM_FEATURES_1..20`. |
 | **Agent 8** | **Digital Asset Synthesizer** | Standardizes primary and alternate images (`<Brand>_<MPN>.jpg`), spec sheets (`<Brand>_<MPN>_Specification_Sheet.pdf`), and document classification links. |
-| **Agent 9** | **Quality Audit & HITL Gate** | Executes a 12-point automated integrity suite, calculates weighted confidence scores ($0\text{--}100\%$), and routes low-confidence SKUs to the Human-in-the-Loop Review Studio. |
+| **Agent 9** | **Quality Audit & HITL Gate** | Executes a 12-point automated integrity suite, calculates weighted confidence scores ($0\text{--}100\%$), tracks cell-level provenance, and routes questionable SKUs to the Human-in-the-Loop Review Studio. |
 
 ---
 
@@ -120,11 +120,11 @@ OMNISPEC AI: 252-COLUMN GROUND TRUTH BENCHMARK HARNESS
 
 ## 💻 Tech Stack
 
-- **AI & Multi-Agent Swarm:** LangGraph, LangChain, OpenAI GPT-4o-mini
-- **Database & Search Engine:** DuckDB (In-Memory Relational Engine), RapidFuzz (C++ Levenshtein string matching)
-- **Backend API:** FastAPI, Uvicorn, Pydantic v2
+- **AI & Multi-Agent Swarm:** LangGraph, LangChain, OpenAI GPT-4o-mini (Generative fallback & Vision RAG)
+- **Database & Search Engine:** DuckDB (In-Memory Relational Engine), RapidFuzz (C++ string matching)
+- **Backend API & Exporters:** FastAPI, Uvicorn, Pydantic v2, openpyxl (Multi-Sheet Excel), reportlab (Autonomous PDF Generator)
 - **Frontend Studio:** Vite, React 18, TailwindCSS, Lucide Icons, Glassmorphism UI
-- **Languages & Runtime:** Python 3.13+, Node.js v24+
+- **Languages & Runtime:** Python 3.11+, Node.js v18+
 
 ---
 
@@ -145,23 +145,28 @@ OmniSpec/
 │       │   ├── agent_8_digital_assets.py
 │       │   ├── agent_9_quality_audit.py
 │       │   └── graph.py
-│       ├── api/                 # FastAPI REST Endpoints (Single, Batch JSON, CSV Stream)
+│       ├── api/                 # FastAPI REST Endpoints (Single, Batch, Excel, PDF, Overrides, KB)
 │       │   └── routes.py
 │       ├── db/                  # In-Memory DuckDB Knowledge Base Client & Seed Tables
 │       │   └── duckdb_client.py
 │       ├── schemas/             # Pydantic 252-Column Delivery & State Schemas
 │       │   ├── delivery_schema.py
 │       │   └── state_schema.py
-│       ├── services/            # Normalization, UOM Converter, Fraction & Copy Engines
+│       ├── services/            # Excel Exporter, PDF Datasheet Generator, Vision Spec RAG
+│       │   ├── excel_exporter.py
+│       │   ├── pdf_datasheet_generator.py
+│       │   ├── vision_spec_rag.py
+│       │   └── fuzzy_matcher.py
 │       └── main.py              # FastAPI Application Entrypoint
 ├── frontend/                    # Vite + React Modern Web Studio
 │   ├── src/
-│   │   ├── components/          # Virtualized 252-Grid, Swarm Visualizer, HITL Modal, Sandbox
+│   │   ├── components/          # Virtualized 252-Grid, Swarm Visualizer, HITL Modal, KB Explorer
 │   │   │   ├── AgentSwarmVisualizer.jsx
 │   │   │   ├── BatchUploadModal.jsx
 │   │   │   ├── DashboardStats.jsx
 │   │   │   ├── Grid252.jsx
 │   │   │   ├── HITLReviewModal.jsx
+│   │   │   ├── KnowledgeBaseExplorer.jsx
 │   │   │   ├── Navbar.jsx
 │   │   │   └── SingleSkuSandbox.jsx
 │   │   ├── App.jsx
@@ -175,6 +180,7 @@ OmniSpec/
 ├── test_agent.py                # Root CLI Transformation Tracer
 ├── OmniSpec_Enriched_1000_Items_Delivery_252.csv # 252-Col Delivery Export (1,000 SKUs)
 ├── requirements.txt             # Python Dependencies
+├── summary.md                   # System Evaluation, Boundaries & Uniqueness Report
 └── PLAN.md                      # Implementation & Architectural Roadmap
 ```
 
@@ -244,6 +250,15 @@ Trace the transformation of any raw SKU across all 9 agents:
 
 # Preset 4: Brass Industrial Pipe Fitting (Plumbing)
 .venv\Scripts\python test_agent.py 4
+
+# Preset 5: Philips LED A19 Light Bulb (Lighting)
+.venv\Scripts\python test_agent.py 5
+
+# Preset 6: DEWALT 20V MAX Miter Saw (Power Tools)
+.venv\Scripts\python test_agent.py 6
+
+# Preset 7: OpenAI Generative Disambiguator & Latency Trace Demo
+.venv\Scripts\python test_agent.py 7
 ```
 
 ### 2. Ground Truth Benchmark Harness

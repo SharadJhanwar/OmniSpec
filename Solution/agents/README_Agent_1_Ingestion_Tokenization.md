@@ -5,20 +5,21 @@
 
 ## 1. Agent Overview & Role
 
-The **Ingestion, De-Noising & Tokenizer Agent** serves as the initial gatekeeper for the OmniSpec AI enrichment pipeline. Raw distributor data feeds arrive contaminated with non-standard delimiters, placeholder values (e.g. `-- Unbranded --`), cryptic abbreviations, supplier-specific vendor codes (e.g. `Freud Inc (2435)`), and merged dimension tokens (e.g. `1nx6-16'`).
+The **Ingestion, De-Noising & Tokenizer Agent** serves as the initial gatekeeper for the OmniSpec AI enrichment pipeline. Raw distributor data feeds arrive contaminated with non-standard delimiters, placeholder values (e.g. `-- Unbranded --`), cryptic abbreviations, supplier-specific vendor codes (e.g. `Freud Inc (2435)`), merged dimension tokens (e.g. `1nx6-16'`), and informal contractor slang (e.g. `sawzall`, `zipper disc`, `romex`).
 
 ### Core Objectives:
 1. **Placeholder Eradication:** Detect and purge negative placeholders across brand/supplier columns.
 2. **Deterministic Tokenization:** Split unstructured `Part_Desc` strings into categorized tokens (MPN prefix, Brand mention, Dimension blocks, Technical keywords, Noise tokens).
-3. **Supplier Code Separation:** Separate corporate vendor suffixes (e.g. `(2435)`, `(JAMIN)`, `(BOICA)`) from legal manufacturer names.
-4. **De-duplication & Hashing:** Generate SHA-256 fingerprint hashes for row-level idempotency and incremental processing.
+3. **Trade Slang & Thesaurus Mapping:** Resolve informal jobsite slang (`sawzall`, `skilsaw`, `zipper disc`, `romex`, `whirlybird`) against the DuckDB `industry_thesaurus` table into canonical product classifications.
+4. **Supplier Code Separation:** Separate corporate vendor suffixes (e.g. `(2435)`, `(JAMIN)`, `(BOICA)`) from legal manufacturer names.
+5. **De-duplication & Hashing:** Generate SHA-256 fingerprint hashes for row-level idempotency and incremental processing.
 
 ```
 +----------------------------------------------------------------------------------------------------+
 |                                      AGENT 1 FLOW DIAGRAM                                          |
 |                                                                                                    |
 |   [ Raw Supplier Row ]                                                                             |
-|   • Part_Desc: "DCB518ASTS06G Diablo 1/2""x18"" - Sanding Belt 6pc"                                |
+|   • Part_Desc: "DCB518ASTS06G Diablo 1/2""x18"" - Sanding Belt 6pc sawzall"                        |
 |   • Part_Manuf: "Freud Inc (2435)"                                                                 |
 |   • E1_Brand / Unilog_Brand: "-- Unbranded --", "-- No Unilog Brand --"                            |
 |             │                                                                                      |
@@ -28,6 +29,7 @@ The **Ingestion, De-Noising & Tokenizer Agent** serves as the initial gatekeeper
 |   │ 2. Supplier Code Parser: Extract "Freud Inc" + Supplier Code "2435"                        │   |
 |   │ 3. MPN Extractor: Detect prefix "DCB518ASTS06G"                                            │   |
 |   │ 4. Dimension Tokenizer: Isolate '1/2"x18"', '6pc', 'Sanding Belt'                          │   |
+|   │ 5. Industry Thesaurus: Map 'sawzall' -> ('Reciprocating Saw', 'Power Tools')               │   |
 |   └────────────────────────────────────────────────────────────────────────────────────────────┘   |
 |             │                                                                                      |
 |             ▼                                                                                      |
@@ -60,27 +62,21 @@ PLACEHOLDER_PATTERNS = [
     r"^--\s*Unbranded\s*--$",
     r"^--\s*No\s+Unilog\s+Brand\s*--$",
     r"^--\s*No\s+DIB\s+Brand\s*--$",
-    r"^--\s*None\s*--$",
-    r"^--\s*N/A\s*--$",
+    r"^--\s*No\s+Brand\s*--$",
     r"^UNKNOWN$",
-    r"^UNASSIGNED$",
-    r"^\s*$"
+    r"^N/A$",
+    r"^NONE$"
 ]
 ```
-If a match is found, the value is set to `None` to prevent downstream models from hallucinating `Unbranded` as a legitimate manufacturer brand.
 
-### Step 2: Supplier Vendor Code Extraction
-Supplier strings often append ERP account codes in parentheses: `Freud Inc (2435)`, `Jam Industrial Supply LLC (JAMIN)`, `Milwaukee Accessory (4031)`.
-- **Regex:** `r"^(?P<clean_manuf>.*?)\s*\((?P<vendor_code>[A-Za-z0-9]+)\)$"`
-- **Result:**
-  - `clean_manuf`: `"Freud Inc"`
-  - `vendor_code`: `"2435"`
+### Step 2: Supplier String & Vendor Code Parser
+Extracts clean corporate names while isolating numerical distributor account codes:
+- Pattern: `r"^(.*?)\s*\(([A-Za-z0-9]+)\)$"`
+- Input: `"Appliance Dealers Cooperative (APPDE)"` $\rightarrow$ Name: `"Appliance Dealers Cooperative"`, Vendor Code: `"APPDE"`.
+- Input: `"Milwaukee Accessory (4031)"` $\rightarrow$ Name: `"Milwaukee Accessory"`, Vendor Code: `"4031"`.
 
-### Step 3: MPN & Description De-noising
-1. **Redundant MPN Prefix Removal:** If `Part_Desc` begins with `Mfg_Part_Num`, the duplicate prefix is tokenized as `MPN_TOKEN` and stripped from the active description to isolate technical attributes:
-   - Input: `"DCB518ASTS06G Diablo 1/2"x18" - Sanding Belt 6pc"`
-   - Extracted MPN: `"DCB518ASTS06G"`
-   - Remaining Desc: `"Diablo 1/2"x18" - Sanding Belt 6pc"`
+### Step 3: MPN Duplicate Stripping & Normalization
+1. **Redundant MPN Prefix Removal:** If `Part_Desc` begins with `Mfg_Part_Num`, the duplicate prefix is tokenized as `MPN_TOKEN` and stripped from the active description to isolate technical attributes.
 2. **Symbol & Delimiter Normalization:**
    - Standardizes escaped quotes: `1/2""x18""` $\rightarrow$ `1/2"x18"`.
    - Normalizes hyphens & en-dashes: ` - ` $\rightarrow$ delimiter split token.
@@ -91,6 +87,14 @@ The agent decomposes the string into structured token types:
 - **BRAND_CANDIDATE:** `["Diablo", "Freud"]`
 - **DIMENSION_CANDIDATE:** `["1/2\"x18\"", "6pc"]`
 - **PRODUCT_TYPE_CANDIDATE:** `["Sanding Belt"]`
+
+### Step 5: Industry Slang & Contractor Thesaurus Resolution
+Queries the DuckDB `industry_thesaurus` table to translate common contractor jargon:
+- `"sawzall"` $\rightarrow$ `("Reciprocating Saw", "Power Tools")`
+- `"skilsaw"` $\rightarrow$ `("Circular Saw", "Power Tools")`
+- `"zipper disc"` $\rightarrow$ `("Cut-Off Disc", "Abrasives")`
+- `"romex"` $\rightarrow$ `("Non-Metallic Sheathed Cable", "Electrical")`
+- `"whirlybird"` $\rightarrow$ `("Roof Turbine Vent", "Building Materials")`
 
 ---
 
@@ -109,44 +113,9 @@ The agent decomposes the string into structured token types:
   "extracted_token_bag": {
     "dimensions": ["1/2\"x18\""],
     "pack_qty": "6pc",
-    "keywords": ["Sanding", "Belt"]
+    "keywords": ["Sanding", "Belt"],
+    "thesaurus": null
   },
   "is_valid": true
 }
 ```
-
----
-
-## 5. Edge Cases & Fallback Handling
-
-| Edge Case | Raw Example | Handling Strategy |
-| :--- | :--- | :--- |
-| **All Brand Fields Empty** | `E1_Brand: -- Unbranded --`, `Part_Manuf: ""` | Agent parses `Part_Desc` for embedded brand tokens (`Diablo`, `Milw`, `3M`). |
-| **Malformed Dimension Spacing** | `1nx6-16'` or `7/8nx6-20'` | Regex normalizer intercepts `nx` and converts to `in x`. |
-| **Double Quote Escapes** | `Diablo 1/2""x18""` | Replace double quotation characters `""` with single `"`. |
-| **Distributor Name as MFR** | `Jam Industrial Supply LLC (JAMIN)` | Flags for Agent 2 to resolve actual OEM (e.g. `3M™`). |
-
----
-
-## 6. Worked Test Case
-
-### Test Input:
-```csv
-Mfg_Part_Num: 49-94-0101
-Part_Desc: "49-94-0101 Milw 4-1/2""x.045""x7/8"" Perform+ Metal Cut Off Disc 10pc"
-E1_Brand: -- Unbranded --
-Unilog_Brand: -- No Unilog Brand --
-DIB_Brand: -- No DIB Brand --
-Part_Manuf: Milwaukee Accessory (4031)
-```
-
-### Agent 1 Execution:
-1. **Placeholder Filter:** `E1_Brand`, `Unilog_Brand`, `DIB_Brand` $\rightarrow$ `None`.
-2. **Supplier Split:** `Part_Manuf` $\rightarrow$ Name: `"Milwaukee Accessory"`, Code: `"4031"`.
-3. **MPN Strip:** Strip `"49-94-0101"` from description $\rightarrow$ `"Milw 4-1/2"x.045"x7/8" Perform+ Metal Cut Off Disc 10pc"`.
-4. **Tokenization:**
-   - Brand Token: `"Milw"` $\rightarrow$ Candidate for `Milwaukee`.
-   - Dimension Token: `"4-1/2\"x.045\"x7/8\""`.
-   - Series Token: `"Perform+"` $\rightarrow$ `"Performance+"`.
-   - Category Token: `"Metal Cut Off Disc"`.
-   - Packaging Token: `"10pc"`.

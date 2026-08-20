@@ -98,11 +98,14 @@ Most hackathon solutions fall into one of two extremes:
 ### 10. Industry Slang & Trade Jargon Thesaurus
 - Pre-classification mapping resolving contractor slang (`sawzall`, `skilsaw`, `zipper disc`, `romex`, `whirlybird`) into canonical taxonomy nodes.
 
-### 11. Full-Stack Enterprise Experience (Not Just a Jupyter Notebook)
+### 11. Multimodal Vision-Language Spec Sheet Parser (Vision RAG)
+- Ingests uploaded technical CAD drawings, exploded parts diagrams, and PDF dimensional schematics via `gpt-4o-mini` with Vision (`POST /api/v1/enrich/vision`) to extract structured mechanical dimensions and nameplate ratings.
+
+### 12. Full-Stack Enterprise Experience (Not Just a Jupyter Notebook)
 - High-performance FastAPI backend with Swagger docs (`/docs`).
 - Interactive Vite + React + TailwindCSS enterprise studio featuring:
   * Virtualized 252-column data grid with sticky keys.
-  * Live Single-SKU Sandbox with 7 core industry presets.
+  * Live Single-SKU Sandbox with 7 core industry presets (including live OpenAI latency badges).
   * Animated 9-agent DAG swarm trace.
   * 1-Click batch CSV upload and 252-column delivery export.
 
@@ -135,6 +138,7 @@ To ensure complete credibility and avoid exaggerated claims, here are the real-w
 | **Active Learning Overrides Store** | DuckDB `kb_active_overrides` | **100% Verified** |
 | **Trade Slang Thesaurus** | `sawzall` $\rightarrow$ Reciprocating Saw | **100% Verified** |
 | **Interactive Knowledge Base Explorer** | 27K Brands, 161K LOVs, 63 Fractions | **100% Operational** |
+| **Multimodal Vision RAG Extraction** | `gpt-4o-mini` Vision parsing | **100% Operational** |
 
 ---
 
