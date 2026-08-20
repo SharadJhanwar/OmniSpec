@@ -9,6 +9,10 @@ import BatchUploadModal from './components/BatchUploadModal';
 import KnowledgeBaseExplorer from './components/KnowledgeBaseExplorer';
 import DBOMModal from './components/DBOMModal';
 import CompatibilityMatrixModal from './components/CompatibilityMatrixModal';
+import ParametricSearchModal from './components/ParametricSearchModal';
+import ProductFamilyModal from './components/ProductFamilyModal';
+
+
 
 // Initial Ground-Truth Seed Items for instant interactive showcase
 const SEED_ITEMS = [
@@ -118,11 +122,13 @@ export default function App() {
   const [selectedReviewItem, setSelectedReviewItem] = useState(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   
-  // Phase 7 Modals
+  // Phase 7, 8 & 9 Modals
   const [isDbomModalOpen, setIsDbomModalOpen] = useState(false);
   const [dbomData, setDbomData] = useState(null);
   const [isDbomLoading, setIsDbomLoading] = useState(false);
   const [isCompatibilityModalOpen, setIsCompatibilityModalOpen] = useState(false);
+  const [isParametricSearchOpen, setIsParametricSearchOpen] = useState(false);
+  const [isFamilyModalOpen, setIsFamilyModalOpen] = useState(false);
 
   // Load server catalog on initial mount
   useEffect(() => {
@@ -245,6 +251,8 @@ export default function App() {
         onExportClick={handleExportCSV}
         onExportExcelClick={handleExportExcel}
         onCompatibilityClick={() => setIsCompatibilityModalOpen(true)}
+        onParametricSearchClick={() => setIsParametricSearchOpen(true)}
+        onFamiliesClick={() => setIsFamilyModalOpen(true)}
         totalRows={items.length}
       />
 
@@ -305,6 +313,18 @@ export default function App() {
         onClose={() => setIsCompatibilityModalOpen(false)}
       />
 
+      {/* Parametric Search Studio Modal */}
+      <ParametricSearchModal
+        isOpen={isParametricSearchOpen}
+        onClose={() => setIsParametricSearchOpen(false)}
+      />
+
+      {/* Product Family Discovery & Variant Induction Modal */}
+      <ProductFamilyModal
+        isOpen={isFamilyModalOpen}
+        onClose={() => setIsFamilyModalOpen(false)}
+      />
+
       {/* Batch Upload Modal */}
       <BatchUploadModal
         isOpen={isUploadOpen}
@@ -314,3 +334,4 @@ export default function App() {
     </div>
   );
 }
+

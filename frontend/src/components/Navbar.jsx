@@ -1,7 +1,7 @@
 import React from 'react';
 import { Layers, Cpu, ShieldCheck, Sparkles, Download, Upload, FileSpreadsheet, GitCompare } from 'lucide-react';
 
-export default function Navbar({ onUploadClick, onExportClick, onExportExcelClick, onCompatibilityClick, isProcessing, totalRows }) {
+export default function Navbar({ onUploadClick, onExportClick, onExportExcelClick, onCompatibilityClick, onParametricSearchClick, onFamiliesClick, isProcessing, totalRows }) {
   return (
     <header className="sticky top-0 z-40 border-b border-surface-border glass-panel">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -29,6 +29,24 @@ export default function Navbar({ onUploadClick, onExportClick, onExportExcelClic
             <span className="text-slate-500">|</span>
             <span className="text-cyan-400 font-medium">154 SKUs/s</span>
           </div>
+
+          <button
+            onClick={onFamiliesClick}
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-indigo-950/80 hover:bg-indigo-900/90 border border-indigo-700/60 text-indigo-300 font-semibold text-xs transition-all shadow-sm cursor-pointer"
+            title="Open Product Families & Variant Matrix Studio"
+          >
+            <Layers className="h-4 w-4 text-indigo-400" />
+            <span className="hidden sm:inline">Product Families</span>
+          </button>
+
+          <button
+            onClick={onParametricSearchClick}
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-cyan-950/80 hover:bg-cyan-900/90 border border-cyan-700/60 text-cyan-300 font-semibold text-xs transition-all shadow-sm cursor-pointer"
+            title="Open Natural Language Parametric Constraint Search Studio"
+          >
+            <Sparkles className="h-4 w-4 text-cyan-400" />
+            <span className="hidden sm:inline">Parametric Search</span>
+          </button>
 
           <button
             onClick={onCompatibilityClick}
