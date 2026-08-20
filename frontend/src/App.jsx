@@ -270,7 +270,11 @@ export default function App() {
         <SingleSkuSandbox
           onEnrichSuccess={handleSingleEnrichSuccess}
           onInspectDbomClick={handleOpenDbom}
+          onOpenCompatibility={() => setIsCompatibilityModalOpen(true)}
+          onOpenParametricSearch={() => setIsParametricSearchOpen(true)}
+          onOpenFamilies={() => setIsFamilyModalOpen(true)}
         />
+
 
         {/* 9-Agent LangGraph Swarm Visualizer */}
         <AgentSwarmVisualizer
