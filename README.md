@@ -2,7 +2,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Orchestrator-ReAct%20Cognitive%20Brain-red?style=for-the-badge&logo=openai" alt="ReAct Brain" />
-  <img src="https://img.shields.io/badge/Architecture-LangGraph%209--Agent%20Swarm-cyan?style=for-the-badge&logo=diagramsdotnet" alt="Architecture" />
+  <img src="https://img.shields.io/badge/Architecture-LangGraph%2010--Agent%20Swarm-cyan?style=for-the-badge&logo=diagramsdotnet" alt="Architecture" />
   <img src="https://img.shields.io/badge/Delivery%20Format-252%20Columns%20(100%25%20Conformant)-emerald?style=for-the-badge" alt="252 Columns" />
   <img src="https://img.shields.io/badge/Throughput-278.6%20SKUs%2Fsec-blue?style=for-the-badge" alt="Speed" />
   <img src="https://img.shields.io/badge/Knowledge%20Base-DuckDB%20(27K%20Brands%20%7C%20161K%20LOVs)-amber?style=for-the-badge" alt="DuckDB" />
@@ -18,7 +18,7 @@
 
 - [🎯 Problem Statement & Industrial Context](#-problem-statement--industrial-context)
 - [🧠 ReAct Cognitive Brain & Multi-Hop Architecture](#-react-cognitive-brain--multi-hop-architecture)
-- [🏛️ 9-Agent Swarm Topology & Interactive Architecture Index](#️-9-agent-swarm-topology--interactive-architecture-index)
+- [🏛️ 10-Agent Swarm Topology & Interactive Architecture Index](#️-10-agent-swarm-topology--interactive-architecture-index)
 - [📊 Evidence-Aware 5-Pillar Confidence Engine](#-evidence-aware-5-pillar-confidence-engine)
 - [⚡ Variable-Level Caching & Active Learning Loop](#-variable-level-caching--active-learning-loop)
 - [🔬 Cryptographic Data Bill of Materials (DBOM) & Lineage](#-cryptographic-data-bill-of-materials-dbom--lineage)
@@ -42,7 +42,7 @@ Industrial distributors and manufacturers manage millions of SKUs across technic
 - **Strict Compliance Governance:** Industrial e-commerce buyers need exact 252-column structured delivery schemas, strict character limits (`INVOICE_DESC` $\le 40$ chars ALL CAPS, `MOBILE_DESC` $60\text{--}80$ chars), legal brand casing with registered marks (`®`, `™`), and 100% zero-hallucination sourcing.
 
 ### OmniSpec AI's Solution
-OmniSpec AI is an **autonomous, 9-agent LangGraph Swarm** orchestrated by a central **ReAct Cognitive Brain**, backed by an in-memory **DuckDB Knowledge Engine** (27,000+ legal UniCat brands, 161,000 controlled LOVs, 63 fractional lookup tables) and **Corrective RAG (CRAG) with live Web & OEM PDF Datasheet discovery**. It expands a raw supplier row into a fully validated, **252-column commerce-ready delivery record** with cell-level cryptographic provenance and zero hallucinations.
+OmniSpec AI is an **autonomous, 10-agent LangGraph Swarm** orchestrated by a central **ReAct Cognitive Brain**, backed by an in-memory **DuckDB Knowledge Engine** (27,000+ legal UniCat brands, 161,000 controlled LOVs, 63 fractional lookup tables) and **Corrective RAG (CRAG) with live Web & OEM PDF Datasheet discovery**. It expands a raw supplier row into a fully validated, **252-column commerce-ready delivery record** with cell-level cryptographic provenance and zero hallucinations.
 
 ---
 
