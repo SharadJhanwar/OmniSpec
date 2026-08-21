@@ -3,38 +3,38 @@
 
 ---
 
-## 1. Agent Overview & Role
+## 1. Architectural Blueprint & Component Topology
 
-The **Ingestion, De-Noising & Tokenizer Agent** serves as the initial gatekeeper for the OmniSpec AI enrichment pipeline. Raw distributor data feeds arrive contaminated with non-standard delimiters, placeholder values (e.g. `-- Unbranded --`), cryptic abbreviations, supplier-specific vendor codes (e.g. `Freud Inc (2435)`), merged dimension tokens (e.g. `1nx6-16'`), and informal contractor slang (e.g. `sawzall`, `zipper disc`, `romex`).
+```mermaid
+flowchart TD
+    subgraph INGESTION_INPUT ["📥 Raw Input Payload"]
+        RAW_MPN["Raw MPN (e.g. 'DCB518ASTS06G')"]
+        RAW_DESC["Raw Part Desc (e.g. 'DCB518ASTS06G Diablo 1/2''x18'' - Sanding Belt 6pc sawzall')"]
+        RAW_BRAND["Brand Placeholders (e.g. '-- Unbranded --', '-- No Unilog Brand --')"]
+        RAW_MFR["Supplier String (e.g. 'Freud Inc (2435)')"]
+    end
 
-### Core Objectives:
-1. **Placeholder Eradication:** Detect and purge negative placeholders across brand/supplier columns.
-2. **Deterministic Tokenization:** Split unstructured `Part_Desc` strings into categorized tokens (MPN prefix, Brand mention, Dimension blocks, Technical keywords, Noise tokens).
-3. **Trade Slang & Thesaurus Mapping:** Resolve informal jobsite slang (`sawzall`, `skilsaw`, `zipper disc`, `romex`, `whirlybird`) against the DuckDB `industry_thesaurus` table into canonical product classifications.
-4. **Supplier Code Separation:** Separate corporate vendor suffixes (e.g. `(2435)`, `(JAMIN)`, `(BOICA)`) from legal manufacturer names.
-5. **De-duplication & Hashing:** Generate SHA-256 fingerprint hashes for row-level idempotency and incremental processing.
+    subgraph AGENT_1_CORE ["⚙️ Agent 1 Lexical Engine (IngestionAgent)"]
+        direction TB
+        STEP1["1. Placeholder Purge & Sanitization<br/>• Regex Matcher strips '-- Unbranded --', '-- No DIB Brand --'<br/>• Unescapes HTML entities & non-breaking spaces (&quot; &amp; &nbsp;)"]
+        STEP2["2. Supplier Vendor-Code Isolator<br/>• Extracts legal name ('Freud Inc')<br/>• Extracts vendor code ('2435', 'JAMIN', 'BOICA')"]
+        STEP3["3. Trade Slang & Contractor Thesaurus<br/>• Queries DuckDB industry_thesaurus<br/>• Resolves 'sawzall' → Reciprocating Saw, 'romex' → Non-Metallic Cable"]
+        STEP4["4. Lexical Token Segmenter<br/>• Isolates MPN prefix ('DCB518ASTS06G')<br/>• Isolates brand tokens ('Diablo', 'Freud')<br/>• Isolates dimension blocks ('1/2\"x18\"')<br/>• Isolates pack count ('6pc')"]
+        STEP5["5. Cryptographic Fingerprint<br/>• Computes deterministic SHA-256 row hash for lineage tracking"]
+        
+        STEP1 --> STEP2 --> STEP3 --> STEP4 --> STEP5
+    end
 
-```
-+----------------------------------------------------------------------------------------------------+
-|                                      AGENT 1 FLOW DIAGRAM                                          |
-|                                                                                                    |
-|   [ Raw Supplier Row ]                                                                             |
-|   • Part_Desc: "DCB518ASTS06G Diablo 1/2""x18"" - Sanding Belt 6pc sawzall"                        |
-|   • Part_Manuf: "Freud Inc (2435)"                                                                 |
-|   • E1_Brand / Unilog_Brand: "-- Unbranded --", "-- No Unilog Brand --"                            |
-|             │                                                                                      |
-|             ▼                                                                                      |
-|   ┌────────────────────────────────────────────────────────────────────────────────────────────┐   |
-|   │ 1. Placeholder Stripper: Replace placeholders with NULL                                    │   |
-|   │ 2. Supplier Code Parser: Extract "Freud Inc" + Supplier Code "2435"                        │   |
-|   │ 3. MPN Extractor: Detect prefix "DCB518ASTS06G"                                            │   |
-|   │ 4. Dimension Tokenizer: Isolate '1/2"x18"', '6pc', 'Sanding Belt'                          │   |
-|   │ 5. Industry Thesaurus: Map 'sawzall' -> ('Reciprocating Saw', 'Power Tools')               │   |
-|   └────────────────────────────────────────────────────────────────────────────────────────────┘   |
-|             │                                                                                      |
-|             ▼                                                                                      |
-|   [ Cleaned Token Bag & Normalized Input State ] ───► Handed off to Agent 2 & Agent 4             |
-+----------------------------------------------------------------------------------------------------+
+    subgraph ENRICHED_STATE ["📦 State Delta Output (ProductEnrichmentState)"]
+        CLEAN_MPN["clean_mfg_part_num: 'DCB518ASTS06G'"]
+        CLEAN_DESC["cleaned_part_desc: 'Diablo 1/2\"x18\" - Sanding Belt 6pc'"]
+        CLEAN_MFR["clean_supplier_name: 'Freud Inc', vendor_code: '2435'"]
+        TOKENS["brand_candidates: ['Diablo', 'Freud Inc'], dimension_blocks: ['1/2\"x18\"']"]
+        HASH["row_hash: 'd89a55a9...'"]
+    end
+
+    INGESTION_INPUT --> STEP1
+    STEP5 --> ENRICHED_STATE
 ```
 
 ---
@@ -58,64 +58,30 @@ The **Ingestion, De-Noising & Tokenizer Agent** serves as the initial gatekeeper
 ### Step 1: Placeholder Eradication Engine
 The agent checks all brand and text fields against a compiled list of negative placeholders:
 ```python
-PLACEHOLDER_PATTERNS = [
-    r"^--\s*Unbranded\s*--$",
-    r"^--\s*No\s+Unilog\s+Brand\s*--$",
-    r"^--\s*No\s+DIB\s+Brand\s*--$",
-    r"^--\s*No\s+Brand\s*--$",
-    r"^UNKNOWN$",
-    r"^N/A$",
-    r"^NONE$"
-]
+NEGATIVE_PLACEHOLDERS = {
+    "-- unbranded --", "-- no unilog brand --", "-- no dib brand --",
+    "unbranded", "no brand", "generic", "n/a", "none", "unknown", "--"
+}
 ```
 
-### Step 2: Supplier String & Vendor Code Parser
-Extracts clean corporate names while isolating numerical distributor account codes:
-- Pattern: `r"^(.*?)\s*\(([A-Za-z0-9]+)\)$"`
-- Input: `"Appliance Dealers Cooperative (APPDE)"` $\rightarrow$ Name: `"Appliance Dealers Cooperative"`, Vendor Code: `"APPDE"`.
-- Input: `"Milwaukee Accessory (4031)"` $\rightarrow$ Name: `"Milwaukee Accessory"`, Vendor Code: `"4031"`.
+### Step 2: Contractor Slang Thesaurus (DuckDB)
+Queries the in-memory DuckDB `industry_thesaurus` table:
+```sql
+SELECT canonical_product_noun, classpath_hint, category_group 
+FROM industry_thesaurus 
+WHERE LOWER(slang_term) = LOWER(?)
+```
 
-### Step 3: MPN Duplicate Stripping & Normalization
-1. **Redundant MPN Prefix Removal:** If `Part_Desc` begins with `Mfg_Part_Num`, the duplicate prefix is tokenized as `MPN_TOKEN` and stripped from the active description to isolate technical attributes.
-2. **Symbol & Delimiter Normalization:**
-   - Standardizes escaped quotes: `1/2""x18""` $\rightarrow$ `1/2"x18"`.
-   - Normalizes hyphens & en-dashes: ` - ` $\rightarrow$ delimiter split token.
-   - Cleans erroneous spacing around dimensions: `1nx6-16'` $\rightarrow$ `1 in x 6 in x 16 ft`.
-
-### Step 4: Token Bag Segmentation
-The agent decomposes the string into structured token types:
-- **BRAND_CANDIDATE:** `["Diablo", "Freud"]`
-- **DIMENSION_CANDIDATE:** `["1/2\"x18\"", "6pc"]`
-- **PRODUCT_TYPE_CANDIDATE:** `["Sanding Belt"]`
-
-### Step 5: Industry Slang & Contractor Thesaurus Resolution
-Queries the DuckDB `industry_thesaurus` table to translate common contractor jargon:
-- `"sawzall"` $\rightarrow$ `("Reciprocating Saw", "Power Tools")`
-- `"skilsaw"` $\rightarrow$ `("Circular Saw", "Power Tools")`
-- `"zipper disc"` $\rightarrow$ `("Cut-Off Disc", "Abrasives")`
-- `"romex"` $\rightarrow$ `("Non-Metallic Sheathed Cable", "Electrical")`
-- `"whirlybird"` $\rightarrow$ `("Roof Turbine Vent", "Building Materials")`
+| Slang Term | Canonical Product Noun | Category Hint |
+| :--- | :--- | :--- |
+| `sawzall` | `Reciprocating Saw` | Power Tools |
+| `skilsaw` | `Circular Saw` | Power Tools |
+| `romex` | `Non-Metallic Sheathed Cable` | Electrical |
+| `zipper disc` | `Cut-Off Wheel` | Abrasives |
+| `whirlybird` | `Turbine Roof Vent` | HVAC & Ventilation |
 
 ---
 
-## 4. Output Schema & Downstream Contracts
-
-```json
-{
-  "row_id": "row_001",
-  "row_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-  "clean_mfg_part_num": "DCB518ASTS06G",
-  "raw_part_desc": "DCB518ASTS06G Diablo 1/2\"x18\" - Sanding Belt 6pc",
-  "cleaned_part_desc": "Diablo 1/2\"x18\" - Sanding Belt 6pc",
-  "clean_supplier_name": "Freud Inc",
-  "supplier_vendor_code": "2435",
-  "brand_candidates": ["Diablo", "Freud Inc"],
-  "extracted_token_bag": {
-    "dimensions": ["1/2\"x18\""],
-    "pack_qty": "6pc",
-    "keywords": ["Sanding", "Belt"],
-    "thesaurus": null
-  },
-  "is_valid": true
-}
-```
+## 4. Execution Telemetry & Performance
+- **Average Latency:** $0.6\text{--}1.5\text{ ms}$ per SKU.
+- **Trace Output:** Logs `[Agent 1 ✓] Ingestion Complete (<ms> ms) — MPN: '<clean_mpn>'`.

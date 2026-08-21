@@ -12,7 +12,7 @@
 ### 1.1 Project Identity
 - **Project Name:** **OmniSpec AI**
 - **Tagline:** *From Cryptic Raw Part Rows to 252-Column Commerce-Ready Master Truth.*
-- **System Classification:** Autonomous Multi-Agent Knowledge Graph & RAG-Powered Product Master Data Management (PIM/MDM) Enrichment Pipeline.
+- **System Classification:** Autonomous Multi-Agent Knowledge Graph & ReAct Cognitive RAG-Powered Product Master Data Management (PIM/MDM) Enrichment Pipeline.
 - **Core Value Proposition:** Converts cryptic, truncated, abbreviated supplier catalog rows (e.g., `49-94-0013 Milw 5"x.045"x7/8" Metal Cut Off Disc`) into fully enriched, strictly compliant 252-column master data records with 100% adherence to controlled vocabularies (LOVs), Master UOM standards, multi-channel formulaic copy, traceable sourcing, active learning human feedback, and automated engineering cut sheet generation.
 
 ```
@@ -20,10 +20,10 @@
 |                                         OMNISPEC AI CORE                                            |
 |                                                                                                    |
 |   [ Messy Supplier Row ]                 [ AI Multi-Agent Pipeline ]              [ Master Truth ] |
-|   • "3/8 CPLG BRS 150#"        ===>      • Deterministic Normalizer    ===>       • 252 Columns    |
+|   • "3/8 CPLG BRS 150#"        ===>      • ReAct Cognitive Brain       ===>       • 252 Columns    |
 |   • "-- Unbranded --"                    • UniCat Entity Resolution               • 100% LOV Match |
 |   • Missing UOMs / Specs                 • Constrained LOV Extractor              • 6 Copy Tiers   |
-|                                          • OEM Sourcing & Spec RAG                • Full Lineage   |
+|                                          • OEM Sourcing & Spec RAG                • DBOM Lineage   |
 +----------------------------------------------------------------------------------------------------+
 ```
 
@@ -66,7 +66,7 @@ The pipeline generates records structured across **10 distinct functional data t
 
 ---
 
-## 4. Multi-Agent Swarm Orchestration (9 Specialized DAG Nodes)
+## 4. Multi-Agent Swarm Orchestration (9 Specialized DAG Nodes + ReAct Brain)
 
 ```
                                       [ Raw Messy Supplier Feed ]
@@ -79,7 +79,7 @@ The pipeline generates records structured across **10 distinct functional data t
                                                    │
                                                    ▼
                                 ┌──────────────────────────────────────┐
-                                │ Agent 2: Brand & Entity Resolution   │  <── Checks Active Overrides, UniCat 27K DuckDB (®, ™)
+                                │ Agent 2: Brand & Entity Resolution   │  <── Checks Active Overrides, UniCat 27K DuckDB (®, ™), Live Search
                                 └──────────────────┬───────────────────┘
                                                    │
                                                    ▼
@@ -94,7 +94,7 @@ The pipeline generates records structured across **10 distinct functional data t
                                                    │
                                                    ▼
                                 ┌──────────────────────────────────────┐
-                                │ Agent 5: Autonomous OEM Sourcing RAG │  <── Official OEM Whitelist & Vision Spec RAG
+                                │ Agent 5: Autonomous OEM Sourcing RAG │  <── Official OEM Whitelist & Corrective RAG (CRAG)
                                 └──────────────────┬───────────────────┘
                                                    │
                                                    ▼
@@ -114,7 +114,7 @@ The pipeline generates records structured across **10 distinct functional data t
                                                    │
                                                    ▼
                                 ┌──────────────────────────────────────┐
-                                │ Agent 9: Quality Audit & HITL Gate   │  <── 12 Integrity Rules & Cell Provenance Lineage
+                                │ Agent 9: Quality Audit & HITL Gate   │  <── Evidence-Aware Confidence & DBOM Lineage Hash
                                 └──────────────────┬───────────────────┘
                                                    │
                                                    ▼
@@ -134,7 +134,7 @@ The pipeline generates records structured across **10 distinct functional data t
 2. **Pydantic Schema Creation:** Complete typed Python model mapping all 252 columns with regex validators and length constraints.
 
 ### Phase 2: Autonomous Multi-Agent Pipeline
-1. **Brand Resolution Module:** Strip `-- Unbranded --`, fuzzy match against UniCat, append `®`/`™`.
+1. **Brand Resolution Module:** Strip `-- Unbranded --`, fuzzy match against UniCat, append `®`/`™`, fall back to live DuckDuckGo discovery.
 2. **Regex Spec Parser:** Extract sizes, dimensions, electrical specs, grit, and quantity pack metrics.
 3. **Deep Category Handlers:** Specialized logic for high-value categories (e.g. Lighting, Power Tools, Decking, Wiring Devices, Abrasives, Plumbing, Appliances).
 4. **Copy Generation Formulas:** Deterministic templates enforcing length constraints for Invoice ($\le 40$ UPPERCASE), Mobile ($60\text{--}80$ chars), and Title formulas.
@@ -166,6 +166,12 @@ The pipeline generates records structured across **10 distinct functional data t
 4. **Interactive UniCat Knowledge Graph Explorer:** Live UI explorer surfacing 27K UniCat Brands, 161K LOVs, 63 Decimal fractions, and Trade Slang Thesaurus (`KnowledgeBaseExplorer.jsx`).
 5. **Multimodal Vision Spec Sheet RAG:** Vision LLM endpoint (`POST /api/v1/enrich/vision`) to parse technical drawing images and nameplates.
 
+### Phase 7: ReAct Cognitive Brain & Variable-Level Provenance (Current Milestone)
+1. **Central ReAct Cognitive Brain:** Multi-hop reasoning loop with 7 specialized tools (DuckDB hybrid retrieval, web search, PDF crawler, spec parser, LOV binder, copy synthesizer, asset namer).
+2. **Variable-Level & Cell-Level Caching:** Tracks `is_cached`, `source_type`, and `confidence` on every cell; cached human overrides resolve with 100% confidence and bypass HITL; uncached novel items route to HITL.
+3. **5-Pillar Evidence-Aware Confidence Formulation:** Decomposed mathematical confidence scoring ($0.20 \times Q_{\text{retrieval}} + 0.20 \times A_{\text{authority}} + 0.20 \times C_{\text{consistency}} + 0.20 \times S_{\text{agreement}} + 0.20 \times V_{\text{validation}} - \text{Penalties}$).
+4. **Data Bill of Materials (DBOM):** Cryptographic cell-level audit provenance sealed with SHA-256 hashes.
+
 ---
 
 ## 6. Hackathon-Winning Edge & Unique Innovations
@@ -176,16 +182,17 @@ The pipeline generates records structured across **10 distinct functional data t
 +------------------------------------+---------------------------------------------------------------+
 | Feature                            | Competitive Advantage                                         |
 +------------------------------------+---------------------------------------------------------------+
-| 1. Deterministic LOV Guardrails    | Zero hallucination on attributes, UOMs, and Brand symbols     |
-| 2. Deep Category Specialization    | Full-depth implementation across 6 primary industrial sectors |
-| 3. Multi-Channel Formula Engine    | 100% compliance with Invoice <=40 & Mobile 60-80 char rules   |
-| 4. Traceability & Lineage Matrix   | Every cell linked to OEM source URL or LOV rule               |
-| 5. Interactive HITL Web Studio     | Enterprise-ready UI with virtualized 252-column editing grid   |
-| 6. Quantitative Ground Truth Score | 100% field accuracy scored against Unilog ground truth data   |
-| 7. Multi-Sheet Excel (.xlsx) Export| Formatted delivery workbook with frozen panes & audit sheet   |
-| 8. Autonomous PDF Datasheet Gen    | 1-click 1-page engineering PDF submittal cut sheet generation |
-| 9. Knowledge Base Visual Explorer  | Direct UI navigation of 27K Brands, 161K LOVs & Fractions     |
-| 10. Active Learning Overrides Store| DuckDB persistence converting human review into swarm memory  |
-| 11. Trade Slang Thesaurus          | Automatic translation of jobsite jargon to canonical taxonomy |
+| 1. ReAct Cognitive Brain           | Multi-hop reasoning over grounded evidence, zero hallucination |
+| 2. Variable-Level Caching          | 100% confidence on cached/approved items, zero unnecessary HITL|
+| 3. Evidence-Aware 5-Pillar Audit   | Transparent mathematical confidence scoring                   |
+| 4. Deterministic LOV Guardrails    | Zero hallucination on attributes, UOMs, and Brand symbols     |
+| 5. Deep Category Specialization    | Full-depth implementation across 6 primary industrial sectors |
+| 6. Multi-Channel Formula Engine    | 100% compliance with Invoice <=40 & Mobile 60-80 char rules   |
+| 7. Traceability & Lineage Matrix   | Every cell linked to OEM source URL, rule, and SHA-256 hash   |
+| 8. Interactive HITL Web Studio     | Enterprise-ready UI with virtualized 252-column editing grid   |
+| 9. Quantitative Ground Truth Score | 100% field accuracy scored against Unilog ground truth data   |
+| 10. Multi-Sheet Excel (.xlsx) Export| Formatted delivery workbook with frozen panes & audit sheet   |
+| 11. Autonomous PDF Datasheet Gen   | 1-click 1-page engineering PDF submittal cut sheet generation |
+| 12. Active Learning Overrides Store| DuckDB persistence converting human review into swarm memory  |
 +------------------------------------+---------------------------------------------------------------+
 ```

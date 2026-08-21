@@ -1,27 +1,30 @@
 # ⚡ OmniSpec AI — Industrial Product Intelligence Platform
 
 <p align="center">
+  <img src="https://img.shields.io/badge/Orchestrator-ReAct%20Cognitive%20Brain-red?style=for-the-badge&logo=openai" alt="ReAct Brain" />
   <img src="https://img.shields.io/badge/Architecture-LangGraph%209--Agent%20Swarm-cyan?style=for-the-badge&logo=diagramsdotnet" alt="Architecture" />
-  <img src="https://img.shields.io/badge/Delivery%20Format-252%20Columns%20(100%25%20Verified)-emerald?style=for-the-badge" alt="252 Columns" />
+  <img src="https://img.shields.io/badge/Delivery%20Format-252%20Columns%20(100%25%20Conformant)-emerald?style=for-the-badge" alt="252 Columns" />
   <img src="https://img.shields.io/badge/Throughput-278.6%20SKUs%2Fsec-blue?style=for-the-badge" alt="Speed" />
   <img src="https://img.shields.io/badge/Knowledge%20Base-DuckDB%20(27K%20Brands%20%7C%20161K%20LOVs)-amber?style=for-the-badge" alt="DuckDB" />
-  <img src="https://img.shields.io/badge/Frontend-Vite%20%2B%20React%2018%20%2B%20TailwindCSS-purple?style=for-the-badge&logo=react" alt="React" />
+  <img src="https://img.shields.io/badge/Lineage-DBOM%20Cell--Level%20Provenance-purple?style=for-the-badge" alt="DBOM" />
 </p>
 
 > **Tagline:** *"From Cryptic Raw Part Rows to 252-Column Commerce-Ready Master Truth."*  
-> **Challenge Track:** AI-Powered Product Intelligence for Industrial Commerce (UniHack Hackathon Challenge).
+> **Challenge Track:** AI-Powered Product Intelligence for Industrial Commerce (Unilog / UniHack Hackathon Challenge).
 
 ---
 
 ## 📑 Quick Navigation & Documentation Index
 
 - [🎯 Problem Statement & Industrial Context](#-problem-statement--industrial-context)
-- [🏛️ System Architecture Flowchart](#️-system-architecture-flowchart)
-- [🤖 9-Agent Swarm Deep Dive & Code Links](#-9-agent-swarm-deep-dive--code-links)
-- [🧠 Advanced Intelligence & Governance Services](#-advanced-intelligence--governance-services)
+- [🧠 ReAct Cognitive Brain & Multi-Hop Architecture](#-react-cognitive-brain--multi-hop-architecture)
+- [🏛️ 9-Agent LangGraph Swarm Topology](#️-9-agent-langgraph-swarm-topology)
+- [📊 Evidence-Aware 5-Pillar Confidence Engine](#-evidence-aware-5-pillar-confidence-engine)
+- [⚡ Variable-Level Caching & Active Learning Loop](#-variable-level-caching--active-learning-loop)
+- [🔬 Advanced Intelligence & Governance Services](#-advanced-intelligence--governance-services)
 - [💻 Complete Tech Stack](#-complete-tech-stack)
 - [📁 Repository Structure](#-repository-structure)
-- [🚀 Quickstart & How to Run](#-quickstart--how-to-run)
+- [🚀 Quickstart & Batch Evaluation](#-quickstart--batch-evaluation)
 - [🧪 Automated Testing & Verification Suite](#-automated-testing--verification-suite)
 - [✨ Multi-View Web Studio Workbenches](#-multi-view-web-studio-workbenches)
 - [📚 Solution Documentation & Benchmark Artifacts](#-solution-documentation--benchmark-artifacts)
@@ -30,361 +33,299 @@
 
 ## 🎯 Problem Statement & Industrial Context
 
-### The Core Industrial Commerce Challenge (from `PS.txt`)
-Industrial distributors and manufacturers manage millions of parts across technical catalogs, PDF datasheets, distributor feeds, and legacy ERP systems. Raw product data handed over by distributors is rarely e-commerce ready:
-- **Cryptic & Abbreviated Strings:** Short, unstructured descriptions such as `"3/8 CPLG BRS 150#"` or `"4-1/2X.045X7/8 MTL CUT-OFF DISC"`.
-- **Missing & Dummy Entities:** Crucial brand fields filled with placeholders like `"-- Unbranded --"`, `"-- No DIB Brand --"`, or raw vendor codes (`APPDE`, `BOICA`, `JAMIN`).
+### The Core Industrial Commerce Challenge
+Industrial distributors and manufacturers manage millions of SKUs across technical catalogs, PDF datasheets, distributor feeds, and legacy ERP systems. Raw product data handed over by distributors is rarely e-commerce ready:
+- **Cryptic & Abbreviated Strings:** Short, unstructured descriptions like `"3/8 CPLG BRS 150#"` or `"4-1/2X.045X7/8 MTL CUT-OFF DISC"`.
+- **Missing & Dummy Entities:** Crucial brand fields filled with placeholders like `"-- Unbranded --"`, `"-- No DIB Brand --"`, or vendor codes (`APPDE`, `BOICA`, `JAMIN`).
 - **Inconsistent Units & Formats:** Non-standard units (`24in` vs `24 in`), decimals where tradespeople search fractions (`0.5 in` vs `1/2 in`), and conflicting dimension order.
 - **Strict Compliance Governance:** Industrial e-commerce buyers need exact 252-column structured delivery schemas, strict character limits (`INVOICE_DESC` $\le 40$ chars ALL CAPS, `MOBILE_DESC` $60\text{--}80$ chars), legal brand casing with registered marks (`®`, `™`), and 100% zero-hallucination sourcing.
 
 ### OmniSpec AI's Solution
-OmniSpec AI is an **autonomous, 9-agent LangGraph Swarm** backed by an in-memory **DuckDB Knowledge Engine** (27,000+ legal UniCat brands, 161,000 controlled LOVs, 63 fractional lookup tables) and **multimodal Vision/PDF RAG**. It takes a single 6-column raw supplier row and deterministically expands it into a fully validated, **252-column commerce-ready delivery record** with cell-level cryptographic provenance and zero hallucinations.
+OmniSpec AI is an **autonomous, 9-agent LangGraph Swarm** orchestrated by a central **ReAct Cognitive Brain**, backed by an in-memory **DuckDB Knowledge Engine** (27,000+ legal UniCat brands, 161,000 controlled LOVs, 63 fractional lookup tables) and **Corrective RAG (CRAG) with live Web & OEM PDF Datasheet discovery**. It expands a raw supplier row into a fully validated, **252-column commerce-ready delivery record** with cell-level cryptographic provenance and zero hallucinations.
 
 ---
 
-## 🏛️ System Architecture Flowchart
+## 🧠 ReAct Cognitive Brain & Multi-Hop Architecture
+
+The **ReAct Master Brain** (`backend/app/orchestrator/react_orchestrator.py`) acts as the central cognitive orchestrator. It does not blindly query external search engines for every item; rather, it reasons iteratively over evidence:
 
 ```mermaid
 flowchart TD
-    subgraph INGESTION ["📥 1. Ingestion & Pre-Processing"]
-        RAW["Raw Supplier Feed<br/>(CSV / REST API / Single SKU)"]
-        PARSE["Raw Field Sanitizer<br/>• Strips '-- Unbranded --', HTML entities<br/>• Extracts supplier codes & trade jargon"]
-        RAW --> PARSE
+    IN["📥 INPUT PRODUCT<br/>(e.g., MPN='SHX78B75UC', Desc='Bosch 800 Series Dishwasher 42 dBA')"]
+    
+    subgraph REASONING ["🧠 ReAct 10-Step Cognitive Loop"]
+        STEP1["1. Direct Knowledge Extraction<br/>(Bosch, SHX78B75UC, Dishwasher, 42 dBA)"]
+        STEP2["2. Missing Information Gap Detection<br/>(OEM identity, exact dimensions, LOV schema)"]
+        STEP3["3. In-Memory Hybrid KB Search<br/>(DuckDB Exact + RapidFuzz + BM25 + Vector)"]
+        DEC1{"4. Is Evidence<br/>Sufficient?"}
+        
+        STEP4A["Local Extraction & Schema Binding"]
+        STEP4B["5. Targeted Multi-Hop Web/OEM RAG<br/>• Hop 1: General Brand/Domain Search<br/>• Hop 2: Authoritative OEM PDF Datasheet Crawler"]
+        
+        STEP6["6. LLM Reasoning Over Grounded Evidence<br/>(Zero hallucination cross-source consensus)"]
+        DEC2{"7. Still Uncertain<br/>or Conflicting?"}
+        
+        STEP8A["Accept & Fast-Path"]
+        STEP8B["8. HITL Human Review Queue<br/>(Specialist verifies & saves to DuckDB overrides)"]
+        
+        STEP9["9. Deterministic Validation Audit<br/>(12 automated contract boundary rules)"]
+        STEP10["10. Synthesize 252-Column Delivery Record<br/>with Cell-Level DBOM Cryptographic Lineage"]
     end
+    
+    IN --> STEP1 --> STEP2 --> STEP3 --> DEC1
+    DEC1 -- "YES (conf >= 0.85)" --> STEP4A --> STEP9
+    DEC1 -- "NO (Unseen/Ambiguous)" --> STEP4B --> STEP6 --> DEC2
+    DEC2 -- "NO (Resolved)" --> STEP8A --> STEP9
+    DEC2 -- "YES (Uncertain)" --> STEP8B --> STEP9
+    STEP9 --> STEP10
+```
 
-    subgraph SWARM ["🤖 2. 9-Agent LangGraph DAG Swarm"]
-        direction TB
-        A1["Agent 1: Ingestion & De-Noising<br/>• Normalizes MPN & tokenizes dimensions<br/>• Contractor Slang Thesaurus ('sawzall' → Reciprocating Saw)"]
-        A2["Agent 2: Entity Resolution & Canonicalization<br/>• Active Learning Overrides Cache<br/>• 27K UniCat Brands (®, ™ legal symbols)"]
-        A3["Agent 3: Taxonomy & UNSPSC Classifier<br/>• 4-Tier Hierarchical Classification Graph<br/>• 8-Digit Leaf UNSPSC Tagging"]
-        A4["Agent 4: Spec, Dim & UOM Extractor<br/>• 63 Fractional Constants (0.25 → 1/4 in)<br/>• Standardizes single-space Master UOMs"]
-        A5["Agent 5: Autonomous OEM Sourcing RAG<br/>• Official OEM Whitelist Filter<br/>• Prohibits marketplaces (Amazon, Grainger = 0%)"]
-        A6["Agent 6: Constrained LOV Mapper<br/>• 150-Column EAV Matrix (Labels, Values, UOMs)<br/>• 161,000+ Controlled Vocabularies"]
-        A7["Agent 7: Multi-Channel Copy Builder<br/>• INVOICE_DESC (<=40 Chars ALL CAPS)<br/>• MOBILE_DESC (60-80 Chars) & SHORT_DESC"]
-        A8["Agent 8: Digital Asset Synthesizer<br/>• Standardized JPG (<Brand>_<MPN>.jpg)<br/>• Autonomous PDF Submittal Spec Sheets"]
-        A9["Agent 9: Quality Audit & Governance Gate<br/>• 12 Automated Integrity Validation Rules<br/>• Weighted Confidence Scoring (0-100%)"]
+### Dedicated ReAct Tool Registry
+The brain is equipped with 7 modular domain tools:
+1. `tool_kb_hybrid_retrieval`: DuckDB exact + RapidFuzz + BM25 + vector search over 27K brands & overrides.
+2. `tool_web_search_general`: First-hop DuckDuckGo search for brand/category identity (consumer marketplaces blocked).
+3. `tool_datasheet_pdf_search`: Second-hop targeted crawler for OEM technical PDF datasheets (`.pdf`).
+4. `tool_extract_specs_and_uoms`: Deterministic numerical & dimension parser (`LxWxH`, `V`, `A`, `W`, `dBA`, `PSI`, `RPM`, `GPM`, `AWG`).
+5. `tool_bind_lov_schema`: Category LOV schema binder formatting up to 50 attribute triples (150 columns).
+6. `tool_synthesize_unilog_copy`: Strict character-bounded copy generator (`INVOICE_DESC` $\le 40$ chars ALL CAPS, `MOBILE_DESC` $60\text{--}80$ chars).
+7. `tool_generate_digital_assets`: Standardized asset namer (`<CleanBrand>_<MPN>.jpg` & `.pdf`).
 
-        PARSE --> A1 --> A2 --> A3 --> A4 --> A5 --> A6 --> A7 --> A8 --> A9
-    end
+---
 
-    subgraph ENGINES ["🧠 3. Advanced Intelligence & Analytics Services"]
-        direction TB
-        DBOM["Data Bill of Materials (DBOM)<br/>• Cell-level source attribution<br/>• SHA-256 Cryptographic Lineage Hash"]
-        DPI["Defect Probability Index (DPI)<br/>• Multi-variate risk scoring<br/>• Automatic HITL Queue Routing"]
-        SEARCH["Parametric Search AST Compiler<br/>• Sub-millisecond constraint parser<br/>• DuckDB SQL compilation & trade-off explainer"]
-        FAMILIES["Product Family Discovery<br/>• MPN Decomposition & Variant Induction<br/>• Fractional Assortment Gap Detector"]
-        COMPAT["Pairwise Compatibility Matrix<br/>• Mechanical arbor & RPM boundary fit<br/>• Direct Form-Fit-Function OEM Substitutes"]
+## 🏛️ 9-Agent LangGraph Swarm Topology
 
-        A9 --> DBOM
-        A9 --> DPI
-        A9 --> SEARCH
-        A9 --> FAMILIES
-        A9 --> COMPAT
-    end
+```
++-------------------------------------------------------------------------------------------------------------------------------+
+|                                            OMNISPEC AI 9-AGENT SWARM TOPOLOGY                                                  |
+|                                                                                                                               |
+|  [Raw Catalog Row]                                                                                                            |
+|         │                                                                                                                     |
+|         ▼                                                                                                                     |
+|  ┌──────────────┐      ┌──────────────┐      ┌──────────────┐      ┌──────────────┐      ┌──────────────┐                     |
+|  │   AGENT 1    │ ───► │   AGENT 2    │ ───► │   AGENT 3    │ ───► │   AGENT 4    │ ───► │   AGENT 5    │                     |
+|  │  Ingestion & │      │    Entity    │      │  Taxonomy &  │      │ Spec, Dim &  │      │ OEM Sourcing │                     |
+|  │ De-Noising   │      │  Resolution  │      │ Classification│     │  UOM Parser  │      │  & CRAG RAG  │                     |
+|  └──────────────┘      └──────────────┘      └──────────────┘      └──────────────┘      └──────────────┘                     |
+|                                                                                                  │                            |
+|                                                                                                  ▼                            |
+|  ┌──────────────┐      ┌──────────────┐      ┌──────────────┐      ┌──────────────┐      ┌──────────────┐                     |
+|  │ Final Output │ ◄─── │   AGENT 9    │ ◄─── │   AGENT 8    │ ◄─── │   AGENT 7    │ ◄─── │   AGENT 6    │                     |
+|  │ (252 Columns)│      │Quality, Audit│      │Digital Asset │      │ Multi-Channel│      │ Constrained  │                     |
+|  │ & Analytics  │      │    & HITL    │      │ Synthesizer  │      │ Copy Builder │      │  LOV Mapper  │                     |
+|  └──────────────┘      └──────────────┘      └──────────────┘      └──────────────┘      └──────────────┘                     |
++-------------------------------------------------------------------------------------------------------------------------------+
+```
 
-    subgraph DELIVERY ["📦 4. Enterprise Delivery & Export Layer"]
-        direction TB
-        SPA["Multi-View React SPA<br/>• Studio & Grid (/studio)<br/>• HITL Review Station (/review)<br/>• Parametric Search (/search)<br/>• Intelligence Hub (/intelligence)"]
-        EXCEL["Multi-Sheet Excel (.xlsx)<br/>• Frozen header panes (C2)<br/>• Executive KPI Audit Scorecard"]
-        CSV_OUT["252-Column CSV Deliverable<br/>(100% Header Conformant)"]
-        PDF_OUT["1-Page Engineering PDF Submittal<br/>(Contractor Ready Datasheet)"]
-        ACTIVE_LEARN["Active Learning Feedback Loop<br/>(Persists overrides to DuckDB)"]
+### Agent Roles & Deliverables
 
-        ENGINES --> SPA
-        ENGINES --> EXCEL
-        ENGINES --> CSV_OUT
-        ENGINES --> PDF_OUT
-        SPA -.->|Human Reviewer Override| ACTIVE_LEARN
-        ACTIVE_LEARN -.->|Prioritize on Re-enrichment| A2
-    end
+| # | Agent Name | Primary Mission | Deterministic Capabilities | AI / Generative Role | Key Output Fields |
+| :-: | :--- | :--- | :--- | :--- | :--- |
+| **1** | **Ingestion & De-Noising** | Cleans raw input, strips placeholders (`-- Unbranded --`), tokenizes dimensions. | Regex, Unicode normalizers, contractor jargon thesaurus. | Contextual token tagger. | Cleaned MPN, de-noised `Part_Desc`, token bag, row hash. |
+| **2** | **Brand & Entity Resolution** | Checks active reviewer overrides, resolves supplier names to canonical 27K UniCat brands with registered marks (`®`, `™`). | RapidFuzz C++, UniCat 27K dictionary, `kb_active_overrides` lookup. | Evidence-backed LLM disambiguator using live web search snippets. | `MANUFACTURER_NAME`, `BRAND_NAME`, `TRADE_NAME`, `®`/`™`. |
+| **3** | **Taxonomy & Classification** | Classifies SKU into 4-tier Classpath and assigns 8-digit leaf UNSPSC. | Category Tree Trie, UNSPSC lookup table. | Hierarchical category inference for novel products. | `Classpath`, `UNSPSC`, `Dept`, `Class`, `Fine`, `Product Name`. |
+| **4** | **Spec, Dim & UOM Parser** | Extracts physical dimensions, electrical specs, converts to 63 exact fractions. | 63-entry fraction lookup, Master UOM single-space standard, compiled regexes. | Complex technical phrasing parser. | `LENGTH`, `WIDTH`, `HEIGHT`, `WEIGHT`, normalized UOMs, electrical specs. |
+| **5** | **OEM Sourcing & CRAG RAG** | Discovers official OEM URLs, blocks marketplaces, ingests PDF technical datasheets. | Domain whitelist/blacklist, URL normalizer. | Corrective RAG (CRAG) with multi-engine web search & PDF submittal generator. | `MFR URL`, `Ref URL 1..5`, PDF datasheet link, certs. |
+| **6** | **Constrained LOV Mapper** | Binds raw specs to 161,000-row UniCat LOV schema across 50 triples (150 columns). | Inverted index search, Many-to-One synonym dictionary, 50-slot triple padding. | Constrained value alignment & synonym resolution. | `ATTRIBUTE_LABEL 1..50`, `ATTRIBUTE_VALUE 1..50`, `ATTRIBUTE_UOM 1..50`. |
+| **7** | **Multi-Channel Copy Builder** | Generates 6 distinct formulaic descriptions adhering to strict character caps. | Character counter, uppercase transformer, strict template engine. | High-converting marketing copy & bullet point generator with latency tracing. | `INVOICE_DESC` ($\le 40$ ALL CAPS), `MOBILE_DESC` ($60\text{--}80$), `SHORT_DESC`, `LONG_DESC1`, `ITEM_FEATURES_1..20`. |
+| **8** | **Digital Asset Synthesizer** | Builds canonical asset filenames and validates technical doc links. | String formatters, MIME validators. | Visual asset relevance scorer. | `Product Image`, `Alternate Image 1..4`, `Specification Sheet`, `SDS`, `RoHS`. |
+| **9** | **Quality Audit & HITL** | Runs 12 integrity checks, computes Evidence-Aware confidence, routes to HITL. | 12-rule validation suite, Levenshtein distance scorer, 5-pillar confidence engine. | Explainable anomaly detector. | Confidence scores ($0\text{--}100\%$), audit flags, HITL review queue payload. |
 
-    classDef primary fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
-    classDef agent fill:#022c22,stroke:#10b981,stroke-width:2px,color:#f0fdf4;
-    classDef engine fill:#311042,stroke:#c084fc,stroke-width:2px,color:#faf5ff;
-    classDef delivery fill:#172554,stroke:#60a5fa,stroke-width:2px,color:#eff6ff;
+---
 
-    class RAW,PARSE primary;
-    class A1,A2,A3,A4,A5,A6,A7,A8,A9 agent;
-    class DBOM,DPI,SEARCH,FAMILIES,COMPAT engine;
-    class SPA,EXCEL,CSV_OUT,PDF_OUT,ACTIVE_LEARN delivery;
+## 📊 Evidence-Aware 5-Pillar Confidence Engine
+
+Instead of arbitrary heuristic deductions, OmniSpec AI computes confidence using a **transparent mathematical decomposition**:
+
+$$\text{Confidence Score} = 0.20 \cdot Q_{\text{retrieval}} + 0.20 \cdot A_{\text{authority}} + 0.20 \cdot C_{\text{consistency}} + 0.20 \cdot S_{\text{agreement}} + 0.20 \cdot V_{\text{validation}} - \text{Pen}_{\text{contradictions}} - \text{Pen}_{\text{missing}}$$
+
+```text
+               ┌────────────────────────────────────────────────────────┐
+               │         5-PILLAR EVIDENCE-AWARE CONFIDENCE AUDIT       │
+               └──────────────────────────┬─────────────────────────────┘
+                                          │
+    ┌──────────────────┬──────────────────┼──────────────────┬──────────────────┐
+    ▼                  ▼                  ▼                  ▼                  ▼
+[1. Retrieval Quality][2. Evidence Auth] [3. Consistency]   [4. Agreement]     [5. Det. Validation]
+   Weight: 20%          Weight: 20%        Weight: 20%        Weight: 20%        Weight: 20%
+ ─────────────────   ─────────────────  ─────────────────  ─────────────────  ─────────────────
+ • Exact KB Match:    • Official PDF:    • >= 4 Attributes: • Full Consensus:  • Invoice <= 40:
+   1.00                 1.00               1.00               1.00               1.00
+ • High TF-IDF:       • Verified OEM:    • 2-3 Attributes:  • Inferred:        • Mobile 60-80:
+   0.85                 0.95               0.85               0.85               1.00
+ • Fallback Search:   • Distributor:     • 1 Attribute:     • Single Source:   • Assets .jpg/.pdf:
+   0.50                 0.80               0.70               0.60               1.00
+ • Zero Match:        • Unbranded:       • 0 Specs Grounded:• Conflicting:     • Overflow:
+   0.40                 0.35               0.45               0.40               -0.35 each
 ```
 
 ---
 
-## 🤖 9-Agent Swarm Deep Dive & Code Links
+## ⚡ Variable-Level Caching & Active Learning Loop
 
-Each micro-agent in the LangGraph DAG specializes in a distinct stage of catalog enrichment:
+### 1. Cached vs Uncached Routing Principles
+- **Cached / Human-Approved Knowledge**:
+  * If an SKU or variable was verified by a human specialist (in `kb_active_overrides`) or exact Master KB match $\rightarrow$ **Confidence = 100.0%**, **`needs_hitl_review = False`** (Zero human review required).
+- **Uncached / Novel Knowledge**:
+  * If an SKU is newly ingested, inferred, or web-discovered $\rightarrow$ **`needs_hitl_review = True`** (Routes to human specialist for initial verification).
+  * The specialist reviews and saves the override in DuckDB $\rightarrow$ **Every subsequent request for this SKU immediately resolves from cache with 100% confidence!**
 
-| Agent | Name | Code Implementation | Deep-Dive Documentation | Primary Architectural Function |
-| :--- | :--- | :--- | :--- | :--- |
-| **Agent 1** | **Ingestion & De-Noising** | [`agent_1_ingestion.py`](backend/app/agents/agent_1_ingestion.py) | [Agent 1 Guide](Solution/agents/README_Agent_1_Ingestion_Tokenization.md) | Strips dummy strings (`-- Unbranded --`), decodes HTML entities, isolates raw dimension tokens, extracts vendor codes (`APPDE`, `BOICA`), and translates trade jargon (`sawzall` $\rightarrow$ Reciprocating Saw). |
-| **Agent 2** | **UniCat Entity Resolution** | [`agent_2_entity_resolution.py`](backend/app/agents/agent_2_entity_resolution.py) | [Agent 2 Guide](Solution/agents/README_Agent_2_Entity_Resolution.md) | Prioritizes active learning reviewer overrides, then executes C++ RapidFuzz matching across 27,000+ UniCat records with exact legal casing and mandatory trademark symbols (`FRIGIDAIRE®`, `Milwaukee®`, `3M™`, `DEWALT®`). |
-| **Agent 3** | **Taxonomy & UNSPSC** | [`agent_3_taxonomy.py`](backend/app/agents/agent_3_taxonomy.py) | [Agent 3 Guide](Solution/agents/README_Agent_3_Taxonomy_Classification.md) | Maps product intent to a 4-tier category path (`Dept > Class > Fine > Subfine`), tags 8-digit UNSPSC codes, and triggers dynamic LOV schema validation from DuckDB. |
-| **Agent 4** | **Spec, Dim & UOM Extractor** | [`agent_4_spec_uom.py`](backend/app/agents/agent_4_spec_uom.py) | [Agent 4 Guide](Solution/agents/README_Agent_4_Spec_UOM_Extractor.md) | Extracts dimension triplets (`L x W x H`), converts decimals to 63 exact fraction lookup standards (`50.25` $\rightarrow$ `50-1/4 in`), and enforces single-space UOM formatting (`24 in`, not `24in`). |
-| **Agent 5** | **OEM Sourcing RAG** | [`agent_5_oem_sourcing.py`](backend/app/agents/agent_5_oem_sourcing.py) | [Agent 5 Guide](Solution/agents/README_Agent_5_OEM_Sourcing_RAG.md) | Discovers authoritative OEM manufacturer portals and technical PDF spec sheets while strictly blocking prohibited third-party marketplaces (Amazon, Grainger, eBay). |
-| **Agent 6** | **Constrained LOV Mapper** | [`agent_6_lov_mapper.py`](backend/app/agents/agent_6_lov_mapper.py) | [Agent 6 Guide](Solution/agents/README_Agent_6_Constrained_LOV_Mapper.md) | Maps extracted specs into 50 structured attribute triples (`ATTRIBUTE_LABEL 1..50`, `ATTRIBUTE_VALUE 1..50`, `ATTRIBUTE_UOM 1..50` = 150 columns) adhering to 161,000+ controlled vocabularies. |
-| **Agent 7** | **Multi-Channel Copy Builder** | [`agent_7_copy_builder.py`](backend/app/agents/agent_7_copy_builder.py) | [Agent 7 Guide](Solution/agents/README_Agent_7_MultiChannel_Copy_Builder.md) | Synthesizes multi-channel copy tiers: `INVOICE_DESC` ($\le 40$ chars ALL CAPS), `MOBILE_DESC` ($60\text{--}80$ chars), `SHORT_DESC` (PDP Title), and up to 20 structured bullet features. |
-| **Agent 8** | **Digital Asset Synthesizer** | [`agent_8_digital_assets.py`](backend/app/agents/agent_8_digital_assets.py) | [Agent 8 Guide](Solution/agents/README_Agent_8_Digital_Asset_Synthesizer.md) | Formats canonical asset keys (`<Brand>_<MPN>.jpg`), spec sheets (`<Brand>_<MPN>_Specification_Sheet.pdf`), and document submittal references. |
-| **Agent 9** | **Quality Audit & Governance** | [`agent_9_quality_audit.py`](backend/app/agents/agent_9_quality_audit.py) | [Agent 9 Guide](Solution/agents/README_Agent_9_Quality_Audit_HITL.md) | Runs 12 automated integrity rules, calculates weighted confidence scores ($0\text{--}100\%$), computes cell-level provenance, and routes low-confidence items to the HITL Review queue. |
-| **Swarm DAG** | **LangGraph Orchestration** | [`graph.py`](backend/app/agents/graph.py) | [Master Architecture](Solution/MASTER_ARCHITECTURE_AND_MVP_PLAN.md) | State graph orchestration managing execution order, state immutability, error boundaries, and trace telemetry across all 9 agents. |
+### 2. The Closed-Loop Active Learning Lifecycle
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Supplier as Supplier / Feed
+    participant Agent as 9-Agent LangGraph Swarm
+    participant Audit as Agent 9 (Audit Gate)
+    actor Human as Human Data Specialist
+    participant KB as DuckDB Overrides Cache
+
+    Supplier->>Agent: Submit Unseen SKU (e.g., 'NOVEL-PUMP-99')
+    Agent->>Audit: Process SKU (Uncached, Confidence: 61.0%)
+    Audit->>Human: Route to HITL Review Modal (needs_hitl_review=True)
+    Human->>KB: Verify Brand ('Gorman-Rupp®') & Save Override
+    Note over KB: Override persisted in DuckDB
+    Supplier->>Agent: Re-submit 'NOVEL-PUMP-99'
+    Agent->>KB: Exact Overrides Cache Match
+    KB-->>Agent: Return Verified Canonical Data
+    Agent->>Audit: Quality Audit Evaluation
+    Audit-->>Supplier: Return Enriched 252-Col Record (Confidence: 100.0%, needs_hitl_review=False)
+```
 
 ---
 
-## 🧠 Advanced Intelligence & Governance Services
+## 🔬 Advanced Intelligence & Governance Services
 
-### 1. Data Bill of Materials (DBOM) & Cryptographic Lineage ([`dbom_service.py`](backend/app/services/dbom_service.py))
-Every single cell in the 252-column output is tracked with its **source attribution type** (`OEM_PRIMARY`, `INFERRED_REGEX`, `SYNTACTIC_FORMULA`, `KB_LOOKUP`), exact source document locator, extraction timestamp, and an immutable **SHA-256 cryptographic lineage hash**.
+OmniSpec AI features 5 enterprise intelligence services (`backend/app/services/`):
 
-### 2. Defect Probability Index (DPI) ([`defect_risk_scorer.py`](backend/app/services/defect_risk_scorer.py))
-A calibrated multi-variate risk scoring engine evaluating character boundary overflows, missing mandatory dimensions, unregistered brand symbols, and classification confidence to automatically route items into the HITL Review queue.
-
-### 3. Natural Language Parametric Constraint Search ([`parametric_search_engine.py`](backend/app/services/parametric_search_engine.py))
-Translates freeform engineering queries (e.g., *"Dishwasher under 45 dBA stainless steel 120V 15A"*) into an **Abstract Syntax Tree (AST)** in $0.14\text{ ms}$, compiles dynamic DuckDB SQL, and produces side-by-side **Qualified vs. Disqualified** trade-off explanations with exact numerical deltas (e.g., *"+2.0 dBA over limit"*).
-
-### 4. Product Family Discovery & Assortment Gap Detection ([`family_clustering_engine.py`](backend/app/services/family_clustering_engine.py))
-Clusters flat, fragmented SKUs into canonical **Parent Product Families** by decomposing MPN variant suffixes (Bare Tool vs. 2-Battery Kit, Finish, Pipe Size). Identifies missing sizes in fractional sequences (`1/4 in`, `3/8 in`, `[MISSING 1/2 in]`, `3/4 in`) with evidence-backed gap classifications (`CONFIRMED_MANUFACTURER_GAP`).
-
-### 5. Pairwise Compatibility & Substitute Matrix ([`compatibility_engine.py`](backend/app/services/compatibility_engine.py))
-Evaluates physical, mechanical, and electrical compatibility (e.g. angle grinder arbor hole vs. cut-off wheel bore, voltage platforms) and surfaces direct cross-brand OEM functional substitutes with Form-Fit-Function scores.
+1. **Data Bill of Materials (DBOM) & Cryptographic Lineage** (`dbom_service.py`):
+   - Computes fine-grained cell-level audit provenance for every delivery attribute.
+   - Calculates `cached_attributes_count`, `uncached_attributes_count`, and `cache_coverage_ratio`.
+   - Generates SHA-256 cryptographic lineage hashes.
+2. **Defect Probability Index (DPI)** (`dpi_service.py`):
+   - Multi-variate Bayesian risk scoring predicting delivery disqualification risk.
+3. **Parametric Search & AST Compiler** (`models/parametric_search/compiler.py`):
+   - Sub-millisecond natural language constraint parser compiling user queries into DuckDB SQL with trade-off explainers.
+4. **Product Family Discovery & Assortment Gap Detection** (`family_clustering_engine.py`):
+   - MPN decomposition and DBSCAN clustering discovering sibling variants and fractional catalog gaps.
+5. **Pairwise Compatibility & Substitute Evaluator** (`compatibility_service.py`):
+   - Mechanical arbor & RPM boundary compatibility evaluation and direct Form-Fit-Function OEM substitutes.
 
 ---
 
 ## 💻 Complete Tech Stack
 
-| Component | Technologies & Libraries |
+| Layer | Technologies |
 | :--- | :--- |
-| **Multi-Agent Orchestration** | LangGraph, LangChain Core, Python 3.11+ |
-| **Relational Knowledge Base** | DuckDB (In-Memory Master DB), RapidFuzz (C++ SIMD string matching) |
-| **Generative & Vision Fallback** | OpenAI GPT-4o-mini (Vision Spec RAG & Multimodal Extraction) |
-| **Backend Web Server** | FastAPI, Uvicorn, Pydantic v2 (Validation & Schemas) |
-| **Document & Excel Engines** | openpyxl (Multi-Sheet `.xlsx` Exporter), ReportLab (Autonomous PDF Datasheet Generator) |
-| **Frontend Web Studio** | React 18, Vite, React Router DOM, TailwindCSS, Lucide React, Glassmorphism UI |
-| **Testing & Verification** | Pytest, TestClient, AnyIO |
+| **Orchestration & Brain** | LangGraph, LangChain, OpenAI GPT-4o-mini (Function Calling / Structured Outputs) |
+| **Knowledge Base & Search** | DuckDB (Embedded OLAP), RapidFuzz (C++ Levenshtein), BM25, Scikit-Learn TF-IDF |
+| **Web Sourcing & CRAG** | `ddgs` (DuckDuckGo Search), `httpx`, `beautifulsoup4`, ReportLab PDF Generator |
+| **Backend API** | FastAPI, Pydantic V2, Uvicorn, Python 3.13 |
+| **Frontend Web Studio** | React 18, Vite, TailwindCSS, Lucide Icons, Canvas Confetti |
+| **Quality & Governance** | Pytest, 12-Rule Automated Integrity Engine, DBOM Lineage Engine |
 
 ---
 
 ## 📁 Repository Structure
 
 ```text
-OmniSpec/
-├── backend/                             # Enterprise Backend & Agent Swarm
+UniHack/
+├── backend/
 │   └── app/
-│       ├── agents/                      # 9 Specialized Micro-Agents & LangGraph DAG
-│       │   ├── agent_1_ingestion.py     # Ingestion & De-Noising
-│       │   ├── agent_2_entity_resolution.py # 27K UniCat Brands & Trademark Normalizer
-│       │   ├── agent_3_taxonomy.py      # 4-Tier Classpath & UNSPSC Classifier
-│       │   ├── agent_4_spec_uom.py      # 63 Decimal Fractions & Master UOM Extractor
-│       │   ├── agent_5_oem_sourcing.py  # OEM Portal Whitelist & Vision Spec RAG
-│       │   ├── agent_6_lov_mapper.py    # 150-Column EAV Matrix & 161K Controlled LOVs
-│       │   ├── agent_7_copy_builder.py  # Invoice <=40, Mobile 60-80, Short & Long Copy
-│       │   ├── agent_8_digital_assets.py # Standardized JPGs & PDF Submittal Links
-│       │   ├── agent_9_quality_audit.py # 12 Automated Integrity Validation Rules
-│       │   └── graph.py                 # LangGraph State Graph & DAG Flow
-│       ├── api/                         # 12 FastAPI REST Endpoints (Enrich, Search, Families, DBOM, DPI)
-│       │   └── routes.py
-│       ├── db/                          # DuckDB Client (27K Brands, 161K LOVs, Overrides)
-│       │   └── duckdb_client.py
-│       ├── schemas/                     # Pydantic 252-Column Delivery & State Schemas
-│       │   ├── delivery_schema.py
-│       │   ├── provenance_schema.py
-│       │   ├── search_schema.py
-│       │   ├── family_schema.py
-│       │   └── state_schema.py
-│       ├── services/                    # Core Intelligence Engines
-│       │   ├── dbom_service.py          # Data Bill of Materials & SHA-256 Hash
-│       │   ├── defect_risk_scorer.py    # Defect Probability Index (DPI)
-│       │   ├── compatibility_engine.py  # Pairwise Mechanical & Electrical Matrix
-│       │   ├── parametric_search_engine.py # AST Natural Language Compiler & SQL
-│       │   ├── family_clustering_engine.py # Parent PDP & Assortment Gap Induction
-│       │   ├── excel_exporter.py        # Styled Multi-Sheet Excel Engine
-│       │   └── pdf_datasheet_generator.py # Autonomous 1-Page Engineering PDF Submittal
-│       └── main.py                      # Application Entrypoint & CORS Config
-│
-├── frontend/                            # Vite + React 18 Multi-View SPA
-│   ├── src/
-│   │   ├── components/                  # Virtualized Grid252, DBOM Modal, Swarm Visualizer
-│   │   │   ├── AgentSwarmVisualizer.jsx
-│   │   │   ├── BatchUploadModal.jsx
-│   │   │   ├── DashboardStats.jsx
-│   │   │   ├── DBOMModal.jsx
-│   │   │   ├── Grid252.jsx
-│   │   │   ├── KnowledgeBaseExplorer.jsx
-│   │   │   └── Navbar.jsx
-│   │   ├── context/                     # Global CatalogProvider State
-│   │   │   └── CatalogContext.jsx
-│   │   ├── pages/                       # 4 Dedicated Routed Workbenches
-│   │   │   ├── LandingPage.jsx          # Hero Overview & Capability Grid (/)
-│   │   │   ├── StudioPage.jsx           # Live Sandbox & 252-Column Data Grid (/studio)
-│   │   │   ├── ReviewPage.jsx           # HITL Quality Review & Active Learning (/review)
-│   │   │   ├── SearchPage.jsx           # Parametric Engineering Constraint Search (/search)
-│   │   │   └── IntelligencePage.jsx     # Product Families & Compatibility (/intelligence)
-│   │   ├── App.jsx
-│   │   └── index.css
-│   └── package.json
-│
-├── tests/                               # Comprehensive Automated Test Suite (41 Tests)
-│   ├── unit/                            # Unit tests for individual micro-agent stages
-│   │   ├── test_agents_1_and_2.py
-│   │   ├── test_agents_3_and_4.py
-│   │   ├── test_agents_5_and_6.py
-│   │   ├── test_agents_7_and_8.py
-│   │   ├── test_copy_bounds_edge_cases.py
-│   │   ├── test_denoising_edge_cases.py
-│   │   ├── test_lov_and_taxonomy_deep.py
-│   │   └── test_knowledge_base.py
-│   ├── integration/                     # REST API & End-to-End Pipeline Suites
-│   │   ├── test_all_api_endpoints.py
-│   │   ├── test_pipeline_e2e.py
-│   │   ├── test_ast_stress_cases.py
-│   │   └── test_intelligence_services_deep.py
-│   ├── features/                        # Enterprise Intelligence Capability Tests
-│   │   ├── test_phase7_capabilities.py
-│   │   ├── test_phase8_capabilities.py
-│   │   └── test_phase9_capabilities.py
-│   └── benchmarks/                      # Scale Benchmarking & 1,000 SKU Processors
-│       ├── benchmark_ground_truth.py
-│       ├── run_1000_batch_enrichment.py
-│       └── Result.md
-│
-├── Solution/                            # Comprehensive Architectural & Agent Specs
-│   ├── AGENTS.md                        # Complete Micro-Agent Execution Matrix
-│   ├── MASTER_ARCHITECTURE_AND_MVP_PLAN.md # Master Architecture & Unilog Implementation Plan
-│   └── agents/                          # Deep-Dive Readmes for Agents 1 through 9
-│
-├── test_agent.py                        # Root Stage-by-Stage Interactive Tracer CLI
-├── summary.md                           # Comprehensive System Evaluation & Governance Summary
-├── OmniSpec_Enriched_1000_Items_Delivery_252.csv # Full 1,000-SKU Deliverable (1.64 MB)
-└── requirements.txt                     # Backend Python Dependencies
+│       ├── agents/                         # 9 LangGraph Micro-Agents & DAG Workflow
+│       │   ├── agent_1_ingestion.py        # Tokenization & noise cleansing
+│       │   ├── agent_2_entity_resolution.py# Brand resolution & live web discovery
+│       │   ├── agent_3_taxonomy.py         # 4-tier category & UNSPSC classifier
+│       │   ├── agent_4_spec_uom.py         # 63 fraction & Master UOM parser
+│       │   ├── agent_5_oem_sourcing.py     # OEM PDF crawler & CRAG
+│       │   ├── agent_6_lov_mapper.py       # 150-col EAV schema binder
+│       │   ├── agent_7_copy_builder.py     # Character-bounded copy generator
+│       │   ├── agent_8_digital_assets.py   # Standardized asset namer
+│       │   ├── agent_9_quality_audit.py    # 5-pillar audit & HITL routing
+│       │   ├── graph.py                    # LangGraph StateGraph DAG
+│       │   └── react_master_agent.py       # ReAct Cognitive Brain
+│       ├── api/routes.py                   # REST API Endpoints
+│       ├── db/duckdb_client.py             # DuckDB 27K KB & Overrides Client
+│       ├── orchestrator/                   # ReAct Multi-Hop Cognitive Orchestrator
+│       ├── schemas/                        # Pydantic State & Delivery Schemas
+│       └── services/                       # Intelligence Services (DBOM, DPI, AST, Search)
+├── frontend/                               # React 18 + Vite + TailwindCSS Web Studio
+├── docs/dataset/                           # UniCat Reference CSVs & LOV Dictionaries
+├── models/parametric_search/               # AST Constraint Compiler & Benchmark Tests
+├── tests/                                  # Pytest Test Suite (63 Tests, 100% Passing)
+├── generate_output_json.py                 # Multi-Agent Batch Evaluation Script
+├── output.json                             # 252-Column Delivery Output with Agent Traces
+├── test.json                               # Mixed Evaluation Dataset (Cached + Uncached)
+└── README.md                               # Master Platform Documentation
 ```
 
 ---
 
-## 🚀 Quickstart & How to Run
+## 🚀 Quickstart & Batch Evaluation
 
-### 1. Prerequisites & Environment Setup
-
+### 1. Prerequisites & Installation
 ```bash
-# Clone the repository
-git clone https://github.com/SharadJhanwar/OmniSpec.git
-cd OmniSpec
+# Clone repository
+git clone https://github.com/your-org/omnispec-ai.git
+cd omnispec-ai
 
-# Create and activate Python virtual environment
-python -m venv .venv
+# Activate Python Virtual Environment
+.venv\Scripts\activate  # On Windows
 
-# On Windows:
-.venv\Scripts\activate
-# On macOS / Linux:
-source .venv/bin/activate
-
-# Install Python dependencies
+# Install Dependencies
 pip install -r requirements.txt
 ```
 
 ### 2. Configure Environment Variables
-
 Create a `.env` file in the root directory:
 ```env
 OPENAI_API_KEY=your_openai_api_key_here
-HOST=127.0.0.1
+OPENAI_MODEL_NAME=gpt-4o-mini
 PORT=8000
-ENVIRONMENT=development
+HOST=0.0.0.0
 ```
 
-### 3. Start the FastAPI Backend Server
+### 3. Run Batch Prediction on `test.json`
 ```bash
-.venv\Scripts\python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
+python generate_output_json.py
 ```
-* **Interactive Swagger API Docs:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-* **Health Check:** [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
+This processes all SKUs in `test.json`, logs real-time traces (`Agent 1 ✓` through `Agent 9 ✓`), and exports the enriched records to `output.json`.
 
-### 4. Start the React Frontend Web Studio
-In a second terminal:
+### 4. Launch the Web Studio
 ```bash
+# Start FastAPI Backend
+uvicorn backend.app.main:app --reload --port 8000
+
+# Start React Frontend (in another terminal)
 cd frontend
 npm install
 npm run dev
 ```
-* **Web Studio Application:** [http://localhost:5173](http://localhost:5173)
+Open your browser at `http://localhost:5173`.
 
 ---
 
 ## 🧪 Automated Testing & Verification Suite
 
-OmniSpec AI includes a comprehensive **41-test automated suite** spanning unit tests, integration tests, REST API endpoints, and intelligence engines:
+OmniSpec AI is backed by an automated test suite verifying every component:
 
 ```bash
-# Run all 41 test suites
 pytest tests/ -v
 ```
 
-### Interactive Stage-by-Stage CLI Transformation Tracer
-To trace how a single raw SKU is processed stage-by-stage through all 9 micro-agents in real time:
-
-```bash
-# Preset 1: Frigidaire Built-In Dishwasher (Large Appliances)
-.venv\Scripts\python test_agent.py 1
-
-# Preset 2: Milwaukee Metal Cut-Off Wheel (Abrasives & Cutting Tools)
-.venv\Scripts\python test_agent.py 2
-
-# Preset 3: Trex Composite Decking Board (Building Materials)
-.venv\Scripts\python test_agent.py 3
-
-# Preset 4: Brass Industrial Pipe Fitting (Plumbing)
-.venv\Scripts\python test_agent.py 4
-
-# Preset 5: Philips LED A19 Light Bulb (Lighting)
-.venv\Scripts\python test_agent.py 5
-
-# Preset 6: DEWALT 20V MAX Miter Saw (Power Tools)
-.venv\Scripts\python test_agent.py 6
-
-# Preset 7: OpenAI Generative Fallback & Latency Tracker
-.venv\Scripts\python test_agent.py 7
-```
-
-### Run 1,000-SKU Scale Batch Processing
-```bash
-.venv\Scripts\python tests/benchmarks/run_1000_batch_enrichment.py
-```
-* Generates the 252-column CSV deliverable: [`OmniSpec_Enriched_1000_Items_Delivery_252.csv`](./OmniSpec_Enriched_1000_Items_Delivery_252.csv).
-
----
-
-## ✨ Multi-View Web Studio Workbenches
-
-1. **`Studio & Grid` (`/studio`)**:
-   - **Live Single-SKU Sandbox:** Type raw descriptions, select presets, and inspect stage-by-stage transformation traces.
-   - **Virtualized 252-Column Data Grid:** Scroll horizontally across all 252 fields with frozen key identifiers.
-   - **Drag & Drop CSV Ingestion:** Upload any raw distributor CSV feed and enrich at scale.
-2. **`HITL Review Station` (`/review`)**:
-   - **Side-by-Side Diff Comparison:** Compare raw supplier input against proposed 252-column master fields.
-   - **Live Character Limit Progress Meters:** Visual badges ensuring `INVOICE_DESC` ($\le 40$) and `MOBILE_DESC` ($60\text{--}80$) never violate channel guidelines.
-   - **Active Learning Overrides:** Persists human reviewer corrections into DuckDB (`kb_active_overrides`) so subsequent swarm runs automatically adopt approved master entities.
-3. **`Parametric Search Studio` (`/search`)**:
-   - **AST Compiler:** Translates freeform natural language engineering queries into DuckDB SQL.
-   - **Trade-Off Explainer Cards:** Side-by-side Qualified vs. Disqualified candidate evaluation with exact numerical deltas.
-4. **`Intelligence Hub` (`/intelligence`)**:
-   - **Product Families & Variant Induction:** Clusters flat SKUs into Parent PDPs with multi-axis variant matrices and identifies missing sizes in fractional sequences (`CONFIRMED_MANUFACTURER_GAP`).
-   - **Industrial Compatibility Matrix:** Pairwise mechanical/electrical evaluator and cross-brand OEM functional equivalents.
-   - **UniCat Knowledge Graph Explorer:** Visual dictionary browsing 27,000+ UniCat Brands, 161,000 LOVs, and the Trade Jargon Thesaurus.
-5. **Data Bill of Materials (DBOM) Modal**:
-   - Cell-level source attribution, confidence scores, extraction methods, and SHA-256 cryptographic lineage proof.
-6. **1-Click Multi-Sheet Excel (`.xlsx`) Export**:
-   - Generates styled `.xlsx` delivery workbooks with frozen panes (`C2`), auto-fitted columns, and an executive governance scorecard.
-7. **Autonomous OEM Technical PDF Datasheet Generator**:
-   - Generates 1-page engineering specification submittals (`<Brand>_<MPN>_Specification_Sheet.pdf`) for contractors.
+### Test Coverage Highlights (**63 / 63 Tests Passed — 100%**):
+- **HITL Active Learning Lifecycle** (`tests/features/test_hitl_active_learning_loop.py`): Verifies unseen SKU routing to HITL, specialist override saving into DuckDB, and instant 100% resolution on re-processing.
+- **Unseen Catalog Generalization** (`tests/features/test_unseen_catalog_generalization.py`): 20 unseen industrial SKUs evaluated without hardcoded rules.
+- **Bosch Zero-Hallucination Test**: Verifies `SHX78B75UC` grounds 42 dBA without hallucinating Whirlpool features.
+- **DBOM & DPI Provenance Audits** (`tests/integration/test_all_api_endpoints.py`).
+- **AST Parametric Search Stress Queries** (`tests/integration/test_ast_stress_cases.py`).
 
 ---
 
 ## 📚 Solution Documentation & Benchmark Artifacts
 
-- **[Master Architecture & Implementation Plan](Solution/MASTER_ARCHITECTURE_AND_MVP_PLAN.md)**: Full Unilog guideline mapping and architectural blueprint.
-- **[Micro-Agent Specification Matrix](Solution/AGENTS.md)**: Detailed execution rules for Agents 1 through 9.
-- **[System Evaluation & Governance Summary](summary.md)**: Edge-case boundaries, uniqueness analysis, and enterprise compliance report.
-- **[1,000-SKU Master CSV Deliverable](OmniSpec_Enriched_1000_Items_Delivery_252.csv)**: Complete 252-column dataset generated across all 1,000 input catalog rows.
-
----
-
-## 📄 License
-MIT License. Built for the UniHack Hackathon Challenge.
+- **Executive Summary & Benchmark Report:** [`summary.md`](file:///c:/Users/yx084/OneDrive/UniHack/summary.md)
+- **Master Multi-Agent Architecture Specification:** [`Solution/AGENTS.md`](file:///c:/Users/yx084/OneDrive/UniHack/Solution/AGENTS.md)
+- **Detailed Master MVP Architecture Plan:** [`Solution/MASTER_ARCHITECTURE_AND_MVP_PLAN.md`](file:///c:/Users/yx084/OneDrive/UniHack/Solution/MASTER_ARCHITECTURE_AND_MVP_PLAN.md)
+- **Individual Agent Deep Dives:** [`Solution/agents/`](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/)
+- **Delivery Output Record:** [`output.json`](file:///c:/Users/yx084/OneDrive/UniHack/output.json)
