@@ -18,10 +18,11 @@
 
 - [🎯 Problem Statement & Industrial Context](#-problem-statement--industrial-context)
 - [🧠 ReAct Cognitive Brain & Multi-Hop Architecture](#-react-cognitive-brain--multi-hop-architecture)
-- [🏛️ 9-Agent LangGraph Swarm Topology](#️-9-agent-langgraph-swarm-topology)
+- [🏛️ 9-Agent Swarm Topology & Interactive Architecture Index](#️-9-agent-swarm-topology--interactive-architecture-index)
 - [📊 Evidence-Aware 5-Pillar Confidence Engine](#-evidence-aware-5-pillar-confidence-engine)
 - [⚡ Variable-Level Caching & Active Learning Loop](#-variable-level-caching--active-learning-loop)
-- [🔬 Advanced Intelligence & Governance Services](#-advanced-intelligence--governance-services)
+- [🔬 Cryptographic Data Bill of Materials (DBOM) & Lineage](#-cryptographic-data-bill-of-materials-dbom--lineage)
+- [🔍 Parametric Search AST Compiler & Compatibility Engine](#-parametric-search-ast-compiler--compatibility-engine)
 - [💻 Complete Tech Stack](#-complete-tech-stack)
 - [📁 Repository Structure](#-repository-structure)
 - [🚀 Quickstart & Batch Evaluation](#-quickstart--batch-evaluation)
@@ -92,7 +93,7 @@ The brain is equipped with 7 modular domain tools:
 
 ---
 
-## 🏛️ 9-Agent LangGraph Swarm Topology
+## 🏛️ 9-Agent Swarm Topology & Interactive Architecture Index
 
 ```
 +-------------------------------------------------------------------------------------------------------------------------------+
@@ -116,19 +117,19 @@ The brain is equipped with 7 modular domain tools:
 +-------------------------------------------------------------------------------------------------------------------------------+
 ```
 
-### Agent Roles & Deliverables
+### 📑 Complete Agent Architecture Deep-Dive Blueprint Links
 
-| # | Agent Name | Primary Mission | Deterministic Capabilities | AI / Generative Role | Key Output Fields |
-| :-: | :--- | :--- | :--- | :--- | :--- |
-| **1** | **Ingestion & De-Noising** | Cleans raw input, strips placeholders (`-- Unbranded --`), tokenizes dimensions. | Regex, Unicode normalizers, contractor jargon thesaurus. | Contextual token tagger. | Cleaned MPN, de-noised `Part_Desc`, token bag, row hash. |
-| **2** | **Brand & Entity Resolution** | Checks active reviewer overrides, resolves supplier names to canonical 27K UniCat brands with registered marks (`®`, `™`). | RapidFuzz C++, UniCat 27K dictionary, `kb_active_overrides` lookup. | Evidence-backed LLM disambiguator using live web search snippets. | `MANUFACTURER_NAME`, `BRAND_NAME`, `TRADE_NAME`, `®`/`™`. |
-| **3** | **Taxonomy & Classification** | Classifies SKU into 4-tier Classpath and assigns 8-digit leaf UNSPSC. | Category Tree Trie, UNSPSC lookup table. | Hierarchical category inference for novel products. | `Classpath`, `UNSPSC`, `Dept`, `Class`, `Fine`, `Product Name`. |
-| **4** | **Spec, Dim & UOM Parser** | Extracts physical dimensions, electrical specs, converts to 63 exact fractions. | 63-entry fraction lookup, Master UOM single-space standard, compiled regexes. | Complex technical phrasing parser. | `LENGTH`, `WIDTH`, `HEIGHT`, `WEIGHT`, normalized UOMs, electrical specs. |
-| **5** | **OEM Sourcing & CRAG RAG** | Discovers official OEM URLs, blocks marketplaces, ingests PDF technical datasheets. | Domain whitelist/blacklist, URL normalizer. | Corrective RAG (CRAG) with multi-engine web search & PDF submittal generator. | `MFR URL`, `Ref URL 1..5`, PDF datasheet link, certs. |
-| **6** | **Constrained LOV Mapper** | Binds raw specs to 161,000-row UniCat LOV schema across 50 triples (150 columns). | Inverted index search, Many-to-One synonym dictionary, 50-slot triple padding. | Constrained value alignment & synonym resolution. | `ATTRIBUTE_LABEL 1..50`, `ATTRIBUTE_VALUE 1..50`, `ATTRIBUTE_UOM 1..50`. |
-| **7** | **Multi-Channel Copy Builder** | Generates 6 distinct formulaic descriptions adhering to strict character caps. | Character counter, uppercase transformer, strict template engine. | High-converting marketing copy & bullet point generator with latency tracing. | `INVOICE_DESC` ($\le 40$ ALL CAPS), `MOBILE_DESC` ($60\text{--}80$), `SHORT_DESC`, `LONG_DESC1`, `ITEM_FEATURES_1..20`. |
-| **8** | **Digital Asset Synthesizer** | Builds canonical asset filenames and validates technical doc links. | String formatters, MIME validators. | Visual asset relevance scorer. | `Product Image`, `Alternate Image 1..4`, `Specification Sheet`, `SDS`, `RoHS`. |
-| **9** | **Quality Audit & HITL** | Runs 12 integrity checks, computes Evidence-Aware confidence, routes to HITL. | 12-rule validation suite, Levenshtein distance scorer, 5-pillar confidence engine. | Explainable anomaly detector. | Confidence scores ($0\text{--}100\%$), audit flags, HITL review queue payload. |
+| # | Agent Name | Dedicated Architectural Specification | Primary Mission & Core Innovations | Key Deliverables |
+| :-: | :--- | :--- | :--- | :--- |
+| **1** | **Ingestion & De-Noising** | 📥 [**Agent 1 Architecture Blueprint**](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/README_Agent_1_Ingestion_Tokenization.md) | Cleans raw input, strips placeholders (`-- Unbranded --`), tokenizes dimensions, DuckDB slang thesaurus (`sawzall`, `romex`). | Cleaned MPN, de-noised `Part_Desc`, token bag, row hash. |
+| **2** | **Brand & Entity Resolution** | 🏷️ [**Agent 2 Architecture Blueprint**](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/README_Agent_2_Entity_Resolution.md) | Checks active reviewer overrides, resolves supplier names to canonical 27K UniCat brands with registered marks (`®`, `™`), live DDGS web search. | `MANUFACTURER_NAME`, `BRAND_NAME`, `TRADE_NAME`, `®`/`™`. |
+| **3** | **Taxonomy & Classification** | 🌲 [**Agent 3 Architecture Blueprint**](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/README_Agent_3_Taxonomy_Classification.md) | Classifies SKU into 4-tier Classpath and assigns 8-digit leaf UNSPSC commodity code. | `Classpath`, `UNSPSC`, `Dept`, `Class`, `Fine`, `Product Name`. |
+| **4** | **Spec, Dim & UOM Parser** | 📐 [**Agent 4 Architecture Blueprint**](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/README_Agent_4_Spec_UOM_Extractor.md) | Extracts physical dimensions, electrical specs, converts to 63 exact fractions (`50.25 in` $\rightarrow$ `50-1/4 in`), Master UOM single spacing. | `LENGTH`, `WIDTH`, `HEIGHT`, `WEIGHT`, normalized UOMs, electrical specs. |
+| **5** | **OEM Sourcing & CRAG RAG** | 🌐 [**Agent 5 Architecture Blueprint**](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/README_Agent_5_OEM_Sourcing_RAG.md) | Discovers official OEM URLs, blocks marketplaces (0%), ingests PDF technical datasheets, Corrective RAG (CRAG). | `MFR URL`, `Ref URL 1..5`, PDF datasheet link, certs. |
+| **6** | **Constrained LOV Mapper** | 🗄️ [**Agent 6 Architecture Blueprint**](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/README_Agent_6_Constrained_LOV_Mapper.md) | Binds raw specs to 161,000-row UniCat LOV schema across 50 triples (150 columns). | `ATTRIBUTE_LABEL 1..50`, `ATTRIBUTE_VALUE 1..50`, `ATTRIBUTE_UOM 1..50`. |
+| **7** | **Multi-Channel Copy Builder** | ✍️ [**Agent 7 Architecture Blueprint**](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/README_Agent_7_MultiChannel_Copy_Builder.md) | Generates 6 distinct formulaic descriptions: `INVOICE_DESC` ($\le 40$ ALL CAPS), `MOBILE_DESC` ($60\text{--}80$ chars), 20 bullet features. | `INVOICE_DESC`, `MOBILE_DESC`, `SHORT_DESC`, `LONG_DESC1`, `ITEM_FEATURES_1..20`. |
+| **8** | **Digital Asset Synthesizer** | 🖼️ [**Agent 8 Architecture Blueprint**](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/README_Agent_8_Digital_Asset_Synthesizer.md) | Builds canonical asset filenames (`<Brand>_<MPN>.jpg`), autonomous ReportLab 1-page engineering PDF submittal sheets. | `Product Image`, `Alternate Image 1..4`, `Specification Sheet`, `SDS`, `RoHS`. |
+| **9** | **Quality Audit & HITL** | 🛡️ [**Agent 9 Architecture Blueprint**](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/README_Agent_9_Quality_Audit_HITL.md) | Runs 12 integrity checks, computes 5-Pillar Evidence-Aware confidence, variable-level caching gate, routes to HITL. | Confidence scores ($0\text{--}100\%$), audit flags, HITL review queue payload. |
 
 ---
 
@@ -194,22 +195,51 @@ sequenceDiagram
 
 ---
 
-## 🔬 Advanced Intelligence & Governance Services
+## 🔬 Cryptographic Data Bill of Materials (DBOM) & Lineage
 
-OmniSpec AI features 5 enterprise intelligence services (`backend/app/services/`):
+Every single attribute populated in the 252-column record is tagged with an immutable provenance footprint:
 
-1. **Data Bill of Materials (DBOM) & Cryptographic Lineage** (`dbom_service.py`):
-   - Computes fine-grained cell-level audit provenance for every delivery attribute.
-   - Calculates `cached_attributes_count`, `uncached_attributes_count`, and `cache_coverage_ratio`.
-   - Generates SHA-256 cryptographic lineage hashes.
-2. **Defect Probability Index (DPI)** (`dpi_service.py`):
-   - Multi-variate Bayesian risk scoring predicting delivery disqualification risk.
-3. **Parametric Search & AST Compiler** (`models/parametric_search/compiler.py`):
-   - Sub-millisecond natural language constraint parser compiling user queries into DuckDB SQL with trade-off explainers.
-4. **Product Family Discovery & Assortment Gap Detection** (`family_clustering_engine.py`):
-   - MPN decomposition and DBSCAN clustering discovering sibling variants and fractional catalog gaps.
-5. **Pairwise Compatibility & Substitute Evaluator** (`compatibility_service.py`):
-   - Mechanical arbor & RPM boundary compatibility evaluation and direct Form-Fit-Function OEM substitutes.
+```mermaid
+flowchart LR
+    CELL["Delivery Record Cell<br/>(e.g., 'Sound Level': '42 dBA')"]
+    
+    subgraph DBOM ["📜 Cryptographic Cell Lineage (DataBOM)"]
+        direction TB
+        LOC["Locator / Extraction Rule<br/>(e.g., 'REGEX: ACOUSTIC_DBA_PATTERN')"]
+        SOURCE["Source Type<br/>('oem_pdf_rag' / 'unicat_exact' / 'active_override')"]
+        CONF["Variable Confidence<br/>(1.00 / 0.95)"]
+        CACHE["Cache Status<br/>(is_cached: True / False)"]
+        AGENT["Contributing Agent<br/>('Agent 4: Spec, Dim & UOM Extractor')"]
+        HASH["SHA-256 Lineage Hash<br/>('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')"]
+        
+        LOC --- SOURCE --- CONF --- CACHE --- AGENT --- HASH
+    end
+    
+    CELL --> DBOM
+```
+
+---
+
+## 🔍 Parametric Search AST Compiler & Compatibility Engine
+
+OmniSpec AI features an ultra-fast **Natural Language Parametric Search AST Compiler** (`models/parametric_search/compiler.py`) and a **Pairwise Product Compatibility Matrix Engine** (`backend/app/services/compatibility_engine.py`):
+
+```mermaid
+flowchart TD
+    QUERY["User NL Query: 'Quiet Stainless Steel Dishwasher under 45 dBA with 5 wash cycles'"]
+    
+    subgraph AST_COMPILER ["⚡ AST Constraint Compiler"]
+        direction TB
+        PARSE["Lexical AST Parser<br/>• Sound Level: <= 45 dBA<br/>• Finish: Stainless Steel<br/>• Category: Dishwashers<br/>• Number of Cycles: >= 5"]
+        SQL["DuckDB SQL AST Generation<br/>SELECT * FROM catalog WHERE sound_level <= 45 AND finish = 'Stainless Steel'..."]
+        EXPLAIN["Disqualification & Trade-off Explainer<br/>'Why did SKU X qualify/disqualify?'"]
+        
+        PARSE --> SQL --> EXPLAIN
+    end
+    
+    QUERY --> PARSE
+    SQL --> RESULTS["Sub-millisecond Search Results (< 2 ms)"]
+```
 
 ---
 
@@ -242,13 +272,16 @@ UniHack/
 │       │   ├── agent_7_copy_builder.py     # Character-bounded copy generator
 │       │   ├── agent_8_digital_assets.py   # Standardized asset namer
 │       │   ├── agent_9_quality_audit.py    # 5-pillar audit & HITL routing
-│       │   ├── graph.py                    # LangGraph StateGraph DAG
-│       │   └── react_master_agent.py       # ReAct Cognitive Brain
+│       │   └── graph.py                    # LangGraph StateGraph DAG
 │       ├── api/routes.py                   # REST API Endpoints
 │       ├── db/duckdb_client.py             # DuckDB 27K KB & Overrides Client
 │       ├── orchestrator/                   # ReAct Multi-Hop Cognitive Orchestrator
 │       ├── schemas/                        # Pydantic State & Delivery Schemas
 │       └── services/                       # Intelligence Services (DBOM, DPI, AST, Search)
+├── Solution/                               # 📑 Master Blueprints & Agent Deep-Dives
+│   ├── AGENTS.md                           # Master Multi-Agent Architecture Specification
+│   ├── MASTER_ARCHITECTURE_AND_MVP_PLAN.md # Complete Architecture Roadmap & Plan
+│   └── agents/                             # 9 Dedicated Agent Architecture Documents
 ├── frontend/                               # React 18 + Vite + TailwindCSS Web Studio
 ├── docs/dataset/                           # UniCat Reference CSVs & LOV Dictionaries
 ├── models/parametric_search/               # AST Constraint Compiler & Benchmark Tests
@@ -266,8 +299,8 @@ UniHack/
 ### 1. Prerequisites & Installation
 ```bash
 # Clone repository
-git clone https://github.com/your-org/omnispec-ai.git
-cd omnispec-ai
+git clone https://github.com/SharadJhanwar/OmniSpec.git
+cd OmniSpec
 
 # Activate Python Virtual Environment
 .venv\Scripts\activate  # On Windows
@@ -310,7 +343,7 @@ Open your browser at `http://localhost:5173`.
 OmniSpec AI is backed by an automated test suite verifying every component:
 
 ```bash
-pytest tests/ -v
+python -m pytest tests/ -v
 ```
 
 ### Test Coverage Highlights (**63 / 63 Tests Passed — 100%**):
