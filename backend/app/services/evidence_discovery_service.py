@@ -179,3 +179,69 @@ class EvidenceDiscoveryService:
 
         ranked.sort(key=lambda x: x["rerank_score"], reverse=True)
         return ranked[:top_k]
+
+    @classmethod
+    def discover_product_images(
+        cls,
+        mpn: str,
+        brand: str = "",
+        desc: str = "",
+        max_images: int = 5
+    ) -> List[str]:
+        """
+        Discover real product image URLs via DuckDuckGo Image Search.
+        Returns a list of direct image URLs (jpg/png/webp) from authoritative non-marketplace sources.
+        Filtered against banned marketplaces and sorted by source quality.
+        """
+        if not HAS_DDGS:
+            return []
+
+        clean_mpn = cls.sanitize_search_token(mpn)
+        clean_brand = cls.sanitize_search_token(brand.replace("®", "").replace("™", ""))
+
+        if not clean_mpn:
+            return []
+
+        queries = []
+        if clean_brand and clean_brand.lower() not in ["unbranded", "no unilog brand", ""]:
+            queries.append(f"{clean_brand} {clean_mpn} product")
+            queries.append(f"{clean_brand} {clean_mpn}")
+        else:
+            queries.append(f"{clean_mpn} product")
+
+        collected: List[str] = []
+
+        for q in queries:
+            if len(collected) >= max_images:
+                break
+            try:
+                with DDGS(timeout=8) as ddgs:
+                    results = list(ddgs.images(q, max_results=max_images * 3))
+                    for r in results:
+                        img_url = r.get("image") or r.get("url") or ""
+                        src_url = r.get("url") or r.get("source") or ""
+
+                        if not img_url:
+                            continue
+                        # Skip banned marketplace sources
+                        if cls.is_banned_marketplace(src_url) or cls.is_banned_marketplace(img_url):
+                            continue
+                        # Only accept direct image file URLs
+                        img_lower = img_url.lower()
+                        if not any(img_lower.endswith(ext) for ext in [".jpg", ".jpeg", ".png", ".webp"]):
+                            # Try to still include if it has image-like path
+                            if not any(x in img_lower for x in ["/images/", "/img/", "/product/", "/media/"]):
+                                continue
+
+                        if img_url not in collected:
+                            collected.append(img_url)
+                        if len(collected) >= max_images:
+                            break
+
+                if collected:
+                    logger.info(f"    [ImageSearch] Found {len(collected)} real product images for '{q}'")
+                    break
+            except Exception as e:
+                logger.debug(f"[EvidenceDiscoveryService] Image search '{q}' fallback: {e}")
+
+        return collected[:max_images]

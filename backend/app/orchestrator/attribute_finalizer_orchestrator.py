@@ -1207,17 +1207,60 @@ class AttributeFinalizerOrchestrator:
         # -------------------------------------------------------------
         # 8. Digital Assets & Technical Documentation
         # -------------------------------------------------------------
-        if not rec.product_image:
-            rec.product_image = f"{prefix}.jpg"
-        if not rec.alternate_image_1:
-            rec.alternate_image_1 = f"{prefix}_1.jpg"
-        if not rec.alternate_image_2:
-            rec.alternate_image_2 = f"{prefix}_2.jpg"
-        if not rec.alternate_image_3:
-            rec.alternate_image_3 = f"{prefix}_3.jpg"
-        if not rec.alternate_image_4:
-            rec.alternate_image_4 = f"{prefix}_4.jpg"
-        # Classify dynamic document and media URLs from reference URLs
+        # Agent 8 stores images under title-case keys ("Product Image", "Alternate Image 1", etc.)
+        digital_assets = state.digital_assets or {}
+
+        # Collect real URLs already found by Agent 8
+        real_images: List[str] = []
+        for key in ["Product Image", "Alternate Image 1", "Alternate Image 2", "Alternate Image 3", "Alternate Image 4"]:
+            v = digital_assets.get(key, "")
+            if v and v.startswith("http"):
+                real_images.append(v)
+
+        # Assign real image URLs if Agent 8 found them
+        if real_images:
+            rec.product_image     = real_images[0]
+            rec.alternate_image_1 = real_images[1] if len(real_images) > 1 else ""
+            rec.alternate_image_2 = real_images[2] if len(real_images) > 2 else ""
+            rec.alternate_image_3 = real_images[3] if len(real_images) > 3 else ""
+            rec.alternate_image_4 = real_images[4] if len(real_images) > 4 else ""
+        elif rec.product_image and rec.product_image.startswith("http"):
+            # rec already has real URL from Agent 9 pre-populate step — keep it
+            pass
+        else:
+            # No real images anywhere — fallback last-resort search
+            try:
+                fallback_imgs = EvidenceDiscoveryService.discover_product_images(
+                    mpn=mpn, brand=brand_name, max_images=5
+                )
+                if fallback_imgs:
+                    real_images = fallback_imgs
+                    rec.product_image     = fallback_imgs[0]
+                    rec.alternate_image_1 = fallback_imgs[1] if len(fallback_imgs) > 1 else ""
+                    rec.alternate_image_2 = fallback_imgs[2] if len(fallback_imgs) > 2 else ""
+                    rec.alternate_image_3 = fallback_imgs[3] if len(fallback_imgs) > 3 else ""
+                    rec.alternate_image_4 = fallback_imgs[4] if len(fallback_imgs) > 4 else ""
+                else:
+                    # Canonical naming convention fallback (Unilog content guidelines)
+                    if not rec.product_image:
+                        rec.product_image     = f"{prefix}.jpg"
+                    if not rec.alternate_image_1:
+                        rec.alternate_image_1 = f"{prefix}_1.jpg"
+                    if not rec.alternate_image_2:
+                        rec.alternate_image_2 = f"{prefix}_2.jpg"
+                    if not rec.alternate_image_3:
+                        rec.alternate_image_3 = f"{prefix}_3.jpg"
+                    if not rec.alternate_image_4:
+                        rec.alternate_image_4 = f"{prefix}_4.jpg"
+            except Exception as e:
+                logger.debug(f"[finalize_record] Fallback image search failed: {e}")
+                if not rec.product_image:
+                    rec.product_image = f"{prefix}.jpg"
+
+        # actual_image: Yes if we have real http URLs, No if only canonical filenames
+        has_real_url = rec.product_image and rec.product_image.startswith("http")
+        rec.actual_image = "Yes" if has_real_url else "No"
+
         found_spec_pdf = ""
         found_manual_pdf = ""
         found_sds_pdf = ""
@@ -1271,18 +1314,17 @@ class AttributeFinalizerOrchestrator:
         if not rec.product_label_insert:
             rec.product_label_insert = f"{prefix}_Label_Insert.pdf"
         if not rec.video_link:
-            rec.video_link = found_video if found_video else f"https://www.youtube.com/watch?v=demo_{clean_brand_tag.lower()}_{clean_mpn_tag.lower()}"
+            rec.video_link = found_video if found_video else ""
         if not rec.video_link_1:
-            rec.video_link_1 = f"https://www.youtube.com/watch?v=guide_{clean_brand_tag.lower()}_{clean_mpn_tag.lower()}"
+            rec.video_link_1 = ""
         if not rec.sds:
-            rec.sds = found_sds_pdf if found_sds_pdf else f"{prefix}_SDS.pdf"
+            rec.sds = found_sds_pdf if found_sds_pdf else ""
         if not rec.sds_1:
-            rec.sds_1 = f"{prefix}_SDS_Summary.pdf"
+            rec.sds_1 = ""
         if not rec.country_of_origin:
             rec.country_of_origin = state.country_of_origin or "United States"
         if not rec.discontinued:
             rec.discontinued = "No"
-        if not rec.actual_image:
-            rec.actual_image = "Yes"
+        # actual_image already set above based on real image discovery result
 
         return rec

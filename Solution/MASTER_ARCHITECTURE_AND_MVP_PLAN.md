@@ -62,7 +62,7 @@ The pipeline generates records structured across **10 distinct functional data t
 | **7** | **Structured EAV Attributes (150 cols)** | `ATTRIBUTE_LABEL 1..50`, `ATTRIBUTE_VALUE 1..50`, `ATTRIBUTE_UOM 1..50` | Dynamic attribute triples strictly bound to UniCat LOV controlled dictionaries. |
 | **8** | **Bullet Features** | `ITEM_FEATURES_1` to `20` | Structured bullet points capturing atomic product capabilities. |
 | **9** | **Regulatory & Governance** | `Standard/Approvals`, `Warranty`, `UNSPSC` | Certified ratings (`ASSE`, `cUL`, `ENERGY STAR`, `ANSI`) and 8-digit leaf UNSPSCs. |
-| **10**| **Digital Asset Documents** | `Product Image`, `Alternate Image 1..4`, `Specification Sheet`, `SDS`, `RoHS` | Standardized canonical filenames ready for Digital Asset Managers (DAM). |
+| **10**| **Digital Asset Documents** | `Product Image`, `Alternate Image 1..4`, `Specification Sheet`, `SDS`, `RoHS`, `Actual Image (Yes/No)` | Real product image URLs discovered via DuckDuckGo Image Search (marketplace-filtered). Falls back to canonical `<Brand>_<MPN>.jpg` naming. `Actual Image (Yes/No)` = `Yes` when real URLs sourced. |
 
 ---
 
@@ -109,7 +109,7 @@ The pipeline generates records structured across **10 distinct functional data t
                                                    │
                                                    ▼
                                 ┌──────────────────────────────────────┐
-                                │ Agent 8: Digital Asset Synthesizer   │  <── <Brand>_<MPN>.jpg & Specification_Sheet.pdf
+                                │ Agent 8: Digital Asset Synthesizer   │  <── DuckDuckGo Image Search → Real URLs; fallback <Brand>_<MPN>.jpg
                                 └──────────────────┬───────────────────┘
                                                    │
                                                    ▼
@@ -138,7 +138,7 @@ The pipeline generates records structured across **10 distinct functional data t
 2. **Regex Spec Parser:** Extract sizes, dimensions, electrical specs, grit, and quantity pack metrics.
 3. **Deep Category Handlers:** Specialized logic for high-value categories (e.g. Lighting, Power Tools, Decking, Wiring Devices, Abrasives, Plumbing, Appliances).
 4. **Copy Generation Formulas:** Deterministic templates enforcing length constraints for Invoice ($\le 40$ UPPERCASE), Mobile ($60\text{--}80$ chars), and Title formulas.
-5. **Digital Asset Naming:** Canonical `<Brand>_<MPN>.<ext>` synthesizer.
+5. **Digital Asset Discovery:** DuckDuckGo Image Search finds real `.jpg`/`.png` product image URLs (marketplace-filtered). Canonical `<Brand>_<MPN>.<ext>` fallback when no live image found. `Actual Image (Yes/No)` = `Yes` when real URL sourced.
 
 ### Phase 3: Evaluation Suite & Benchmark against Ground Truth
 1. **Scoring Engine:** Automated evaluator comparing pipeline output against `Unihack_ Expected Output - Delivery Format.csv`:
@@ -189,10 +189,11 @@ The pipeline generates records structured across **10 distinct functional data t
 | 5. Deep Category Specialization    | Full-depth implementation across 6 primary industrial sectors |
 | 6. Multi-Channel Formula Engine    | 100% compliance with Invoice <=40 & Mobile 60-80 char rules   |
 | 7. Traceability & Lineage Matrix   | Every cell linked to OEM source URL, rule, and SHA-256 hash   |
-| 8. Interactive HITL Web Studio     | Enterprise-ready UI with virtualized 252-column editing grid   |
-| 9. Quantitative Ground Truth Score | 100% field accuracy scored against Unilog ground truth data   |
-| 10. Multi-Sheet Excel (.xlsx) Export| Formatted delivery workbook with frozen panes & audit sheet   |
-| 11. Autonomous PDF Datasheet Gen   | 1-click 1-page engineering PDF submittal cut sheet generation |
-| 12. Active Learning Overrides Store| DuckDB persistence converting human review into swarm memory  |
+| 8. Real Product Image Discovery    | DuckDuckGo Image Search: live product image URLs, not placeholders|
+| 9. Interactive HITL Web Studio     | Enterprise-ready UI with virtualized 252-column editing grid   |
+| 10. Quantitative Ground Truth Score | 100% field accuracy scored against Unilog ground truth data   |
+| 11. Multi-Sheet Excel (.xlsx) Export| Formatted delivery workbook with frozen panes & audit sheet   |
+| 12. Autonomous PDF Datasheet Gen   | 1-click 1-page engineering PDF submittal cut sheet generation |
+| 13. Active Learning Overrides Store| DuckDB persistence converting human review into swarm memory  |
 +------------------------------------+---------------------------------------------------------------+
 ```

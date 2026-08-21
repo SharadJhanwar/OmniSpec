@@ -89,7 +89,7 @@ The brain is equipped with 7 modular domain tools:
 4. `tool_extract_specs_and_uoms`: Deterministic numerical & dimension parser (`LxWxH`, `V`, `A`, `W`, `dBA`, `PSI`, `RPM`, `GPM`, `AWG`).
 5. `tool_bind_lov_schema`: Category LOV schema binder formatting up to 50 attribute triples (150 columns).
 6. `tool_synthesize_unilog_copy`: Strict character-bounded copy generator (`INVOICE_DESC` $\le 40$ chars ALL CAPS, `MOBILE_DESC` $60\text{--}80$ chars).
-7. `tool_generate_digital_assets`: Standardized asset namer (`<CleanBrand>_<MPN>.jpg` & `.pdf`).
+7. `tool_generate_digital_assets`: Real image discovery via DuckDuckGo Image Search; fallback to standardized `<CleanBrand>_<MPN>.jpg` canonical naming & `.pdf` doc links. Sets `Actual Image (Yes/No)` = `Yes` when real URL found.
 
 ---
 
@@ -128,7 +128,7 @@ The brain is equipped with 7 modular domain tools:
 | **5** | **OEM Sourcing & CRAG RAG** | 🌐 [**Agent 5 Architecture Blueprint**](Solution/agents/README_Agent_5_OEM_Sourcing_RAG.md) | Discovers official OEM URLs, blocks marketplaces (0%), ingests PDF technical datasheets, Corrective RAG (CRAG). | `MFR URL`, `Ref URL 1..5`, PDF datasheet link, certs. |
 | **6** | **Constrained LOV Mapper** | 🗄️ [**Agent 6 Architecture Blueprint**](Solution/agents/README_Agent_6_Constrained_LOV_Mapper.md) | Binds raw specs to 161,000-row UniCat LOV schema across 50 triples (150 columns). | `ATTRIBUTE_LABEL 1..50`, `ATTRIBUTE_VALUE 1..50`, `ATTRIBUTE_UOM 1..50`. |
 | **7** | **Multi-Channel Copy Builder** | ✍️ [**Agent 7 Architecture Blueprint**](Solution/agents/README_Agent_7_MultiChannel_Copy_Builder.md) | Generates 6 distinct formulaic descriptions: `INVOICE_DESC` ($\le 40$ ALL CAPS), `MOBILE_DESC` ($60\text{--}80$ chars), 20 bullet features. | `INVOICE_DESC`, `MOBILE_DESC`, `SHORT_DESC`, `LONG_DESC1`, `ITEM_FEATURES_1..20`. |
-| **8** | **Digital Asset Synthesizer** | 🖼️ [**Agent 8 Architecture Blueprint**](Solution/agents/README_Agent_8_Digital_Asset_Synthesizer.md) | Builds canonical asset filenames (`<Brand>_<MPN>.jpg`), autonomous ReportLab 1-page engineering PDF submittal sheets. | `Product Image`, `Alternate Image 1..4`, `Specification Sheet`, `SDS`, `RoHS`. |
+| **8** | **Digital Asset Synthesizer** | 🖼️ [**Agent 8 Architecture Blueprint**](Solution/agents/README_Agent_8_Digital_Asset_Synthesizer.md) | **Discovers real product image URLs** via DuckDuckGo Image Search (marketplace-filtered). Falls back to canonical `<Brand>_<MPN>.jpg` naming. Generates ReportLab 1-page engineering PDF submittals. | `Product Image` (real URL), `Alternate Image 1..4`, `Actual Image (Yes/No)`, `Specification Sheet`, `SDS`, `RoHS`. |
 | **9** | **ReAct Attribute Finalizer** | 🧠 [**Agent 9 Architecture Blueprint**](Solution/agents/README_Agent_9_ReAct_Attribute_Finalizer.md) | 5-Loop Autonomous ReAct SubGraph densely populating up to 50 verified domain triples across 8 property clusters. | Full 50-slot verified attribute triples, exact physical UOMs. |
 | **10** | **Quality Audit & HITL** | 🛡️ [**Agent 10 Architecture Blueprint**](Solution/agents/README_Agent_10_Quality_Audit_HITL.md) | Runs 12 integrity checks, computes 5-Pillar Evidence-Aware confidence, variable-level caching gate, routes to HITL. | Confidence scores ($0\text{--}100\%$), audit flags, HITL review queue payload. |
 

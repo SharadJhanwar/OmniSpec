@@ -56,6 +56,7 @@ def node_agent_5(state: ProductEnrichmentState):
     logger.info(f"  [Agent 5/10 ✓] OEM Grounding Complete ({ms} ms) ── Official URL: '{res.get('mfr_url', '')}'")
     return res
 
+
 def node_agent_6(state: ProductEnrichmentState):
     logger.info("  [Agent 6/10: Constrained LOV Mapper] ──► Calling Service: DuckDB.get_lov_schema() & CategorySchemaValidator")
     t0 = time.perf_counter()
