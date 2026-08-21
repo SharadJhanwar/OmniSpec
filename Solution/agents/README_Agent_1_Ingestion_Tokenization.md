@@ -9,17 +9,17 @@
 flowchart TD
     subgraph INGESTION_INPUT ["📥 Raw Input Payload"]
         RAW_MPN["Raw MPN (e.g. 'DCB518ASTS06G')"]
-        RAW_DESC["Raw Part Desc (e.g. 'DCB518ASTS06G Diablo 1/2''x18'' - Sanding Belt 6pc sawzall')"]
+        RAW_DESC["Raw Part Desc (e.g. 'DCB518ASTS06G Diablo 1/2 in x 18 in - Sanding Belt 6pc sawzall')"]
         RAW_BRAND["Brand Placeholders (e.g. '-- Unbranded --', '-- No Unilog Brand --')"]
         RAW_MFR["Supplier String (e.g. 'Freud Inc (2435)')"]
     end
 
     subgraph AGENT_1_CORE ["⚙️ Agent 1 Lexical Engine (IngestionAgent)"]
         direction TB
-        STEP1["1. Placeholder Purge & Sanitization<br/>• Regex Matcher strips '-- Unbranded --', '-- No DIB Brand --'<br/>• Unescapes HTML entities & non-breaking spaces (&quot; &amp; &nbsp;)"]
+        STEP1["1. Placeholder Purge & Sanitization<br/>• Regex Matcher strips negative placeholders<br/>• Unescapes HTML entities & non-breaking spaces"]
         STEP2["2. Supplier Vendor-Code Isolator<br/>• Extracts legal name ('Freud Inc')<br/>• Extracts vendor code ('2435', 'JAMIN', 'BOICA')"]
         STEP3["3. Trade Slang & Contractor Thesaurus<br/>• Queries DuckDB industry_thesaurus<br/>• Resolves 'sawzall' → Reciprocating Saw, 'romex' → Non-Metallic Cable"]
-        STEP4["4. Lexical Token Segmenter<br/>• Isolates MPN prefix ('DCB518ASTS06G')<br/>• Isolates brand tokens ('Diablo', 'Freud')<br/>• Isolates dimension blocks ('1/2\"x18\"')<br/>• Isolates pack count ('6pc')"]
+        STEP4["4. Lexical Token Segmenter<br/>• Isolates MPN prefix ('DCB518ASTS06G')<br/>• Isolates brand tokens ('Diablo', 'Freud')<br/>• Isolates dimension blocks ('1/2 in x 18 in')<br/>• Isolates pack count ('6pc')"]
         STEP5["5. Cryptographic Fingerprint<br/>• Computes deterministic SHA-256 row hash for lineage tracking"]
         
         STEP1 --> STEP2 --> STEP3 --> STEP4 --> STEP5
@@ -27,9 +27,9 @@ flowchart TD
 
     subgraph ENRICHED_STATE ["📦 State Delta Output (ProductEnrichmentState)"]
         CLEAN_MPN["clean_mfg_part_num: 'DCB518ASTS06G'"]
-        CLEAN_DESC["cleaned_part_desc: 'Diablo 1/2\"x18\" - Sanding Belt 6pc'"]
+        CLEAN_DESC["cleaned_part_desc: 'Diablo 1/2 in x 18 in - Sanding Belt 6pc'"]
         CLEAN_MFR["clean_supplier_name: 'Freud Inc', vendor_code: '2435'"]
-        TOKENS["brand_candidates: ['Diablo', 'Freud Inc'], dimension_blocks: ['1/2\"x18\"']"]
+        TOKENS["brand_candidates: ['Diablo', 'Freud Inc'], dimension_blocks: ['1/2 in x 18 in']"]
         HASH["row_hash: 'd89a55a9...'"]
     end
 

@@ -16,8 +16,8 @@ flowchart TD
     subgraph AGENT_8_CORE ["⚙️ Agent 8 Asset Synthesizer Engine (DigitalAssetAgent)"]
         direction TB
         STEP1["1. Clean Brand Sanitizer<br/>• Strips ®, ™ and non-alphanumeric chars → 'BOSCH'"]
-        STEP2["2. Primary & Alternate Image Formatter<br/>• Primary Image: <CleanBrand>_<MPN>.jpg ('BOSCH_SHX78B75UC.jpg')<br/>• Alternate Images 1..4: <CleanBrand>_<MPN>_1.jpg to _4.jpg"]
-        STEP3["3. Technical Document Classifier & Submittal Builder<br/>• Spec Sheet: <CleanBrand>_<MPN>_Specification_Sheet.pdf<br/>• Maps Installation Manual, Owners Manual, SDS, RoHS<br/>• Autonomous 1-page engineering PDF generator (ReportLab)"]
+        STEP2["2. Primary & Alternate Image Formatter<br/>• Primary Image: CleanBrand_MPN.jpg (e.g. 'BOSCH_SHX78B75UC.jpg')<br/>• Alternate Images 1..4: CleanBrand_MPN_1.jpg to _4.jpg"]
+        STEP3["3. Technical Document Classifier & Submittal Builder<br/>• Spec Sheet: CleanBrand_MPN_Specification_Sheet.pdf<br/>• Maps Installation Manual, Owners Manual, SDS, RoHS<br/>• Autonomous 1-page engineering PDF generator (ReportLab)"]
         STEP4["4. Compliance & Verification Flags<br/>• Actual Image (Yes/No) = 'Yes'<br/>• Discontinued = 'No'<br/>• Country Of Origin normalization"]
         
         STEP1 --> STEP2 --> STEP3 --> STEP4

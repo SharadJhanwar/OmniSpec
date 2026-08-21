@@ -15,7 +15,7 @@ flowchart TD
 
     subgraph AGENT_5_CORE ["⚙️ Agent 5 Sourcing & CRAG Engine (OEMSourcingRAGAgent)"]
         direction TB
-        STEP1["1. Multi-Engine OEM Search Discovery<br/>• Uses EvidenceDiscoveryService (DuckDuckGo Search)<br/>• Generates targeted query: '<Brand> <MPN> official datasheet specifications'"]
+        STEP1["1. Multi-Engine OEM Search Discovery<br/>• Uses EvidenceDiscoveryService (DuckDuckGo Search)<br/>• Generates targeted query: Brand + MPN + official datasheet specifications"]
         STEP2["2. Sourcing Hierarchy Gatekeeper & Blacklist Filter<br/>• BANS marketplaces & retail aggregators (Amazon, eBay, Grainger, Walmart)<br/>• PRIORITIZES direct OEM domains (e.g. skf.com, bosch.com, milwaukeetool.com)"]
         STEP3["3. Corrective RAG (CRAG) Document Evaluator<br/>• Grades retrieved snippets: CORRECT / AMBIGUOUS / INCORRECT<br/>• Scrapes authoritative PDF technical datasheets and submittal cut sheets"]
         STEP4["4. Standards & Approvals Aggregator<br/>• Parses pipe-delimited certifications (ASSE 1006|cUL Listed|ENERGY STAR|UL Listed)"]

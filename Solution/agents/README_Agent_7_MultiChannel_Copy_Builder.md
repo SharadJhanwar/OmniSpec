@@ -16,9 +16,9 @@ flowchart TD
 
     subgraph AGENT_7_CORE ["⚙️ Agent 7 Copy Synthesis Engine (MultiChannelCopyAgent)"]
         direction TB
-        STEP1["1. Invoice Description Generator (<= 40 chars ALL CAPS)<br/>• Formula: <NOUN> <SPEC> <MPN><br/>• e.g. 'DISHWASHER SST SHX78B75UC' (25 chars)"]
-        STEP2["2. Mobile Description Generator (60-80 chars window)<br/>• Formula: <Brand>, <Item>, Industrial Grade, <MPN><br/>• Strict whitespace padding to guarantee 60-80 chars"]
-        STEP3["3. Title / Short Description Assembler<br/>• Formula: Brand® + Series + MPN + Item Type + Key Specs"]
+        STEP1["1. Invoice Description Generator (<= 40 chars ALL CAPS)<br/>• Formula: NOUN + SPEC + MPN<br/>• e.g. 'DISHWASHER SST SHX78B75UC' (25 chars)"]
+        STEP2["2. Mobile Description Generator (60-80 chars window)<br/>• Formula: Brand, Item, Industrial Grade, MPN<br/>• Strict whitespace padding to guarantee 60-80 chars"]
+        STEP3["3. Title / Short Description Assembler<br/>• Formula: Brand + Series + MPN + Item Type + Key Specs"]
         STEP4["4. Long Description & Additional Info Generator<br/>• Standardized narrative + 'Additional Information:' spec block"]
         STEP5["5. 20-Bullet Feature Allocator<br/>• Formats atomic capability bullets (ITEM_FEATURES_1..20)"]
         
