@@ -11,7 +11,13 @@ class DBOMService:
     """
 
     @classmethod
-    def generate_dbom(cls, state: ProductEnrichmentState, dpi_score: float = 0.0, risk_tier: str = "LOW") -> DataBOM:
+    def generate_dbom(cls, state: Any, dpi_score: float = 0.0, risk_tier: str = "LOW") -> DataBOM:
+        if isinstance(state, dict):
+            try:
+                state = ProductEnrichmentState(**state)
+            except Exception:
+                state = ProductEnrichmentState.model_construct(**state)
+
         cells: Dict[str, CellProvenance] = {}
         tracked_count = 0
         oem_verified_sources = 0
@@ -271,19 +277,46 @@ class DBOMService:
         )
         tracked_count += 1
 
+        # Compute variable-level caching and HITL status for every cell
+        is_sku_cached = getattr(state, "is_cached", False)
+        cached_count = 0
+        uncached_count = 0
+
+        for col, cell in cells.items():
+            # A variable is cached if SKU has active human override or cell comes from verified Master KB
+            if is_sku_cached or (cell.source_type in ["ACTIVE_OVERRIDE", "UNICAT_BRAND_KB", "UNICAT_LOV_KB"] and cell.confidence >= 0.95):
+                cell.is_cached = True
+                cell.needs_hitl = False
+                cell.confidence = 1.0
+                cached_count += 1
+            else:
+                cell.is_cached = False
+                cell.needs_hitl = True
+                cell.hitl_reason = f"Field '{col}' is uncached and requires human review"
+                uncached_count += 1
+
+        cache_coverage = round(cached_count / max(1, tracked_count), 3)
+
         # Generate cryptographic lineage hash
-        raw_signature = f"{mpn}_{brand_name}_{tracked_count}_{state.overall_confidence}"
+        raw_signature = f"{mpn}_{brand_name}_{tracked_count}_{cached_count}_{state.overall_confidence}"
         lineage_hash = hashlib.sha256(raw_signature.encode("utf-8")).hexdigest()
+
+        bom_conf = 1.00 if (is_sku_cached or cached_count == tracked_count) else round(state.overall_confidence, 3)
+        bom_needs_hitl = False if (is_sku_cached or cached_count == tracked_count) else True
 
         return DataBOM(
             row_id=state.row_id or mpn,
             mpn=mpn,
             brand_name=brand_name,
             manufacturer_name=state.manufacturer_name or "Unknown Manufacturer",
-            overall_confidence=round(state.overall_confidence, 3),
+            overall_confidence=bom_conf,
             defect_probability_index=round(dpi_score, 3),
             risk_tier=risk_tier,
             total_attributes_tracked=tracked_count,
+            cached_attributes_count=cached_count,
+            uncached_attributes_count=uncached_count,
+            cache_coverage_ratio=cache_coverage,
+            needs_hitl_review=bom_needs_hitl,
             verified_oem_sources_count=oem_verified_sources,
             provenance_cells=cells,
             lineage_hash=lineage_hash
