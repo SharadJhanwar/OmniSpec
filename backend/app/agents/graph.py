@@ -86,7 +86,8 @@ from ..orchestrator.attribute_finalizer_orchestrator import LangGraphReActAttrib
 def node_react_attribute_finalizer(state: ProductEnrichmentState):
     logger.info("  [Agent 9/10: ReAct Attribute Finalizer] ──► Calling Service: LangGraphReActSubGraph & DeepSpecMiner")
     t0 = time.perf_counter()
-    res = LangGraphReActAttributeFinalizer.execute_react_loop(state)
+    subgraph = LangGraphReActAttributeFinalizer.create_graph()
+    res = subgraph.invoke(state, {"recursion_limit": 25})
     ms = round((time.perf_counter() - t0) * 1000, 2)
     total_attrs = sum(1 for i in range(1, 51) if res.get("attributes", {}).get(f"ATTRIBUTE_VALUE {i}"))
     logger.info(f"  [Agent 9/10 ✓] ReAct Finalization Done ({ms} ms) ── {total_attrs} Total Structured Triples with Precise UOMs")

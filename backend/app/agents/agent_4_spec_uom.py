@@ -73,52 +73,63 @@ class SpecUOMExtractorAgent:
             dim_specs["LENGTH_UOM"] = "in"
 
         # -------------------------------------------------------------
-        # 2. Electrical & Lighting Specifications
+        # 2. Electrical & Lighting Specifications (Only for Electrical/Lighting/Appliance/Power Tools)
         # -------------------------------------------------------------
-        # Voltage
-        v_match = re.search(r"\b(\d+)\s*(?:V|VAC|Volts)\b", desc_text, flags=re.IGNORECASE)
-        if v_match:
-            electrical_specs["Voltage Rating"] = v_match.group(1)
-            electrical_specs["Voltage Rating UOM"] = "V"
-        elif "120V" in desc_text or "120 V" in desc_text:
-            electrical_specs["Voltage Rating"] = "120"
-            electrical_specs["Voltage Rating UOM"] = "V"
-        elif "20V" in desc_text or "20 V" in desc_text:
-            electrical_specs["Voltage Rating"] = "20"
-            electrical_specs["Voltage Rating UOM"] = "V"
+        cp_up = (state.classpath or "").upper()
+        is_passive_hardware = any(p in cp_up or p in desc_text.upper() for p in [
+            "ABRASIVE", "SANDING", "SANDPAPER", "CUT-OFF", "WHEEL", "DISC", "BELT",
+            "FASTENER", "BOLT", "SCREW", "NUT", "WASHER", "LUMBER", "DECKING", "PIPE", "FITTING"
+        ])
 
-        # Amperage (Strict lookahead: A must be followed by whitespace, comma, semicolon, or end-of-string)
-        a_match = re.search(r"\b(\d+(?:\.\d+)?)\s*(?:Amps?|Amperes?|Amp)\b|\b(\d+)\s*A(?=[\s,;]|$)", desc_text, flags=re.IGNORECASE)
-        if a_match:
-            a_val = a_match.group(1) or a_match.group(2)
-            electrical_specs["Amperage Rating"] = a_val
-            electrical_specs["Amperage Rating UOM"] = "A"
+        if not is_passive_hardware or any(w in desc_text.upper() for w in ["VOLTS", "AMPERES", "WATTS", "MOTOR", "CORDED", "BATTERY"]):
+            # Voltage
+            v_match = re.search(r"\b(\d+)\s*(?:V|VAC|Volts)\b", desc_text, flags=re.IGNORECASE)
+            if v_match:
+                electrical_specs["Voltage Rating"] = v_match.group(1)
+                electrical_specs["Voltage Rating UOM"] = "V"
+            elif "120V" in desc_text or "120 V" in desc_text:
+                electrical_specs["Voltage Rating"] = "120"
+                electrical_specs["Voltage Rating UOM"] = "V"
+            elif "20V" in desc_text or "20 V" in desc_text:
+                electrical_specs["Voltage Rating"] = "20"
+                electrical_specs["Voltage Rating UOM"] = "V"
 
-        # Wattage (e.g. 60W, 9.5W, 40W, 100W)
-        w_match = re.search(r"\b(\d+(?:\.\d+)?)\s*(?:W|Watts|Watt)\b", desc_text, flags=re.IGNORECASE)
-        if w_match:
-            electrical_specs["Wattage"] = w_match.group(1)
-            electrical_specs["Wattage UOM"] = "W"
+            # Amperage (Explicit Amps/Amperes or numbers followed by A only in electrical contexts)
+            a_match = re.search(r"\b(\d+(?:\.\d+)?)\s*(?:Amps?|Amperes?|Amp)\b", desc_text, flags=re.IGNORECASE)
+            if a_match:
+                electrical_specs["Amperage Rating"] = a_match.group(1)
+                electrical_specs["Amperage Rating UOM"] = "A"
+            elif not is_passive_hardware:
+                a_match2 = re.search(r"\b(\d+)\s*A(?=[\s,;]|$)", desc_text, flags=re.IGNORECASE)
+                if a_match2:
+                    electrical_specs["Amperage Rating"] = a_match2.group(1)
+                    electrical_specs["Amperage Rating UOM"] = "A"
 
-        # Color Temperature (e.g. 27K -> 2700 K, 30K -> 3000 K, 50K -> 5000 K)
-        cct_match = re.search(r"\b(27|30|35|40|50|65)K\b", desc_text, flags=re.IGNORECASE)
-        if cct_match:
-            cct_val = f"{cct_match.group(1)}00"
-            electrical_specs["Color Temperature"] = cct_val
-            electrical_specs["Color Temperature UOM"] = "K"
+            # Wattage (e.g. 60W, 9.5W, 40W, 100W)
+            w_match = re.search(r"\b(\d+(?:\.\d+)?)\s*(?:W|Watts|Watt)\b", desc_text, flags=re.IGNORECASE)
+            if w_match:
+                electrical_specs["Wattage"] = w_match.group(1)
+                electrical_specs["Wattage UOM"] = "W"
 
-        # Base Type (e.g. MED -> Medium E26, CANDLE -> Candelabra E12, GU10)
-        if "MED" in desc_text.upper() or "E26" in desc_text.upper():
-            electrical_specs["Base Type"] = "Medium E26"
-        elif "CANDLE" in desc_text.upper() or "E12" in desc_text.upper():
-            electrical_specs["Base Type"] = "Candelabra E12"
-        elif "GU10" in desc_text.upper():
-            electrical_specs["Base Type"] = "GU10"
+            # Color Temperature (e.g. 27K -> 2700 K, 30K -> 3000 K, 50K -> 5000 K)
+            cct_match = re.search(r"\b(27|30|35|40|50|65)K\b", desc_text, flags=re.IGNORECASE)
+            if cct_match:
+                cct_val = f"{cct_match.group(1)}00"
+                electrical_specs["Color Temperature"] = cct_val
+                electrical_specs["Color Temperature UOM"] = "K"
 
-        # Bulb Shape (e.g. A19, BR30, PAR38, T8, B11)
-        shape_match = re.search(r"\b(A19|BR30|PAR38|PAR30|PAR20|T8|T5|B11|G25)\b", desc_text, flags=re.IGNORECASE)
-        if shape_match:
-            electrical_specs["Bulb Shape"] = shape_match.group(1).upper()
+            # Base Type (e.g. MED -> Medium E26, CANDLE -> Candelabra E12, GU10)
+            if "MED" in desc_text.upper() or "E26" in desc_text.upper():
+                electrical_specs["Base Type"] = "Medium E26"
+            elif "CANDLE" in desc_text.upper() or "E12" in desc_text.upper():
+                electrical_specs["Base Type"] = "Candelabra E12"
+            elif "GU10" in desc_text.upper():
+                electrical_specs["Base Type"] = "GU10"
+
+            # Bulb Shape (e.g. A19, BR30, PAR38, T8, B11)
+            shape_match = re.search(r"\b(A19|BR30|PAR38|PAR30|PAR20|T8|T5|B11|G25)\b", desc_text, flags=re.IGNORECASE)
+            if shape_match:
+                electrical_specs["Bulb Shape"] = shape_match.group(1).upper()
 
         # -------------------------------------------------------------
         # 3. Acoustic Ratings (e.g. 47 dBA, 41 dBA)
@@ -221,10 +232,28 @@ class SpecUOMExtractorAgent:
         if "MASONRY" in desc_text.upper() or "BRICK" in desc_text.upper() or "CONCRETE" in desc_text.upper():
             electrical_specs["Material Application"] = "Masonry, Concrete, Brick"
 
-        # Speed Rating for Abrasives
+        # Speed Rating for Abrasives governed by ANSI B7.1 / OSHA 80 m/s law
         if "DISC" in desc_text.upper() or "WHEEL" in desc_text.upper():
             if "Speed Rating" not in electrical_specs and "Max Speed" not in electrical_specs:
-                electrical_specs["Max Speed"] = "13300"
+                d_str = dim_specs.get("DIAMETER", "")
+                if not d_str:
+                    if re.search(r"\b9\s*(?:in|\"|\b)", desc_text):
+                        d_str = "9"
+                    elif re.search(r"\b(?:4-1/2|4\.5)\s*(?:in|\"|\b)", desc_text):
+                        d_str = "4.5"
+                    elif re.search(r"\b7\s*(?:in|\"|\b)", desc_text):
+                        d_str = "7"
+                
+                # ANSI B7.1 safe speed calculation: RPM <= 60000 / D_inches
+                if d_str:
+                    try:
+                        d_val = float(d_str.replace('"', '').strip())
+                        safe_rpm = str(int(60000 / d_val)) if d_val > 0 else "6650"
+                    except Exception:
+                        safe_rpm = "6650"
+                else:
+                    safe_rpm = "6650"
+                electrical_specs["Max Speed"] = safe_rpm
                 electrical_specs["Max Speed UOM"] = "rpm"
 
         # Abrasive Backing & Joint Types

@@ -107,3 +107,10 @@ class ProductEnrichmentState(BaseModel):
     # Execution Trace & 252-Col Delivery Format
     traces: List[AgentTrace] = Field(default_factory=list)
     delivery_record: Optional[DeliveryProductRecord] = None
+
+    # Agent 9: ReAct SubGraph State Fields
+    discovered_triples: Dict[str, Any] = Field(default_factory=dict)
+    web_search_snippets: List[str] = Field(default_factory=list)
+    react_iteration: int = 0
+    react_current_count: int = 0
+    react_missing_clusters: List[str] = Field(default_factory=list)
