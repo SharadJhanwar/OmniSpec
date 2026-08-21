@@ -25,7 +25,7 @@ class ExcelDeliveryExporter:
             wb.save(out)
             return out.getvalue()
 
-        headers = list(records[0].keys())
+        headers = [k for k in records[0].keys() if not str(k).startswith("_")]
         ws_data.append(headers)
 
         # Style Header Row
