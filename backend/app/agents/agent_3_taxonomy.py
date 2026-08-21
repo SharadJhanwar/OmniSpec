@@ -1,183 +1,136 @@
 import time
 import re
-from typing import Dict, Any, Tuple
+import os
+from typing import Dict, Any, Tuple, Optional
 from ..schemas.state_schema import ProductEnrichmentState, AgentTrace
 from ..db.duckdb_client import kb
 from ..core.logging import logger
 
+try:
+    from langchain_openai import ChatOpenAI
+    from langchain_core.messages import SystemMessage, HumanMessage
+    HAS_OPENAI = bool(os.getenv("OPENAI_API_KEY"))
+except ImportError:
+    HAS_OPENAI = False
+
 
 class TaxonomyClassifierAgent:
     """
-    Agent 3: Taxonomy, UNSPSC & Classpath Classifier Agent
-    Maps product tokens into the 4-tier UniCat taxonomy hierarchy,
-    assigns 8-digit UNSPSC codes, and triggers dynamic LOV schemas.
+    Agent 3: Dynamic Taxonomy & UNSPSC Classifier Agent
+    Uses hybrid keyword + fuzzy retrieval over DuckDB unicat_taxonomy_nodes
+    with structured LLM zero-shot ranking for ambiguous novel items.
+    Eliminates all hardcoded category lambda arrays.
     """
-
-    # Comprehensive Classification Taxonomy Rules across all Industrial Sectors
-    TAXONOMY_RULES = [
-        # 1. Built-In Dishwashers & Major Appliances
-        {
-            "match": lambda desc, mpn: "DISHWASHER" in desc or mpn.startswith("PDSH") or mpn.startswith("WDTS"),
-            "classpath": "Appliances & Consumer Electronics>Kitchen Appliances>Built-In Dishwashers",
-            "dept": "Appliances",
-            "class": "Large Appliances",
-            "fine": "Dishwashers",
-            "product_name": "Dishwasher",
-            "unspsc": "52141505"
-        },
-        # 2. LED Light Bulbs & Lamps
-        {
-            "match": lambda desc, mpn: ("LED" in desc or "BULB" in desc or "LAMP" in desc) and ("MED" in desc or "27K" in desc or "30K" in desc or "40K" in desc or "50K" in desc or "A19" in desc or "BR30" in desc or "PAR38" in desc or "60W" in desc or "40W" in desc or "100W" in desc or "CANDLE" in desc or "WATT" in desc),
-            "classpath": "Lighting & Electrical>Light Bulbs & Lamps>LED Light Bulbs",
-            "dept": "Lighting",
-            "class": "Lamps",
-            "fine": "LED Bulbs",
-            "product_name": "LED Light Bulb",
-            "unspsc": "39101628"
-        },
-        # 3. Cut-Off Discs & Grinding Wheels
-        {
-            "match": lambda desc, mpn: ("CUT OFF" in desc or "CUT-OFF" in desc or "GRIND" in desc) and ("DISC" in desc or "WHEEL" in desc),
-            "classpath": "Abrasives & Polishing>Cut-Off & Grinding Wheels>Cut-Off Wheels",
-            "dept": "Abrasives",
-            "class": "Abrasive Wheels",
-            "fine": "Cut-Off Discs",
-            "product_name": "Metal Cut-Off Disc",
-            "unspsc": "31191500"
-        },
-        # 4. Sanding Belts
-        {
-            "match": lambda desc, mpn: "SANDING BELT" in desc or ("BELT" in desc and ("GRIT" in desc or "SANDING" in desc or "ASTS" in mpn)),
-            "classpath": "Abrasives & Polishing>Sandpaper & Abrasive Pads>Sanding Belts",
-            "dept": "Abrasives",
-            "class": "Abrasive Belts",
-            "fine": "Sanding Belts",
-            "product_name": "Sanding Belt",
-            "unspsc": "31191500"
-        },
-        # 5. Sanding Discs / Film Discs
-        {
-            "match": lambda desc, mpn: ("STIKIT" in desc or "ABRANET" in desc or "HIOLIT" in desc or "DISC" in desc) and ("FILM" in desc or "GRIT" in desc or "P150" in desc or "P80" in desc or "P120" in desc or "P180" in desc or "P220" in desc or "P320" in desc or "CUBITRON" in desc),
-            "classpath": "Abrasives & Polishing>Sandpaper & Abrasive Pads>Sanding Discs",
-            "dept": "Abrasives",
-            "class": "Abrasive Discs",
-            "fine": "Film Discs",
-            "product_name": "Sanding Disc",
-            "unspsc": "31191500"
-        },
-        # 6. Fascia Boards
-        {
-            "match": lambda desc, mpn: "FASCIA" in desc or "PVC FASCIA" in desc,
-            "classpath": "Building Materials>Decking & Railing>Fascia Boards",
-            "dept": "Building Materials",
-            "class": "Decking",
-            "fine": "Fascia Boards",
-            "product_name": "Fascia Board",
-            "unspsc": "30151501"
-        },
-        # 7. Decking Boards
-        {
-            "match": lambda desc, mpn: "DECKING" in desc or ("TREX" in desc or "TIMBERTECH" in desc or "AZEK" in desc) and ("GROOVED" in desc or "SQ EDGE" in desc or "SQUARE EDGE" in desc or "1NX6" in desc or "1X6" in desc),
-            "classpath": "Building Materials>Decking & Railing>Decking Boards",
-            "dept": "Building Materials",
-            "class": "Decking",
-            "fine": "Composite Decking",
-            "product_name": "Decking Board",
-            "unspsc": "30151500"
-        },
-        # 8. Siding & Engineered Wood Trim
-        {
-            "match": lambda desc, mpn: "SMARTSIDE" in desc or "HARDIE" in desc or "SIDING" in desc or "LAP SIDING" in desc,
-            "classpath": "Building Materials>Siding & Trim>Engineered Siding",
-            "dept": "Building Materials",
-            "class": "Siding",
-            "fine": "Lap Siding",
-            "product_name": "Siding Board",
-            "unspsc": "30151800"
-        },
-        # 9. Power Saws (Circular, Miter, Reciprocating)
-        {
-            "match": lambda desc, mpn: ("SAW" in desc or "MITER" in desc or "RECIP" in desc or "CIRCULAR" in desc) and not "DISC" in desc and not "WHEEL" in desc,
-            "classpath": "Tools & Instruments>Power Tools>Saws & Blades>Circular & Miter Saws",
-            "dept": "Tools",
-            "class": "Power Saws",
-            "fine": "Miter & Circular Saws",
-            "product_name": "Power Saw",
-            "unspsc": "27112700"
-        },
-        # 10. Power Drills & Drivers
-        {
-            "match": lambda desc, mpn: ("DRILL" in desc or "IMPACT" in desc or "DRIVER" in desc or "HAMMER" in desc) and not "BIT" in desc,
-            "classpath": "Tools & Instruments>Power Tools>Drills & Drivers>Cordless Drills & Drivers",
-            "dept": "Tools",
-            "class": "Power Drills",
-            "fine": "Impact Drivers & Drills",
-            "product_name": "Cordless Drill/Driver",
-            "unspsc": "27112700"
-        },
-        # 11. Electrical Switches & Receptacles
-        {
-            "match": lambda desc, mpn: "SWITCH" in desc or "RECEPTACLE" in desc or "OUTLET" in desc or "DECORA" in desc or "DUPLEX" in desc,
-            "classpath": "Lighting & Electrical>Wiring Devices & Supplies>Switches & Outlets",
-            "dept": "Electrical",
-            "class": "Wiring Devices",
-            "fine": "Switches & Outlets",
-            "product_name": "Wiring Device",
-            "unspsc": "39122200"
-        },
-        # 12. Pipe & Tube Fittings
-        {
-            "match": lambda desc, mpn: "CPLG" in desc or "COUPLING" in desc or "ELBOW" in desc or "TEE" in desc or "ADAPTER" in desc or "FITTING" in desc,
-            "classpath": "Plumbing>Pipe, Tube & Hose Fittings>Pipe Fittings",
-            "dept": "Plumbing",
-            "class": "Fittings",
-            "fine": "Pipe Fittings",
-            "product_name": "Pipe Coupling",
-            "unspsc": "40171500"
-        },
-        # 13. Kitchen & Bath Faucets
-        {
-            "match": lambda desc, mpn: "FAUCET" in desc or "SINK FAUCET" in desc,
-            "classpath": "Plumbing>Commercial & Residential Faucets>Kitchen Sink Faucets",
-            "dept": "Plumbing",
-            "class": "Faucets",
-            "fine": "Kitchen Faucets",
-            "product_name": "Kitchen Sink Faucet",
-            "unspsc": "30181702"
-        },
-        # 14. Driver Bits & Fasteners
-        {
-            "match": lambda desc, mpn: "SCREWDRIVER" in desc or "BIT SET" in desc or "DRIVE BIT" in desc or "SCREW SETTER" in desc or ("BIT" in desc and "DEWALT" in desc),
-            "classpath": "Tools & Hardware>Fasteners & Screwdriving>Driver Bits",
-            "dept": "Hardware",
-            "class": "Fasteners",
-            "fine": "Bits",
-            "product_name": "Driver Bit",
-            "unspsc": "27112814"
-        }
-    ]
 
     @classmethod
     def execute(cls, state: ProductEnrichmentState) -> Dict[str, Any]:
         t0 = time.perf_counter()
 
-        desc_upper = (state.cleaned_part_desc or "").upper()
-        mpn_upper = (state.clean_mfg_part_num or "").upper()
+        desc_text = state.cleaned_part_desc or ""
+        mpn = (state.clean_mfg_part_num or "").strip()
 
-        matched_rule = None
-        for rule in cls.TAXONOMY_RULES:
-            if rule["match"](desc_upper, mpn_upper):
-                matched_rule = rule
-                break
+        # Step 0: Check Active Reviewer Overrides Store (HITL Approved Knowledge)
+        override = kb.get_override(mpn)
+        if override and override.get("classpath"):
+            cp_meta = kb.get_taxonomy_by_classpath(override["classpath"]) or {}
+            classpath = override["classpath"]
+            dept = override.get("dept") or cp_meta.get("dept", "General")
+            class_name = override.get("class_name") or cp_meta.get("class_name", "General")
+            fine = override.get("fine") or cp_meta.get("fine_name", "General")
+            product_name = override.get("product_name") or cp_meta.get("product_name", "Product")
+            unspsc = override.get("unspsc") or cp_meta.get("unspsc", "31160000")
+            conf = 1.0
 
-        if matched_rule:
-            classpath = matched_rule["classpath"]
-            dept = matched_rule["dept"]
-            class_name = matched_rule["class"]
-            fine = matched_rule["fine"]
-            product_name = matched_rule["product_name"]
-            unspsc = matched_rule["unspsc"]
-            conf = 0.98
+            active_lov_schema = kb.get_lov_schema(classpath)
+            trace = AgentTrace(
+                agent_name="Agent 3: Dynamic Taxonomy & Classification",
+                execution_time_ms=round((time.perf_counter() - t0) * 1000, 2),
+                notes=[
+                    f"Applied Active Reviewer Taxonomy Override: '{classpath}' [UNSPSC: {unspsc}]",
+                    f"Product Name: '{product_name}'"
+                ],
+                extracted_data={
+                    "classpath": classpath,
+                    "dept": dept,
+                    "class_name": class_name,
+                    "fine": fine,
+                    "product_name": product_name,
+                    "unspsc": unspsc,
+                    "active_override_applied": True
+                }
+            )
+            return {
+                "classpath": classpath,
+                "dept": dept,
+                "class_name": class_name,
+                "fine": fine,
+                "product_name": product_name,
+                "unspsc": unspsc,
+                "taxonomy_confidence": conf,
+                "traces": state.traces + [trace]
+            }
+
+        # Step 1: Hybrid Retrieval from DuckDB (unicat_taxonomy_nodes)
+        candidates = kb.search_taxonomy(desc_text, top_k=5)
+        
+        classpath = ""
+        dept = ""
+        class_name = ""
+        fine = ""
+        product_name = ""
+        unspsc = ""
+        conf = 0.0
+        llm_used = False
+
+        if candidates and candidates[0]["score"] >= 35.0:
+            top = candidates[0]
+            classpath = top["classpath"]
+            dept = top["dept"]
+            class_name = top["class_name"]
+            fine = top["fine_name"]
+            product_name = top["product_name"]
+            unspsc = top["unspsc"]
+            conf = min(0.98, top["confidence"])
+        elif candidates:
+            # Step 2: Structured LLM Zero-Shot Reasoning if retrieval confidence is ambiguous
+            if HAS_OPENAI and state.enable_llm:
+                try:
+                    t_ai_0 = time.perf_counter()
+                    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+                    options_str = "\n".join([f"- {c['classpath']} | UNSPSC: {c['unspsc']} | Product: {c['product_name']}" for c in candidates])
+                    prompt = (
+                        f"Given product description: '{desc_text}', MPN: '{mpn}'.\n"
+                        f"Select the best matching taxonomy classification from the candidates below, or propose canonical classification.\n"
+                        f"Candidates:\n{options_str}\n\n"
+                        "Format Output: CLASSPATH: <path> | UNSPSC: <8-digit> | PRODUCT_NAME: <name> | DEPT: <dept> | CLASS: <class> | FINE: <fine>"
+                    )
+                    res = llm.invoke([
+                        SystemMessage(content="You are an industrial catalog master taxonomist."),
+                        HumanMessage(content=prompt)
+                    ])
+                    content = res.content.strip()
+                    m = re.search(r"CLASSPATH:\s*([^|]+)\|\s*UNSPSC:\s*(\d+)\|\s*PRODUCT_NAME:\s*([^|]+)\|\s*DEPT:\s*([^|]+)\|\s*CLASS:\s*([^|]+)\|\s*FINE:\s*(.+)", content)
+                    if m:
+                        classpath = m.group(1).strip()
+                        unspsc = m.group(2).strip()
+                        product_name = m.group(3).strip()
+                        dept = m.group(4).strip()
+                        class_name = m.group(5).strip()
+                        fine = m.group(6).strip()
+                        conf = 0.90
+                        llm_used = True
+                except Exception as e:
+                    logger.warning(f"OpenAI taxonomy classification fallback used top candidate: {e}")
+
+            if not classpath:
+                top = candidates[0]
+                classpath = top["classpath"]
+                dept = top["dept"]
+                class_name = top["class_name"]
+                fine = top["fine_name"]
+                product_name = top["product_name"]
+                unspsc = top["unspsc"]
+                conf = 0.65
         else:
             # Fallback General Classification
             classpath = "Industrial Supplies & Hardware>General Hardware"
@@ -186,17 +139,18 @@ class TaxonomyClassifierAgent:
             fine = "Industrial Hardware"
             product_name = "Industrial Component"
             unspsc = "31160000"
-            conf = 0.60
+            conf = 0.40
 
-        # Retrieve active LOV attribute schema from DuckDB
+        # Retrieve active LOV attribute schema from DuckDB for the assigned classpath
         active_lov_schema = kb.get_lov_schema(classpath)
 
         trace = AgentTrace(
-            agent_name="Agent 3: Taxonomy & Classification",
+            agent_name="Agent 3: Dynamic Taxonomy & Classification",
             execution_time_ms=round((time.perf_counter() - t0) * 1000, 2),
             notes=[
                 f"Assigned Classpath: '{classpath}' [UNSPSC: {unspsc}]",
-                f"Product Name: '{product_name}'",
+                f"Product Name: '{product_name}' (Confidence: {conf*100}%)",
+                f"LLM Classification Invoked: {llm_used}",
                 f"Loaded {len(active_lov_schema)} active LOV schema attributes"
             ],
             extracted_data={
@@ -206,6 +160,8 @@ class TaxonomyClassifierAgent:
                 "fine": fine,
                 "product_name": product_name,
                 "unspsc": unspsc,
+                "taxonomy_confidence": conf,
+                "llm_used": llm_used,
                 "active_schema_count": len(active_lov_schema)
             }
         )

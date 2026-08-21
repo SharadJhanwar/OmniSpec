@@ -1,3 +1,4 @@
+import re
 import duckdb
 import json
 from pathlib import Path
@@ -103,32 +104,45 @@ class DuckDBKnowledgeBase:
             );
         """)
 
+        # 8. Canonical UniCat Taxonomy Index Nodes (for Hybrid Dynamic Classification)
+        self.conn.execute("""
+            CREATE TABLE IF NOT EXISTS unicat_taxonomy_nodes (
+                classpath VARCHAR PRIMARY KEY,
+                dept VARCHAR,
+                class_name VARCHAR,
+                fine_name VARCHAR,
+                product_name VARCHAR,
+                unspsc VARCHAR,
+                keywords VARCHAR
+            );
+        """)
+
     def load_seed_data(self):
         """Seed master reference tables with core UniCat entities and trade jargon."""
         logger.info("[OmniSpec] Seeding Master Knowledge Base into DuckDB...")
 
-        # 1. Seed Core UniCat Brands with Legal Names & Trademarks
+        # 1. Seed Core UniCat Brands with Legal Names, Vendor Codes, Aliases & Trademarks
         seed_brands = [
-            ("Rheem Manufacturing", "RHEEM", "FRIGIDAIRE®", "FRIG", "FRIGIDAIRE", True, "®"),
-            ("Whirlpool Corporation", "WHIRL", "Whirlpool®", "WHIRL", "WHIRLPOOL", True, "®"),
-            ("Milwaukee Electric Tool Corporation", "MILW", "Milwaukee®", "MILW", "MILWAUKEE", True, "®"),
-            ("Freud America Inc", "FREUD", "Diablo®", "DIAB", "DIABLO", True, "®"),
-            ("3M Company", "3M", "3M™", "3M", "3M", True, "™"),
-            ("Mirka USA Inc", "MIRKA", "Mirka®", "MIRKA", "MIRKA", True, "®"),
-            ("Trex Company Inc", "TREX", "Trex®", "TREX", "TREX", True, "®"),
-            ("The AZEK Company LLC", "AZEK", "TimberTech®", "TT", "TIMBERTECH", True, "®"),
+            ("Rheem Manufacturing", "APPDE", "FRIGIDAIRE®", "PDSH", "FRIGIDAIRE", True, "®"),
+            ("Whirlpool Corporation", "APPDE", "Whirlpool®", "WDTS", "WHIRLPOOL", True, "®"),
+            ("Milwaukee Electric Tool Corporation", "MILW", "Milwaukee®", "4031", "MILWAUKEE", True, "®"),
+            ("Freud America Inc", "2435", "Diablo®", "DIAB", "DIABLO", True, "®"),
+            ("3M Company", "3M", "3M™", "3MABR", "3M", True, "™"),
+            ("Mirka USA Inc", "MIRUS", "Mirka®", "MIRKA", "MIRKA", True, "®"),
+            ("Trex Company Inc", "3073", "Trex®", "TREX", "TREX", True, "®"),
+            ("The AZEK Company LLC", "6151", "TimberTech®", "TT", "TIMBERTECH", True, "®"),
             ("The AZEK Company LLC", "AZEK", "AZEK®", "AZEK", "AZEK", True, "®"),
             ("Louisiana-Pacific Corporation", "LP", "LP® SmartSide®", "LP", "SMARTSIDE", True, "®"),
             ("James Hardie Building Products Inc", "JH", "James Hardie®", "JH", "HARDIE", True, "®"),
-            ("Signify North America Corporation", "PHIL", "Philips®", "PHIL", "PHILIPS", True, "®"),
-            ("Kichler Lighting LLC", "KICH", "Kichler®", "KICH", "KICHLER", True, "®"),
-            ("Satco Products Inc", "SATCO", "Satco®", "SATCO", "SATCO", True, "®"),
-            ("Stanley Black & Decker Inc", "SBD", "DEWALT®", "DEW", "DEWALT", True, "®"),
+            ("Signify North America Corporation", "5831", "Philips®", "PHIL", "PHILIPS", True, "®"),
+            ("Kichler Lighting LLC", "KICLI", "Kichler®", "KICH", "KICHLER", True, "®"),
+            ("Satco Products Inc", "5573", "Satco®", "SATCO", "SATCO", True, "®"),
+            ("Stanley Black & Decker Inc", "2585", "DEWALT®", "DWS", "DEWALT", True, "®"),
             ("Stanley Black & Decker Inc", "SBD", "Black & Decker®", "BD", "BLACK & DECKER", True, "®"),
-            ("Makita U.S.A. Inc", "MAKI", "Makita®", "MAKI", "MAKITA", True, "®"),
+            ("Makita U.S.A. Inc", "5142", "Makita®", "XPH", "MAKITA", True, "®"),
             ("Festool USA Inc", "FESTO", "Festool®", "FESTO", "FESTOOL", True, "®"),
-            ("Leviton Manufacturing Co Inc", "LEVIT", "Leviton®", "LEVIT", "LEVITON", True, "®"),
-            ("Southwire Company LLC", "SOUTH", "Southwire®", "SOUTH", "SOUTHWIRE", True, "®"),
+            ("Leviton Manufacturing Co Inc", "4927", "Leviton®", "LEVIT", "LEVITON", True, "®"),
+            ("Southwire Company LLC", "6603", "Southwire®", "SOUTH", "SOUTHWIRE", True, "®"),
             ("Jam Industrial Supply LLC", "JAMIN", "Jam Industrial®", "JAMIN", "JAM INDUSTRIAL", True, "®"),
             ("Boise Cascade Building Materials", "BOICA", "Boise Cascade®", "BOICA", "BOISE CASCADE", True, "®"),
             ("Fastenal Company", "FAST", "Fastenal®", "FAST", "FASTENAL", True, "®")
@@ -207,6 +221,48 @@ class DuckDBKnowledgeBase:
             INSERT OR REPLACE INTO industry_thesaurus VALUES (?, ?, ?)
         """, seed_thesaurus)
 
+        # 5. Seed Canonical UniCat Taxonomy Nodes Index
+        seed_taxonomy = [
+            ("Power Transmission>Bearings & Bushings>Ball Bearings", "Power Transmission", "Bearings", "Ball Bearings", "Ball Bearing", "26101500", "bearing ball deep groove 2rs sealed rubber radial 6205"),
+            ("Tools & Instruments>Hand Tools>Wire Strippers & Cutters", "Tools", "Hand Tools", "Wire Strippers", "Wire Stripper", "27111514", "wire stripper cutter awg solid stranded kleinkurve 11055"),
+            ("Lighting & Electrical>Power Distribution>Circuit Breakers", "Electrical", "Circuit Protection", "Circuit Breakers", "Circuit Breaker", "39121601", "circuit breaker pole plugon br120 kaic load center"),
+            ("Chemicals & Adhesives>Adhesives & Glues>Threadlockers", "Chemicals", "Adhesives", "Threadlockers", "Threadlocker", "31201614", "threadlocker anaerobic loctite 242 medium blue sealant"),
+            ("Tools & Instruments>Hand Tools>Screwdrivers", "Tools", "Hand Tools", "Screwdrivers", "Screwdriver", "27111701", "screwdriver slotted phillips insulated 1000v torx shank"),
+            ("Safety & Security>Personal Protective Equipment>Safety Glasses", "Safety", "PPE", "Eye Protection", "Safety Glasses", "46181802", "safety glasses eyewear goggles antifog clear lens securefit"),
+            ("Tools & Instruments>Power Tool Accessories>Router Bits", "Tools", "Cutting Tools", "Router Bits", "Router Bit", "27112803", "router bit flush trim spiral carbide shank diameter chamfer"),
+            ("Tools & Instruments>Hand Tools>Snips & Shears>Aviation Snips", "Tools", "Hand Tools", "Snips", "Aviation Snips", "27111508", "aviation snips sheet metal left right straight cut crv steel"),
+            ("Hydraulics & Pneumatics>Hoses & Tubing>Hydraulic Hoses", "Hydraulics", "Hoses", "Hydraulic Hose", "Hydraulic Hose", "40142000", "hydraulic hose wire braid psi reel high pressure"),
+            ("Test & Measurement>Electrical Testing>Digital Multimeters", "Testing", "Electrical Test", "Multimeters", "Digital Multimeter", "41113630", "multimeter digital true rms voltage ac dc autoranging cat iii"),
+            ("Tools & Storage>Tool Storage>Tool Boxes & Chests", "Storage", "Tool Storage", "Tool Boxes", "Tool Box", "24112401", "tool box packout rolling storage chest organizer"),
+            ("Plumbing>Pumps & Filtration>Sump & Sewage Pumps", "Plumbing", "Pumps", "Sump Pumps", "Sump Pump", "40151513", "sump pump submersible cast iron hp gpm discharge sewage"),
+            ("Appliances & Consumer Electronics>Kitchen Appliances>Built-In Dishwashers", "Appliances", "Kitchen Appliances", "Dishwashers", "Dishwasher", "52141505", "dishwasher built-in stainless steel dba wash cycles"),
+            ("Tools & Instruments>Hand Tools>Levels & Layout Tools", "Tools", "Hand Tools", "Levels", "Torpedo Level", "27111802", "level torpedo magnetic cast aluminum vial precision layout"),
+            ("Tools & Instruments>Hand Tools>Clamps & Vices", "Tools", "Hand Tools", "Clamps", "C-Clamp", "27112100", "clamp cclamp ductile iron jaw opening throat depth workholding"),
+            ("Tools & Instruments>Hand Tools>Sockets & Ratchets", "Tools", "Hand Tools", "Ratchets", "Ratchet Socket Set", "27111703", "ratchet socket set zyklop drive metric bit set socket wrench"),
+            ("Packaging & Shipping>Tapes & Adhesives>Duct & Cloth Tapes", "Packaging", "Tapes", "Duct Tape", "Duct Tape", "31201503", "duct tape adhesive waterproof cloth silver heavy duty"),
+            ("Hardware & Fasteners>Rings & Retainers>Retaining Rings", "Hardware", "Fasteners", "Retaining Rings", "Retaining Ring", "31163205", "retaining ring snap ring external rotor clip shaft dia carbon steel"),
+            ("Raw Materials & Metals>Sheet Metal & Plates>Galvanized Sheets", "Materials", "Raw Materials", "Sheet Metal", "Sheet Metal", "30102400", "sheet metal galvanized steel gauge corrosion resistant plate"),
+            ("Appliances & Consumer Electronics>Appliance Replacement Parts>Heating Elements & Heater Kits", "Appliances", "Appliance Parts", "Heater Elements", "Commercial Appliance Heater Kit", "52141500", "dryer heating element kit coil nichrome heater 240v 4750w appliance"),
+            ("Abrasives & Polishing>Cut-Off & Grinding Wheels>Cut-Off Wheels", "Abrasives", "Abrasive Discs", "Cut-Off Wheels", "Cut-Off Disc", "31191500", "cut off disc wheel metal abrasive milwaukee diablo grinding"),
+            ("Abrasives & Polishing>Sandpaper & Abrasive Pads>Sanding Discs", "Abrasives", "Abrasive Discs", "Film Discs", "Sanding Disc", "31191500", "sanding disc film abrasive grit stikit abranet cubitron sandpaper"),
+            ("Building Materials>Decking & Railing>Decking Boards", "Building Materials", "Decking", "Composite Decking", "Decking Board", "30151500", "decking board composite grooved square edge trex timbertech azek"),
+            ("Building Materials>Decking & Railing>Fascia Boards", "Building Materials", "Decking", "Fascia Boards", "Fascia Board", "30151501", "fascia board composite pvc fascia trim trex timbertech"),
+            ("Building Materials>Siding & Trim>Engineered Siding", "Building Materials", "Siding", "Lap Siding", "Siding Board", "30151800", "siding board smartside hardie lap siding engineered wood"),
+            ("Tools & Instruments>Power Tools>Saws & Blades>Circular & Miter Saws", "Tools", "Power Saws", "Miter & Circular Saws", "Power Saw", "27112700", "saw circular miter recip blade cutting sawzall skilsaw"),
+            ("Tools & Instruments>Power Tools>Drills & Drivers>Cordless Drills & Drivers", "Tools", "Power Drills", "Impact Drivers & Drills", "Cordless Drill/Driver", "27112700", "drill cordless driver impact brushless hammer drill hammerdriver"),
+            ("Lighting & Electrical>Wiring Devices & Supplies>Switches & Outlets", "Electrical", "Wiring Devices", "Switches & Outlets", "Wiring Device", "39122200", "switch receptacle outlet decora duplex wallplate leviton rocker toggle"),
+            ("Plumbing>Pipe, Tube & Hose Fittings>Pipe Fittings", "Plumbing", "Fittings", "Pipe Fittings", "Pipe Coupling", "40171500", "pipe fitting coupling elbow tee adapter brass pvc fnpt mnpt threaded"),
+            ("Plumbing>Valves>Ball Valves", "Plumbing", "Valves", "Ball Valves", "Ball Valve", "40141607", "valve ball threaded brass stainless 150 npt full port shutoff"),
+            ("Motors & Motion Control>Electric Motors>DC Motors & Gearmotors", "Motors", "Electric Motors", "DC Motors", "DC Gear Motor", "26101100", "motor dc gear gearmotor electric 24v 12v rpm torque"),
+            ("Hydraulics & Pneumatics>Pneumatic Actuators>Pneumatic Cylinders", "Pneumatics", "Actuators", "Cylinders", "Pneumatic Cylinder", "40141600", "cylinder pneumatic air cylinder stroke bore single double acting hx"),
+            ("Filtration>Liquid Filtration>Filter Cartridges", "Filtration", "Filter Cartridges", "Liquid Filters", "Filter Cartridge", "40161500", "filter cartridge replacement micron 25 micron sediment particulate flt"),
+            ("Plumbing>Commercial & Residential Faucets>Kitchen Sink Faucets", "Plumbing", "Faucets", "Kitchen Faucets", "Kitchen Sink Faucet", "30181702", "faucet sink kitchen pull down single handle spray residential"),
+            ("Lighting & Electrical>Light Bulbs & Lamps>LED Light Bulbs", "Lighting", "Lamps", "LED Bulbs", "LED Light Bulb", "39101628", "led light bulb lamp lumens a19 br30 par38 dimmable philips satco")
+        ]
+        self.conn.executemany("""
+            INSERT OR REPLACE INTO unicat_taxonomy_nodes VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, seed_taxonomy)
+
         # Cache Brand List for C++ RapidFuzz matching (aliases, vendor codes, and brand names)
         rows = self.conn.execute("SELECT search_alias, brand_code, manufacturer_code, brand_name, manufacturer_name FROM unicat_brands").fetchall()
         self._brand_list_cache = []
@@ -237,6 +293,8 @@ class DuckDBKnowledgeBase:
                 return mfr, brand, 1.0
             if len(alias) >= 2 and re.search(rf"\b{re.escape(alias)}\b", q_clean):
                 return mfr, brand, 0.98
+            if len(alias) >= 3 and q_clean.startswith(alias):
+                return mfr, brand, 0.95
 
         # Fuzzy match
         choices = [item[0] for item in self._brand_list_cache]
@@ -247,6 +305,68 @@ class DuckDBKnowledgeBase:
                 if alias == matched_alias:
                     return mfr, brand, round(match[1] / 100.0, 2)
 
+        return None
+
+    def search_taxonomy(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+        """
+        Hybrid taxonomy candidate search: computes token overlap and fuzzy similarity
+        against unicat_taxonomy_nodes.
+        """
+        if not query:
+            return []
+
+        q_lower = query.lower()
+        rows = self.conn.execute("""
+            SELECT classpath, dept, class_name, fine_name, product_name, unspsc, keywords
+            FROM unicat_taxonomy_nodes
+        """).fetchall()
+
+        scored_candidates = []
+        for cp, dept, cname, fname, pname, unspsc, kw in rows:
+            combined_text = f"{cp} {pname} {kw}".lower()
+            
+            # Exact keyword hits
+            kw_tokens = set(kw.split())
+            q_tokens = set(re.findall(r"\b[a-zA-Z0-9]+\b", q_lower))
+            overlap = len(kw_tokens.intersection(q_tokens))
+            
+            # Direct product name presence boost
+            pname_boost = 50.0 if pname.lower() in q_lower else 0.0
+
+            # Fuzzy match score
+            fuzzy_score = fuzz.token_set_ratio(q_lower, combined_text)
+            combined_score = (overlap * 25.0) + pname_boost + (fuzzy_score * 0.5)
+            
+            scored_candidates.append({
+                "classpath": cp,
+                "dept": dept,
+                "class_name": cname,
+                "fine_name": fname,
+                "product_name": pname,
+                "unspsc": unspsc,
+                "score": combined_score,
+                "confidence": min(1.0, round(combined_score / 100.0, 2))
+            })
+
+        scored_candidates.sort(key=lambda x: x["score"], reverse=True)
+        return scored_candidates[:top_k]
+
+    def get_taxonomy_by_classpath(self, classpath: str) -> Optional[Dict[str, Any]]:
+        """Retrieve taxonomy node metadata by exact classpath."""
+        row = self.conn.execute("""
+            SELECT classpath, dept, class_name, fine_name, product_name, unspsc
+            FROM unicat_taxonomy_nodes
+            WHERE classpath = ?
+        """, [classpath]).fetchone()
+        if row:
+            return {
+                "classpath": row[0],
+                "dept": row[1],
+                "class_name": row[2],
+                "fine_name": row[3],
+                "product_name": row[4],
+                "unspsc": row[5]
+            }
         return None
 
     def get_lov_schema(self, classpath: str) -> List[Dict[str, Any]]:

@@ -122,10 +122,61 @@ class SpecUOMExtractorAgent:
             acoustic_specs["Sound Level UOM"] = "dBA"
 
         # -------------------------------------------------------------
-        # 4. Packaging & Selling Quantities (e.g. '2PK', '50 Disc/Box', '6pc')
+        # 3b. Generalized Industrial Ratings (Pressure, Speed, Flow, Gauge, Power)
         # -------------------------------------------------------------
-        pk_match = re.search(r"\b(\d+)\s*(?:PK|Pack|pc|piece)\b", desc_text, flags=re.IGNORECASE)
-        if pk_match:
+        # Pressure (e.g. 3500 PSI, 60 PSI)
+        psi_match = re.search(r"\b(\d+)\s*(?:PSI|psi|bar)\b", desc_text, flags=re.IGNORECASE)
+        if psi_match:
+            electrical_specs["Pressure Rating"] = psi_match.group(1)
+            electrical_specs["Pressure Rating UOM"] = "PSI"
+
+        # Speed (e.g. 13300 RPM, 2400 RPM)
+        rpm_match = re.search(r"\b(\d+)\s*(?:RPM|rpm)\b", desc_text, flags=re.IGNORECASE)
+        if rpm_match:
+            electrical_specs["Speed Rating"] = rpm_match.group(1)
+            electrical_specs["Speed Rating UOM"] = "rpm"
+
+        # Flow Rate (e.g. 3000 GPM, 45 GPM)
+        gpm_match = re.search(r"\b(\d+)\s*(?:GPM|gpm)\b", desc_text, flags=re.IGNORECASE)
+        if gpm_match:
+            electrical_specs["Flow Rate"] = gpm_match.group(1)
+            electrical_specs["Flow Rate UOM"] = "GPM"
+
+        # Horsepower (e.g. 1/3 HP, 1.5 HP, 2 HP)
+        hp_match = re.search(r"\b(\d+(?:\.\d+)?|\d+/\d+)\s*(?:HP|hp|Horsepower)\b", desc_text, flags=re.IGNORECASE)
+        if hp_match:
+            electrical_specs["Power Rating"] = hp_match.group(1)
+            electrical_specs["Power Rating UOM"] = "HP"
+
+        # Interrupt Rating (e.g. 10 kAIC)
+        kaic_match = re.search(r"\b(\d+)\s*(?:kAIC|kaic|kA)\b", desc_text, flags=re.IGNORECASE)
+        if kaic_match:
+            electrical_specs["Interrupt Rating"] = kaic_match.group(1)
+            electrical_specs["Interrupt Rating UOM"] = "kAIC"
+
+        # Wire Gauge (e.g. 10-18 AWG, 12 AWG)
+        awg_match = re.search(r"\b(\d+(?:-\d+)?)\s*(?:AWG|awg)\b", desc_text, flags=re.IGNORECASE)
+        if awg_match:
+            electrical_specs["Wire Gauge"] = awg_match.group(1)
+            electrical_specs["Wire Gauge UOM"] = "AWG"
+
+        # Capacity / Volume (e.g. 10 ml, 50 ml, 16 oz)
+        vol_match = re.search(r"\b(\d+(?:\.\d+)?)\s*(ml|oz|fl oz|liter|L)\b", desc_text, flags=re.IGNORECASE)
+        if vol_match:
+            electrical_specs["Container Size"] = vol_match.group(1)
+            electrical_specs["Container Size UOM"] = vol_match.group(2)
+
+        # -------------------------------------------------------------
+        # 4. Packaging & Selling Quantities (e.g. '2PK', '50 Disc/Box', '6pc', '100/Box')
+        # -------------------------------------------------------------
+        box_match = re.search(r"\b(\d+)\s*/\s*(?:Box|box|Pack|pack|Pk|pk)\b", desc_text, flags=re.IGNORECASE)
+        pk_match = re.search(r"\b(\d+)\s*(?:PK|Pack|pc|piece|Disc/Box)\b", desc_text, flags=re.IGNORECASE)
+        if box_match:
+            q = box_match.group(1)
+            packaging_specs["Selling Qty"] = q
+            packaging_specs["Selling UOM"] = f"{q}/Box"
+            packaging_specs["Standard Packaging Information"] = f"{q}/Box"
+        elif pk_match:
             q = pk_match.group(1)
             packaging_specs["Selling Qty"] = q
             packaging_specs["Selling UOM"] = f"{q}/PK"

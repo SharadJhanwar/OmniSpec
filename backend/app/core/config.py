@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from dotenv import load_dotenv
 
 # Load root .env
@@ -28,8 +28,7 @@ class Settings(BaseSettings):
     
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     
-    class Config:
-        case_sensitive = True
+    model_config = SettingsConfigDict(case_sensitive=True, extra="ignore")
 
 
 settings = Settings()

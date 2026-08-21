@@ -5,11 +5,13 @@ from typing import Dict, Any, Tuple
 from ..schemas.state_schema import ProductEnrichmentState, AgentTrace
 from ..db.duckdb_client import kb
 from ..core.logging import logger
+from ..core.config import settings
+from ..services.evidence_discovery_service import EvidenceDiscoveryService
 
 try:
     from langchain_openai import ChatOpenAI
     from langchain_core.messages import SystemMessage, HumanMessage
-    HAS_OPENAI = bool(os.getenv("OPENAI_API_KEY"))
+    HAS_OPENAI = bool(os.getenv("OPENAI_API_KEY") or settings.OPENAI_API_KEY)
 except ImportError:
     HAS_OPENAI = False
 
@@ -23,54 +25,7 @@ class EntityResolutionAgent:
     and falls back to OpenAI GPT-4o-mini for unseen complex feeds.
     """
 
-    # MPN Prefix -> Known Brand hints
-    MPN_PREFIX_MAP = {
-        "PDSH": "FRIGIDAIRE",
-        "WDTS": "WHIRLPOOL",
-        "DCB": "DIABLO",
-        "DBD": "DIABLO",
-        "DFB": "DIABLO",
-        "3MABR": "3M",
-        "9A-": "MIRKA",
-        "5B-": "MIRKA",
-        "49-94": "MILWAUKEE",
-        "ADR": "AZEK",
-        "ADCR": "AZEK",
-        "DWS": "DEWALT",
-        "DCD": "DEWALT",
-        "DCF": "DEWALT",
-        "XPH": "MAKITA",
-        "XDT": "MAKITA"
-    }
-
-    # Vendor / Distributor Code -> Canonical OEM / Brand hints
-    VENDOR_CODE_TO_OEM_MAP = {
-        "5831": ("Signify North America Corporation", "Philips®"),
-        "KICLI": ("Kichler Lighting LLC", "Kichler®"),
-        "5573": ("Satco Products Inc", "Satco®"),
-        "2585": ("Stanley Black & Decker Inc", "DEWALT®"),
-        "5142": ("Makita U.S.A. Inc", "Makita®"),
-        "FESTO": ("Festool USA Inc", "Festool®"),
-        "4927": ("Leviton Manufacturing Co Inc", "Leviton®"),
-        "6603": ("Southwire Company LLC", "Southwire®"),
-        "4031": ("Milwaukee Electric Tool Corporation", "Milwaukee®"),
-        "MIRUS": ("Mirka USA Inc", "Mirka®"),
-        "2435": ("Freud America Inc", "Diablo®"),
-        "6151": ("The AZEK Company LLC", "TimberTech®"),
-        "3073": ("Trex Company Inc", "Trex®")
-    }
-
-    # Extended distributor co-op list to identify non-OEM suppliers
-    DISTRIBUTOR_MAP = {
-        "APPDE": "Appliance Dealers Cooperative",
-        "JAMIN": "Jam Industrial Supply LLC",
-        "BOICA": "Boise Cascade Building Materials",
-        "USLUMBER": "U S Lumber",
-        "PARKSITE": "Parksite",
-        "FASTENAL": "Fastenal Company"
-    }
-
-    # Brand line / Trade name mappings
+    # Trade name patterns for product lines
     TRADE_NAME_PATTERNS = {
         "Cubitron": "Cubitron™ II",
         "Diablo": "Diablo®",
@@ -100,12 +55,14 @@ class EntityResolutionAgent:
     def execute(cls, state: ProductEnrichmentState) -> Dict[str, Any]:
         t0 = time.perf_counter()
 
-        desc_text = state.cleaned_part_desc or ""
-        supp_name = state.clean_supplier_name or ""
+        desc_text = state.cleaned_part_desc or state.raw_part_desc or ""
+        supp_name = state.clean_supplier_name or state.raw_e1_brand or state.raw_part_manuf or ""
+        if supp_name.strip().lower() in ["-- unbranded --", "unbranded", "no brand", "-- no unilog brand --", "-- no dib brand --", "n/a", "none", "unassigned", ""]:
+            supp_name = ""
         vendor_code = (state.supplier_vendor_code or "").upper()
-        mpn = (state.clean_mfg_part_num or "").strip()
+        mpn = (state.clean_mfg_part_num or state.raw_mfg_part_num or "").strip()
 
-        # Step 0: Check Active Reviewer Overrides Store (HITL Feedback Loop)
+        # Step 0: Check Active Reviewer Overrides Store (Approved Human Knowledge from HITL)
         override = kb.get_override(mpn)
         if override and override.get("brand_name"):
             mfr_name = override.get("manufacturer_name", "")
@@ -153,40 +110,19 @@ class EntityResolutionAgent:
                 trade_name = canonical_trade
                 break
 
-        # Step 2: Check if supplier is a known distributor co-op
-        is_distributor = vendor_code in cls.DISTRIBUTOR_MAP or any(
-            d.lower() in supp_name.lower() for d in cls.DISTRIBUTOR_MAP.values()
-        )
-
+        # Step 2: Exact / Fuzzy KB Retrieval from DuckDB (unicat_brands)
         brand_match = None
 
-        # Step 3: Priority 1 - Explicit Clean Brand Candidates from Input (E1_Brand, DIB_Brand, etc.)
+        # Priority A: Check explicit brand candidates from feed
         brand_candidates = state.token_bag.get("brand_candidates", [])
         for cand in brand_candidates:
-            if not cand:
-                continue
-            cand_u = cand.upper()
-            if cand_u in cls.DISTRIBUTOR_MAP or any(d.upper() in cand_u for d in cls.DISTRIBUTOR_MAP.values()):
-                continue
-            brand_match = kb.find_brand(cand)
-            if brand_match:
-                break
+            if cand and len(cand) >= 2:
+                brand_match = kb.find_brand(cand)
+                if brand_match:
+                    break
 
-        # Step 4: Priority 2 - Check Vendor Code OEM Map
-        if not brand_match and vendor_code in cls.VENDOR_CODE_TO_OEM_MAP:
-            mfr_name, brand_name = cls.VENDOR_CODE_TO_OEM_MAP[vendor_code]
-            conf = 1.0
-
-        # Step 5: Priority 3 - Check MPN Prefix Map
-        if not brand_match and not mfr_name and mpn:
-            for prefix, mapped_brand in cls.MPN_PREFIX_MAP.items():
-                if mpn.upper().startswith(prefix):
-                    brand_match = kb.find_brand(mapped_brand)
-                    if brand_match:
-                        break
-
-        # Step 6: Priority 4 - Search Description Words for Known Brands
-        if not brand_match and not mfr_name and desc_text:
+        # Priority B: Search description tokens in DuckDB
+        if not brand_match and desc_text:
             desc_words = desc_text.split()
             for w in desc_words:
                 clean_w = re.sub(r"[^A-Za-z0-9]", "", w)
@@ -195,33 +131,55 @@ class EntityResolutionAgent:
                     if brand_match:
                         break
 
-        # Step 7: Priority 5 - If supplier is NOT a distributor, match supplier name
-        if not brand_match and not mfr_name and not is_distributor and supp_name:
+        # Priority C: Search supplier name in DuckDB
+        if not brand_match and supp_name:
             brand_match = kb.find_brand(supp_name)
 
-        # Step 8: Assign canonical results if matched from DuckDB
+        # Priority D: Search vendor code token in DuckDB
+        if not brand_match and vendor_code:
+            brand_match = kb.find_brand(vendor_code)
+
+        # Priority E: Search MPN token in DuckDB
+        if not brand_match and mpn:
+            brand_match = kb.find_brand(mpn)
+
+        # Step 3: Check if resolved with high confidence from KB
         if brand_match:
             mfr_name, brand_name, conf = brand_match
-        elif not mfr_name:
-            if supp_name and not is_distributor:
-                mfr_name = supp_name
-                brand_name = supp_name
-                conf = 0.70
-            else:
-                mfr_name = supp_name or "Unassigned Manufacturer"
-                brand_name = supp_name or "Unbranded"
-                conf = 0.40
-
-        # Step 9: Optional OpenAI LLM Disambiguator if confidence is low and enabled
+        elif supp_name:
+            # Clean supplier string into manufacturer and brand candidates
+            clean_supp = re.sub(r"\s*\([A-Za-z0-9_-]+\)$", "", supp_name).strip()
+            mfr_name = clean_supp
+            brand_name = clean_supp
+            conf = 0.70
+        else:
+            mfr_name = "Unassigned Manufacturer"
+            brand_name = "Unbranded"
+            conf = 0.40
         openai_used = False
         openai_time_ms = 0.0
-        if conf < 0.75 and HAS_OPENAI and state.enable_llm and desc_text:
+        has_openai = bool(os.getenv("OPENAI_API_KEY") or settings.OPENAI_API_KEY)
+        if conf < 0.75 and has_openai and state.enable_llm and (desc_text or mpn):
             try:
                 t_ai_0 = time.perf_counter()
-                llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+                
+                # Fetch live web evidence via DuckDuckGo to discover true OEM
+                web_ev = EvidenceDiscoveryService.discover_web_evidence(
+                    mpn=mpn,
+                    desc=desc_text,
+                    max_results=3
+                )
+                ev_snippets = [f"- {e.get('title')}: {e.get('snippet')}" for e in web_ev]
+                evidence_str = "\n".join(ev_snippets) if ev_snippets else "No web evidence retrieved."
+
+                api_k = os.getenv("OPENAI_API_KEY") or settings.OPENAI_API_KEY
+                llm = ChatOpenAI(api_key=api_k, model="gpt-4o-mini", temperature=0)
                 prompt = (
-                    f"Disambiguate the true OEM Manufacturer and Brand for raw supplier: '{supp_name}', MPN: '{mpn}', Desc: '{desc_text}'.\n"
-                    "Output in exact format: MFR: <Legal Manufacturer Name> | BRAND: <Brand Name with ® or ™>"
+                    f"INPUT SKU:\n- Supplier: '{supp_name}'\n- MPN: '{mpn}'\n- Desc: '{desc_text}'\n\n"
+                    f"LIVE WEB EVIDENCE / TECHNICAL SEARCH SNIPPETS:\n{evidence_str}\n\n"
+                    "Identify the true legal OEM Manufacturer and Brand name from the evidence.\n"
+                    "If truly unknown / unbranded, return MFR: -- Unbranded -- | BRAND: -- Unbranded --\n"
+                    "Output in exact format: MFR: <Legal Manufacturer Name> | BRAND: <Brand Name with ® or ™ if known>"
                 )
                 res = llm.invoke([
                     SystemMessage(content="You are an expert industrial master catalog data entity resolver."),
@@ -233,14 +191,15 @@ class EntityResolutionAgent:
                 if m_match:
                     ai_mfr = m_match.group(1).strip()
                     ai_brand = m_match.group(2).strip()
-                    kb_check = kb.find_brand(ai_brand)
-                    if kb_check:
-                        mfr_name, brand_name, conf = kb_check
-                    else:
-                        mfr_name = ai_mfr
-                        brand_name = ai_brand
-                        conf = 0.88
-                    openai_used = True
+                    if ai_brand not in ["-- Unbranded --", "Unbranded", ""]:
+                        kb_check = kb.find_brand(ai_brand)
+                        if kb_check:
+                            mfr_name, brand_name, conf = kb_check
+                        else:
+                            mfr_name = ai_mfr
+                            brand_name = ai_brand
+                            conf = 0.88
+                        openai_used = True
             except Exception as e:
                 logger.warning(f"OpenAI entity resolution fallback used standard match: {e}")
 
@@ -255,7 +214,6 @@ class EntityResolutionAgent:
             notes=[
                 f"Resolved: '{brand_name}' ({mfr_name}) [Score: {conf*100}%]",
                 f"Trade Name: '{trade_name}'",
-                f"Is Distributor: {is_distributor}",
                 f"OpenAI Disambiguated: {openai_used}" + (f" ({openai_time_ms} ms)" if openai_used else "")
             ],
             extracted_data={

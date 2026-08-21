@@ -28,6 +28,8 @@ class ProductEnrichmentState(BaseModel):
     raw_class: str = ""
     raw_fine: str = ""
     enable_llm: bool = False
+    is_cached: bool = False
+    cache_source: str = ""  # 'human_override', 'master_kb', 'unassigned'
 
     # Agent 1: De-noised & Tokenized
     clean_mfg_part_num: str = ""

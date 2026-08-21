@@ -3,6 +3,7 @@ from typing import Dict, Any
 from ..schemas.state_schema import ProductEnrichmentState, AgentTrace
 from ..schemas.delivery_schema import DeliveryProductRecord
 from ..services.audit_engine import QualityAuditEngine
+from ..db.duckdb_client import kb
 from ..core.logging import logger
 
 
@@ -82,21 +83,32 @@ class QualityAuditAgent:
         for idx, feat in enumerate(state.item_features[:20], 1):
             setattr(rec, f"item_features_{idx}", feat)
 
-        # Run 12-point integrity audit
-        conf, violations = QualityAuditEngine.audit_record(rec)
-        needs_hitl = conf < 0.85 or len(violations) > 0
+        # Run Evidence-Aware confidence audit
+        mpn_key = state.clean_mfg_part_num or state.raw_mfg_part_num
+        is_cached = getattr(state, "is_cached", False) or bool(kb.get_override(mpn_key))
+        conf, violations, hitl_reasons, evidence_breakdown = QualityAuditEngine.audit_record(rec, is_cached=is_cached)
+        
+        # If cached: zero HITL needed (100% confidence); if uncached: requires human review & approval
+        if is_cached:
+            needs_hitl = False
+        else:
+            needs_hitl = True
+            if not hitl_reasons:
+                hitl_reasons.append("UNCACHED_RECORD: First-time ingestion pending human verification")
 
         trace = AgentTrace(
             agent_name="Agent 9: Quality Audit & HITL",
             execution_time_ms=round((time.perf_counter() - t0) * 1000, 2),
             notes=[
-                f"Overall Record Confidence: {conf * 100}%",
-                f"Violations: {len(violations)}",
-                f"Routing to HITL: {needs_hitl}"
+                f"Evidence-Aware Confidence: {conf * 100:.1f}%" + (" (100% Verified Cache)" if is_cached else ""),
+                f"Evidence Vector: Retrieval={evidence_breakdown['retrieval_quality']*100:.0f}%, Authority={evidence_breakdown['evidence_authority']*100:.0f}%, Consistency={evidence_breakdown['extraction_consistency']*100:.0f}%, Agreement={evidence_breakdown['cross_source_agreement']*100:.0f}%, DetVal={evidence_breakdown['deterministic_validation']*100:.0f}%, Penalties=-{evidence_breakdown['penalties_applied']*100:.0f}%",
+                f"Routing to HITL: {needs_hitl}" + (f" (Reasons: {'; '.join(hitl_reasons[:2])})" if hitl_reasons else "")
             ],
             extracted_data={
                 "confidence_score": conf,
+                "evidence_breakdown": evidence_breakdown,
                 "violations": violations,
+                "hitl_reasons": hitl_reasons,
                 "needs_hitl": needs_hitl
             }
         )

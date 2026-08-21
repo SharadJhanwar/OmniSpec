@@ -1,25 +1,14 @@
 import time
 import re
-import os
-from typing import Dict, Any, List
+from typing import Dict, Any
 from ..schemas.state_schema import ProductEnrichmentState, AgentTrace
-from ..services.copy_builder import MultiChannelCopyBuilder
-from ..core.logging import logger
-
-try:
-    from langchain_openai import ChatOpenAI
-    from langchain_core.messages import SystemMessage, HumanMessage
-    HAS_OPENAI = bool(os.getenv("OPENAI_API_KEY"))
-except ImportError:
-    HAS_OPENAI = False
 
 
 class MultiChannelCopyAgent:
     """
     Agent 7: Multi-Channel Formulaic Copy Builder Agent
-    Generates 6 distinct copy tiers adhering strictly to character limits,
-    word order formulas, and casing rules from Unilog Internal Content Guidelines.
-    Utilizes OpenAI GPT-4o-mini for rich marketing narrative and atomic feature synthesis when enabled.
+    Generates 6 distinct copy tiers adhering strictly to Unilog character limits and word order formulas.
+    Pure generic formulas: Zero category-specific if/elif branches or hardcoded strings.
     """
 
     @classmethod
@@ -30,240 +19,113 @@ class MultiChannelCopyAgent:
         brand = state.brand_name or ""
         clean_brand = re.sub(r"[^A-Za-z0-9]", "", brand).strip()
         mpn = state.clean_mfg_part_num or ""
-        prod_name = state.product_name or "Component"
+        prod_name = state.product_name or "Industrial Component"
         trade = state.trade_name or ""
-        classpath = state.classpath or ""
         dims = state.dimensions or {}
         elec = state.electrical_specs or {}
-        acoust = state.acoustic_specs or {}
-        with_feat = state.with_features or ""
 
         # -------------------------------------------------------------
         # 1. INVOICE_DESC (<= 40 chars, ALL CAPS)
+        # Universal Formula: [PRODUCT_NOUN] [KEY_SPECS] [MPN]
         # -------------------------------------------------------------
-        if "Dishwashers" in classpath:
-            if "PDSH" in mpn:
-                inv_desc = "DISHWASHER LEG 5 SST 120V 15A 50-1/4IN"
-            else:
-                inv_desc = "DISHWASHER BLTLN SST SST 120V 10A 41DBA"
-        elif "LED Light Bulbs" in classpath or "Light Bulbs" in classpath:
-            shape = elec.get("Bulb Shape", "A19")
-            cct = elec.get("Color Temperature", "2700")
-            cct_k = f"{cct[:2]}K" if len(cct) >= 4 else "27K"
-            w = elec.get("Wattage", "60W")
-            inv_desc = f"LED {shape} {w} {cct_k} MED {mpn}"[:40].upper()
-        elif "Cut-Off Wheels" in classpath or "Abrasives" in classpath:
-            l = dims.get("LENGTH", "5")
-            w = dims.get("WIDTH", ".045")
-            h = dims.get("HEIGHT", "7/8")
-            inv_desc = f"DISC CUT OFF {l}X{w}X{h} MTL"[:40].upper()
-        elif "Decking" in classpath or "Fascia" in classpath:
-            color = dims.get("Color", "HONEY GROVE").upper()
-            inv_desc = f"DECKING BOARD 1X6 16FT {color}"[:40].upper()
-        elif "Power Tools" in classpath or "Saws" in classpath:
-            inv_desc = f"SAW {trade.upper()} 20V BL {mpn}"[:40].upper()
-        elif "Fittings" in classpath or "Pipe" in classpath:
-            mat = state.attributes.get("ATTRIBUTE_VALUE 4", "BRS")
-            inv_desc = f"CPLG {mat} 150# FNPT {mpn}"[:40].upper()
-        else:
-            inv_desc = f"{prod_name.upper()} {mpn.upper()}"[:40]
+        # Gather primary spec tokens
+        spec_tokens = []
+        if "Voltage Rating" in elec:
+            spec_tokens.append(f"{elec['Voltage Rating']}V")
+        if "Amperage Rating" in elec:
+            spec_tokens.append(f"{elec['Amperage Rating']}A")
+        if "Wattage" in elec:
+            spec_tokens.append(f"{elec['Wattage']}W")
+        if "Power Rating" in elec:
+            spec_tokens.append(f"{elec['Power Rating']}HP")
+        if "Pressure Rating" in elec:
+            spec_tokens.append(f"{elec['Pressure Rating']}PSI")
+        if "LENGTH" in dims and "WIDTH" in dims:
+            spec_tokens.append(f"{dims['LENGTH']}X{dims['WIDTH']}")
+        elif "LENGTH" in dims:
+            spec_tokens.append(f"{dims['LENGTH']}{dims.get('LENGTH_UOM', '')}")
 
-        # Guarantee <= 40 chars uppercase
-        inv_desc = inv_desc[:40].upper()
+        # Check description for prominent tokens like 2RS, BLUE, SST, 1-POLE
+        desc_up = (state.cleaned_part_desc or "").upper()
+        if "2RS" in desc_up or "2RS1" in desc_up:
+            spec_tokens.append("2RS")
+        if "SST" in desc_up or "STAINLESS" in desc_up:
+            spec_tokens.append("SST")
+
+        specs_str = " ".join(spec_tokens)
+        noun_upper = prod_name.upper()
+
+        # Assemble INVOICE_DESC
+        candidate_inv = f"{noun_upper} {specs_str} {mpn.upper()}".strip()
+        candidate_inv = re.sub(r"\s+", " ", candidate_inv)
+
+        if len(candidate_inv) > 40:
+            # Shorten noun or drop middle specs to fit within 40 chars
+            candidate_inv = f"{noun_upper} {mpn.upper()}".strip()
+            if len(candidate_inv) > 40:
+                candidate_inv = candidate_inv[:40]
+
+        inv_desc = candidate_inv.upper()
 
         # -------------------------------------------------------------
         # 2. MOBILE_DESC (60 to 80 chars)
+        # Universal Formula: [BRAND], [PRODUCT_NAME], [FEATURE/SPEC], [MPN]
         # -------------------------------------------------------------
-        if "Dishwashers" in classpath:
-            if "PDSH" in mpn:
-                mob_desc = "Rheem Manufacturing FRIGIDAIRE, Dishwasher, Professional Series, PDSH4816AF"
-            else:
-                mob_desc = "Whirlpool, Dishwasher, Eco Series, WDTS7024RZ, Built-in Mounting"
-        elif "LED Light Bulbs" in classpath:
-            shape = elec.get("Bulb Shape", "A19")
-            mob_desc = f"{mfr} {clean_brand}, {prod_name}, {shape} LED Lamp, {mpn}"
-        elif "Cut-Off Wheels" in classpath or "Abrasives" in classpath:
-            mob_desc = f"{mfr} {clean_brand}, {prod_name}, {mpn}"
-            if len(mob_desc) < 60 and trade:
-                mob_desc = f"{mfr} {clean_brand}, {prod_name}, {trade}, {mpn}"
-            if len(mob_desc) > 80:
-                mob_desc = f"{clean_brand}, {prod_name}, {trade or 'Cut-Off'}, {mpn}"
-        elif "Decking" in classpath:
-            mob_desc = f"{mfr} {clean_brand}, {prod_name}, {trade or 'Enhance'}, {mpn}"
-        elif "Power Tools" in classpath:
-            mob_desc = f"{mfr} {clean_brand}, {prod_name}, {trade or 'Cordless Tool'}, {mpn}"
-        elif "Fittings" in classpath:
-            mob_desc = f"{mfr} {clean_brand}, {prod_name}, Brass Fitting, {mpn}"
+        brand_disp = brand if brand and brand != "-- Unbranded --" else "Unbranded"
+        feature_str = f"{trade}, " if trade else ("Industrial Grade, " if specs_str else "")
+        mob_raw = f"{brand_disp}, {prod_name}, {feature_str}{mpn}".strip()
+
+        if len(mob_raw) < 60:
+            mob_desc = mob_raw.ljust(60)
+        elif len(mob_raw) > 80:
+            mob_desc = mob_raw[:80].rstrip()
         else:
-            mob_desc = f"{mfr} {clean_brand}, {prod_name}, {mpn}"
-
-        # Guarantee 60-80 chars window
-        if len(mob_desc) < 60:
-            mob_desc = mob_desc.ljust(60)
-        elif len(mob_desc) > 80:
-            mob_desc = mob_desc[:80]
+            mob_desc = mob_raw
 
         # -------------------------------------------------------------
-        # 3. SHORT_DESC (Product Title Formula)
+        # 3. SHORT_DESC & 4. LONG_DESC1
         # -------------------------------------------------------------
-        if "Dishwashers" in classpath:
-            if "PDSH" in mpn:
-                short_desc = "FRIGIDAIRE® Professional Series PDSH4816AF Dishwasher With CleanBoost™, Leg Mounting, 5-Wash Cycle, Stainless Steel"
-            else:
-                short_desc = "Whirlpool® Eco Series WDTS7024RZ Dishwasher, Built-in Mounting, Stainless Steel, Stainless Steel"
-        elif "LED Light Bulbs" in classpath:
-            shape = elec.get("Bulb Shape", "A19")
-            cct = elec.get("Color Temperature", "2700 K")
-            short_desc = f"{brand} {mpn} {prod_name}, {shape} Shape, {cct}, Medium E26 Base"
-        elif "Cut-Off Wheels" in classpath:
-            l = dims.get("LENGTH", "5")
-            w = dims.get("WIDTH", ".045")
-            h = dims.get("HEIGHT", "7/8")
-            short_desc = f"{brand} {trade or 'Performance+'} {mpn} {l} in x {w} in x {h} in {prod_name}"
-        elif "Decking" in classpath:
-            short_desc = f"{brand} {trade or 'Enhance Naturals'} {mpn} {prod_name}, Composite Wood"
-        elif "Power Tools" in classpath:
-            short_desc = f"{brand} {trade or 'MAX*'} {mpn} {prod_name}, Brushless Motor"
-        else:
-            short_desc = f"{brand} {trade} {mpn} {prod_name}".strip()
+        trade_part = f"{trade} " if trade else ""
+        short_desc = f"{brand_disp} {trade_part}{mpn} {prod_name}".strip()
+        long_desc1 = f"{brand_disp} {trade_part}{mpn} {prod_name}, engineered for reliable industrial performance."
 
         # -------------------------------------------------------------
-        # 4. LONG_DESC1 (Comprehensive Specifications Narrative)
+        # 5. RETAIL_DESC & 6. MARKETING_DESC
         # -------------------------------------------------------------
-        if "Dishwashers" in classpath:
-            if "PDSH" in mpn:
-                long_desc = "FRIGIDAIRE® Dishwasher With CleanBoost™, Professional Series, 5 Wash Cycles, 120 V, 15 A, Leg Mounting, 24 in W x 24-1/4 in D, 50-1/4 in Depth With Door Open, 8-1/2 in Upper Rack, 11-1/4 in Lower Rack Minimum Height, 10-3/8 in Upper Rack, 13-1/4 in Lower Rack Maximum Height, 47 dBA Sound Level, Stainless Steel, Additional Information: 240 kW-hr Annual Energy, 1 to 12 hr Delay Start Hours"
-            else:
-                long_desc = "Whirlpool® Dishwasher, Eco Series, 120 V, 10 A, Built-in Mounting, 33-7/16 in H x 23-7/8 in W x 22-5/8 in D, 50-3/16 in Depth With Door Open, 33-7/16 in Minimum Height, 41 dBA Sound Level, Stainless Steel, Stainless Steel, Additional Information: Folding Tines, Leak Detection System, Moisture Repellent Silverware Basket, Normal Cycle, Quick Wash Cycle, Sani Rinse Option, Sensor Cycle, Triple Wash Spray"
-        elif "LED Light Bulbs" in classpath:
-            long_desc = f"{short_desc}, Energy-efficient solid state lighting designed for long lifespan and high color rendering index."
-        else:
-            long_desc = f"{short_desc}, Engineered for heavy-duty industrial performance and maximum service life."
+        retail_desc = f"{brand_disp} {prod_name}".strip()
+        marketing_desc = f"Professional-grade {prod_name} by {brand_disp}. MPN: {mpn}."
 
         # -------------------------------------------------------------
-        # 5. RETAIL_DESC & MARKETING_DESCRIPTION
+        # 7. ITEM_FEATURES (Bullet Points)
         # -------------------------------------------------------------
-        if "Dishwashers" in classpath:
-            if "PDSH" in mpn:
-                retail_desc = "Professional Series Dishwasher, Leg Mounting, 5-Wash Cycle, Stainless Steel"
-                mktg_desc = "Clean dishes thoroughly and quietly with CleanBoost™ technology."
-            else:
-                retail_desc = "Eco Series Dishwasher, Built-in Mounting, Stainless Steel, Stainless Steel"
-                mktg_desc = "Load more and run less with our quietest and largest capacity dishwasher. A 3rd Rack provides dedicated space for mugs and bowls, while an adjustable 2nd Rack helps fit all the dishes and pans your family piles up."
-        elif "LED Light Bulbs" in classpath:
-            retail_desc = f"{brand} LED Lamp"
-            mktg_desc = f"Upgrade your lighting with energy efficient LED bulbs from {brand}, delivering crisp illumination and long-lasting durability."
-        else:
-            retail_desc = f"{trade or clean_brand} {prod_name}"
-            mktg_desc = f"Industrial grade {prod_name} from {brand} offering high precision and durability."
-
-        # -------------------------------------------------------------
-        # 6. ITEM_FEATURES_1 to ITEM_FEATURES_20 (Atomic Bullet Points)
-        # -------------------------------------------------------------
-        features = []
-        if "WDTS" in mpn:
-            features = [
-                "3rd rack with extra wash action",
-                "Adjustable 2nd Rack",
-                "41 dBA",
-                "Moisture Repellent Silverware Basket",
-                "Sensor cycle",
-                "Sani Rinse Option",
-                "Leak Detection System",
-                "Folding Tines",
-                "Normal cycle",
-                "Triple Wash Spray",
-                "Quick Wash Cycle"
-            ]
-        elif "PDSH" in mpn:
-            features = [
-                "CleanBoost™ technology",
-                "5 Wash Cycles",
-                "47 dBA Sound Level",
-                "Stainless Steel Tub",
-                "Energy Star Certified"
-            ]
-        elif "LED Light Bulbs" in classpath:
-            features = [
-                "Energy efficient LED technology reduces power consumption",
-                "Dimmable with compatible LED dimmers",
-                "Rated for 15000 hours average operating life",
-                "Instant-on full brightness with zero warm-up time"
-            ]
-        elif "Cut-Off" in classpath:
-            features = [
-                "Fast cutting ceramic blend",
-                "Reinforced fiberglass construction",
-                "Extended wheel life",
-                "Burr-free cuts on stainless steel"
-            ]
-        elif "Decking" in classpath:
-            features = [
-                "High-performance composite shell resists staining and fading",
-                "Grooved edge profile for hidden fastener installation",
-                "Authentic natural wood grain finish",
-                "Low maintenance - cleans easily with soap and water"
-            ]
-        elif "Power Tools" in classpath:
-            features = [
-                "High-efficiency brushless motor delivers extended runtime",
-                "Ergonomic compact design for comfort and control",
-                "Heavy-duty construction for demanding jobsite use"
-            ]
-        elif "Fittings" in classpath:
-            features = [
-                "Durable solid brass construction",
-                "Precision machined female NPT threaded connections",
-                "Rated for 150 psi working pressure",
-                "Corrosion resistant for long service life"
-            ]
-        else:
-            features = [
-                f"Manufactured to {brand} precision standards",
-                "High durability industrial construction",
-                "Designed for reliable long-term performance"
-            ]
-
-        # Optional OpenAI LLM Copy Enrichment for novel items when enabled
-        llm_used = False
-        openai_time_ms = 0.0
-        if HAS_OPENAI and state.enable_llm and "Dishwashers" not in classpath and "Cut-Off" not in classpath and "Decking" not in classpath and "Fittings" not in classpath and "LED" not in classpath and "Power Tools" not in classpath:
-            try:
-                t_ai_0 = time.perf_counter()
-                llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
-                prompt = (
-                    f"Given industrial product: Brand: {brand}, MPN: {mpn}, Classpath: {classpath}, Raw Desc: {state.cleaned_part_desc}.\n"
-                    "Generate a concise 2-sentence marketing description and 4 atomic bullet features. Format: MARKETING: <text>\nFEATURES: <f1>|<f2>|<f3>|<f4>"
-                )
-                res = llm.invoke([SystemMessage(content="You are an industrial catalog master copywriter."), HumanMessage(content=prompt)])
-                openai_time_ms = round((time.perf_counter() - t_ai_0) * 1000, 2)
-                lines = res.content.strip().split("\n")
-                for line in lines:
-                    if line.startswith("MARKETING:"):
-                        mktg_desc = line.replace("MARKETING:", "").strip()
-                    elif line.startswith("FEATURES:"):
-                        f_raw = line.replace("FEATURES:", "").strip()
-                        features = [f.strip() for f in f_raw.split("|") if f.strip()]
-                llm_used = True
-            except Exception as e:
-                logger.warning(f"OpenAI copy generation fallback used deterministic template: {e}")
+        item_features = [
+            f"Manufacturer Part Number: {mpn}",
+            f"Product Type: {prod_name}"
+        ]
+        for k, v in list(elec.items())[:3]:
+            if not k.endswith(" UOM"):
+                uom = elec.get(f"{k} UOM", "")
+                item_features.append(f"{k}: {v} {uom}".strip())
+        for k, v in list(dims.items())[:2]:
+            if not k.endswith(" UOM"):
+                uom = dims.get(f"{k} UOM", "in")
+                item_features.append(f"{k}: {v} {uom}".strip())
 
         trace = AgentTrace(
             agent_name="Agent 7: Multi-Channel Copy Builder",
             execution_time_ms=round((time.perf_counter() - t0) * 1000, 2),
             notes=[
-                f"Invoice Desc: '{inv_desc}' ({len(inv_desc)} chars)",
-                f"Mobile Desc: '{mob_desc}' ({len(mob_desc)} chars)",
-                f"Features count: {len(features)}",
-                f"OpenAI LLM Enrichment: {llm_used}" + (f" ({openai_time_ms} ms)" if llm_used else "")
+                f"Generated 6 copy tiers via universal dynamic formulas",
+                f"INVOICE_DESC length: {len(inv_desc)} chars (limit 40)",
+                f"MOBILE_DESC length: {len(mob_desc)} chars (window 60-80)"
             ],
             extracted_data={
                 "invoice_desc": inv_desc,
                 "mobile_desc": mob_desc,
                 "short_desc": short_desc,
-                "features_count": len(features),
-                "llm_used": llm_used,
-                "openai_time_ms": openai_time_ms
+                "long_desc1": long_desc1,
+                "retail_desc": retail_desc,
+                "marketing_desc": marketing_desc
             }
         )
 
@@ -271,9 +133,9 @@ class MultiChannelCopyAgent:
             "invoice_desc": inv_desc,
             "mobile_desc": mob_desc,
             "short_desc": short_desc,
-            "long_desc1": long_desc,
+            "long_desc1": long_desc1,
             "retail_desc": retail_desc,
-            "marketing_desc": mktg_desc,
-            "item_features": features,
+            "marketing_desc": marketing_desc,
+            "item_features": item_features,
             "traces": state.traces + [trace]
         }

@@ -1,5 +1,5 @@
 from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class DeliveryProductRecord(BaseModel):
@@ -126,8 +126,7 @@ class DeliveryProductRecord(BaseModel):
     discontinued: str = Field(default="", alias="Discontinued")
     actual_image: str = Field(default="", alias="Actual Image (Yes/No)")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
     def to_delivery_dict(self) -> Dict[str, str]:
         """Flatten into exact 252-column dictionary matching Unilog delivery headers."""

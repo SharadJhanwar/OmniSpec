@@ -16,6 +16,9 @@ class CellProvenance(BaseModel):
     confidence: float = 1.0                # 0.0 to 1.0
     rule_applied: str = ""                 # e.g., "Unilog Title Formula §3.1", "Master UOM Spacing Standard", "Exact Fraction Hash"
     derived: bool = False                  # True if calculated/inferred vs explicitly stated in input
+    is_cached: bool = False                # True if retrieved from verified/approved cache (100% confidence)
+    needs_hitl: bool = False               # True if variable is uncached / newly inferred
+    hitl_reason: str = ""                  # Explanation if variable requires human review
 
 
 class DataBOM(BaseModel):
@@ -30,6 +33,10 @@ class DataBOM(BaseModel):
     defect_probability_index: float = 0.0
     risk_tier: str = "LOW"                 # LOW, ELEVATED, CRITICAL
     total_attributes_tracked: int = 0
+    cached_attributes_count: int = 0
+    uncached_attributes_count: int = 0
+    cache_coverage_ratio: float = 0.0      # 0.0 to 1.0
+    needs_hitl_review: bool = False
     verified_oem_sources_count: int = 0
     provenance_cells: Dict[str, CellProvenance] = Field(default_factory=dict)
     lineage_hash: str = ""
