@@ -20,10 +20,12 @@ class ColoredFormatter(logging.Formatter):
         return super().format(record)
 
 
-def setup_logger(name: str = "omnispec") -> logging.Logger:
+def setup_logger(name: str = "OmniSpec") -> logging.Logger:
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
+    logger.propagate = True
     
+    # Remove existing handlers to avoid duplicate lines
     if not logger.handlers:
         handler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(

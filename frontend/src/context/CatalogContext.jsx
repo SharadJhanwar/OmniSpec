@@ -83,6 +83,7 @@ export function CatalogProvider({ children }) {
   const [activeTraces, setActiveTraces] = useState([]);
   const [isEnriching, setIsEnriching] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [activeBatchName, setActiveBatchName] = useState(null);
 
   // DBOM Modal State
   const [isDbomModalOpen, setIsDbomModalOpen] = useState(false);
@@ -109,37 +110,75 @@ export function CatalogProvider({ children }) {
       .catch(err => console.log('Using default catalog seed:', err));
   }, []);
 
+  const UNILOG_DELIVERY_HEADERS = [
+    "MFR URL", "Ref URL 1", "Ref URL 2", "Ref URL 3", "Ref URL 4", "Ref URL 5",
+    "PART_NUMBER", "Dept", "Class", "Fine", "SKU - MY_PART_NUMBER", "Mfg_Part_Num", "Part_Desc",
+    "E1_Brand", "Unilog_Brand", "DIB_Brand", "Part_Manuf", "MANUFACTURER_NAME", "BRAND_NAME",
+    "TRADE_NAME", "MANUFACTURER_PART_NUMBER", "ALTERNATE_PART_NUMBER", "Classpath",
+    "MOBILE_DESC", "INVOICE_DESC", "SHORT_DESC", "LONG_DESC1", "RETAIL_DESC", "MARKETING_DESCRIPTION",
+    ...Array.from({ length: 20 }, (_, i) => `ITEM_FEATURES_${i + 1}`),
+    "With", "Standard/Approvals", "Prop 65", "Application", "Includes", "Product Name",
+    ...Array.from({ length: 50 }, (_, i) => [
+      `ATTRIBUTE_LABEL ${i + 1}`,
+      `ATTRIBUTE_VALUE ${i + 1}`,
+      `ATTRIBUTE_UOM ${i + 1}`
+    ]).flat(),
+    "UPC", "EAN", "GTIN", "UNSPSC", "Warranty", "List Price", "Selling Qty", "Selling UOM", "Standard Packaging Information",
+    "LENGTH", "LENGTH_UOM", "HEIGHT", "HEIGHT_UOM", "WIDTH", "WIDTH_UOM", "WEIGHT", "WEIGHT_UOM", "VOLUME", "VOLUME_UOM",
+    "Product Image", "Alternate Image 1", "Alternate Image 2", "Alternate Image 3", "Alternate Image 4",
+    "SDS", "SDS_1", "Warranty Information", "Catalog", "Specification Sheet",
+    "Instruction/Installation Manual", "Service Manual", "Owners/User Manual", "Line Drawing", "MTR", "RoHS",
+    "Full Engineering Drawing", "Energy Star Guide", "Technical Bulletin", "Submittal", "Compatibility Chart",
+    "Size Chart", "Product Label/Insert", "Video Link", "Video Link 1", "Country Of Origin", "Discontinued", "Actual Image (Yes/No)"
+  ];
+
   const handleExportCSV = () => {
     const validItems = (Array.isArray(items) ? items : []).filter(Boolean);
     if (validItems.length === 0) return;
-    const keys = Object.keys(validItems[0]).filter(k => !k.startsWith('_'));
+    
+    // Use canonical Unilog 252 delivery headers
+    const keys = UNILOG_DELIVERY_HEADERS;
     const rows = [
       keys.join(','),
-      ...validItems.map(item => keys.map(k => `"${(item[k] || '').toString().replace(/"/g, '""')}"`).join(','))
+      ...validItems.map(item => keys.map(k => {
+        let val = item[k];
+        if (val === undefined || val === null) {
+          val = (item.attributes && item.attributes[k]) !== undefined ? item.attributes[k] : '';
+        }
+        return `"${val.toString().replace(/"/g, '""')}"`;
+      }).join(','))
     ];
+    const cleanStem = activeBatchName ? activeBatchName.replace(/\.[^/.]+$/, "") : "Current_Batch";
     const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', 'OmniSpec_Delivery_Enriched_252.csv');
+    link.setAttribute('download', `OmniSpec_Enriched_${cleanStem}_252.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   const handleExportExcel = async () => {
+    const validItems = (Array.isArray(items) ? items : []).filter(Boolean);
     try {
       const response = await fetch('/api/v1/enrich/export-excel', {
-        method: 'POST'
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: validItems,
+          filename: activeBatchName || "Current_Batch"
+        })
       });
       if (!response.ok) {
         throw new Error(`Excel export failed: ${response.status}`);
       }
+      const cleanStem = activeBatchName ? activeBatchName.replace(/\.[^/.]+$/, "") : "Current_Batch";
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', 'OmniSpec_Enriched_1000_Catalog_Master_252.xlsx');
+      link.setAttribute('download', `OmniSpec_Enriched_${cleanStem}_252.xlsx`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -176,6 +215,13 @@ export function CatalogProvider({ children }) {
     }
   };
 
+  const selectActiveItem = (item) => {
+    setActiveItem(item);
+    if (item && item._traces) {
+      setActiveTraces(item._traces);
+    }
+  };
+
   const handleSaveReviewedItem = (updatedItem) => {
     if (!updatedItem) return;
     const updatedMpn = updatedItem.Mfg_Part_Num || updatedItem.mfg_part_num;
@@ -183,14 +229,18 @@ export function CatalogProvider({ children }) {
       const currentMpn = item.Mfg_Part_Num || item.mfg_part_num;
       return currentMpn === updatedMpn ? updatedItem : item;
     }));
-    setActiveItem(updatedItem);
+    selectActiveItem(updatedItem);
   };
 
-  const handleUploadSuccess = (newRecords) => {
+  const handleUploadSuccess = (newRecords, filename) => {
     if (Array.isArray(newRecords) && newRecords.length > 0) {
       const valid = newRecords.filter(Boolean);
-      setItems(prev => [...valid, ...(Array.isArray(prev) ? prev : []).filter(Boolean)]);
-      if (valid[0]) setActiveItem(valid[0]);
+      // Set catalog to purely the uploaded batch
+      setItems(valid);
+      setActiveBatchName(filename || "Uploaded_Feed.csv");
+      if (valid[0]) {
+        selectActiveItem(valid[0]);
+      }
     }
   };
 
@@ -198,7 +248,25 @@ export function CatalogProvider({ children }) {
     if (!enrichedItem) return;
     setItems(prev => [enrichedItem, ...(Array.isArray(prev) ? prev : []).filter(Boolean)]);
     setActiveItem(enrichedItem);
-    setActiveTraces(traces || []);
+    setActiveTraces(traces || enrichedItem._traces || []);
+  };
+
+  const handleResetCatalog = () => {
+    fetch('/api/v1/catalog?page=1&page_size=100')
+      .then(res => res.json())
+      .then(data => {
+        if (data && Array.isArray(data.items) && data.items.length > 0) {
+          const loaded = data.items.filter(Boolean).map(it => ({
+            ...it,
+            _confidence: it._confidence !== undefined ? it._confidence : 1.0,
+            _needs_hitl: Boolean(it._needs_hitl)
+          }));
+          setItems(loaded);
+          setActiveBatchName(null);
+          if (loaded[0]) selectActiveItem(loaded[0]);
+        }
+      })
+      .catch(err => console.log('Reset catalog error:', err));
   };
 
   const validItems = (Array.isArray(items) ? items : []).filter(Boolean);
@@ -209,13 +277,14 @@ export function CatalogProvider({ children }) {
     items: validItems,
     setItems,
     activeItem,
-    setActiveItem,
+    setActiveItem: selectActiveItem,
     activeTraces,
     setActiveTraces,
     isEnriching,
     setIsEnriching,
     isUploadOpen,
     setIsUploadOpen,
+    activeBatchName,
     isDbomModalOpen,
     setIsDbomModalOpen,
     dbomData,
@@ -227,7 +296,8 @@ export function CatalogProvider({ children }) {
     handleOpenDbom,
     handleSaveReviewedItem,
     handleUploadSuccess,
-    handleSingleEnrichSuccess
+    handleSingleEnrichSuccess,
+    handleResetCatalog
   };
 
   return (

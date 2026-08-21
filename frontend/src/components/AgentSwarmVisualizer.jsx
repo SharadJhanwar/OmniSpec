@@ -23,6 +23,7 @@ const AGENTS = [
   { id: 6, name: 'Constrained LOV Mapper', icon: Grid3X3, desc: '150-Col structured EAV grid' },
   { id: 7, name: 'Multi-Channel Copy', icon: FileSignature, desc: 'Invoice <=40 & Mobile 60-80 copy' },
   { id: 8, name: 'Digital Asset Synthesizer', icon: ImageIcon, desc: 'Canonical <Brand>_<MPN> naming' },
+  { id: 'react', name: 'ReAct Attribute Finalizer', icon: Sparkles, desc: 'LangGraph reasoning & web search' },
   { id: 9, name: 'Quality Audit & HITL', icon: ShieldCheck, desc: '12-Point integrity & confidence' },
 ];
 
@@ -32,7 +33,7 @@ export default function AgentSwarmVisualizer({ activeItem, isEnriching, traces }
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
         <div className="flex items-center space-x-2">
           <div className={`h-2.5 w-2.5 rounded-full ${isEnriching ? 'bg-amber-400 animate-ping' : 'bg-cyan-400'}`}></div>
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider">LangGraph 9-Agent DAG Swarm Pipeline</h3>
+          <h3 className="text-sm font-bold text-white uppercase tracking-wider">LangGraph 10-Agent Swarm with ReAct Finalizer</h3>
         </div>
         <div className="flex items-center space-x-3 text-xs font-mono">
           {isEnriching ? (

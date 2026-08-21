@@ -97,7 +97,7 @@ The brain is equipped with 7 modular domain tools:
 
 ```
 +-------------------------------------------------------------------------------------------------------------------------------+
-|                                            OMNISPEC AI 9-AGENT SWARM TOPOLOGY                                                  |
+|                                            OMNISPEC AI 10-AGENT SWARM TOPOLOGY                                                |
 |                                                                                                                               |
 |  [Raw Catalog Row]                                                                                                            |
 |         │                                                                                                                     |
@@ -110,10 +110,10 @@ The brain is equipped with 7 modular domain tools:
 |                                                                                                  │                            |
 |                                                                                                  ▼                            |
 |  ┌──────────────┐      ┌──────────────┐      ┌──────────────┐      ┌──────────────┐      ┌──────────────┐                     |
-|  │ Final Output │ ◄─── │   AGENT 9    │ ◄─── │   AGENT 8    │ ◄─── │   AGENT 7    │ ◄─── │   AGENT 6    │                     |
-|  │ (252 Columns)│      │Quality, Audit│      │Digital Asset │      │ Multi-Channel│      │ Constrained  │                     |
-|  │ & Analytics  │      │    & HITL    │      │ Synthesizer  │      │ Copy Builder │      │  LOV Mapper  │                     |
-|  └──────────────┘      └──────────────┘      └──────────────┘      └──────────────┘      └──────────────┘                     |
+|  │ Final Output │ ◄─── │   AGENT 10   │ ◄─── │   AGENT 9    │ ◄─── │   AGENT 8    │ ◄─── │   AGENT 7    │ ◄─── │   AGENT 6    │
+|  │ (252 Columns)│      │Quality, Audit│      │ReAct Attribute│     │Digital Asset │      │ Multi-Channel│      │ Constrained  │
+|  │ & Analytics  │      │    & HITL    │      │  Finalizer   │      │ Synthesizer  │      │ Copy Builder │      │  LOV Mapper  │
+|  └──────────────┘      └──────────────┘      └──────────────┘      └──────────────┘      └──────────────┘      └──────────────┘
 +-------------------------------------------------------------------------------------------------------------------------------+
 ```
 
@@ -129,7 +129,8 @@ The brain is equipped with 7 modular domain tools:
 | **6** | **Constrained LOV Mapper** | 🗄️ [**Agent 6 Architecture Blueprint**](Solution/agents/README_Agent_6_Constrained_LOV_Mapper.md) | Binds raw specs to 161,000-row UniCat LOV schema across 50 triples (150 columns). | `ATTRIBUTE_LABEL 1..50`, `ATTRIBUTE_VALUE 1..50`, `ATTRIBUTE_UOM 1..50`. |
 | **7** | **Multi-Channel Copy Builder** | ✍️ [**Agent 7 Architecture Blueprint**](Solution/agents/README_Agent_7_MultiChannel_Copy_Builder.md) | Generates 6 distinct formulaic descriptions: `INVOICE_DESC` ($\le 40$ ALL CAPS), `MOBILE_DESC` ($60\text{--}80$ chars), 20 bullet features. | `INVOICE_DESC`, `MOBILE_DESC`, `SHORT_DESC`, `LONG_DESC1`, `ITEM_FEATURES_1..20`. |
 | **8** | **Digital Asset Synthesizer** | 🖼️ [**Agent 8 Architecture Blueprint**](Solution/agents/README_Agent_8_Digital_Asset_Synthesizer.md) | Builds canonical asset filenames (`<Brand>_<MPN>.jpg`), autonomous ReportLab 1-page engineering PDF submittal sheets. | `Product Image`, `Alternate Image 1..4`, `Specification Sheet`, `SDS`, `RoHS`. |
-| **9** | **Quality Audit & HITL** | 🛡️ [**Agent 9 Architecture Blueprint**](Solution/agents/README_Agent_9_Quality_Audit_HITL.md) | Runs 12 integrity checks, computes 5-Pillar Evidence-Aware confidence, variable-level caching gate, routes to HITL. | Confidence scores ($0\text{--}100\%$), audit flags, HITL review queue payload. |
+| **9** | **ReAct Attribute Finalizer** | 🧠 [**Agent 9 Architecture Blueprint**](Solution/agents/README_Agent_9_ReAct_Attribute_Finalizer.md) | 5-Loop Autonomous ReAct SubGraph densely populating up to 50 verified domain triples across 8 property clusters. | Full 50-slot verified attribute triples, exact physical UOMs. |
+| **10** | **Quality Audit & HITL** | 🛡️ [**Agent 10 Architecture Blueprint**](Solution/agents/README_Agent_10_Quality_Audit_HITL.md) | Runs 12 integrity checks, computes 5-Pillar Evidence-Aware confidence, variable-level caching gate, routes to HITL. | Confidence scores ($0\text{--}100\%$), audit flags, HITL review queue payload. |
 
 ---
 

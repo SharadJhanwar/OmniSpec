@@ -1,5 +1,5 @@
 from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from .delivery_schema import DeliveryProductRecord
 
 
@@ -15,6 +15,8 @@ class ProductEnrichmentState(BaseModel):
     """
     Master State passed sequentially through the 9-Agent LangGraph Swarm
     """
+    model_config = ConfigDict(extra="allow")
+
     # Raw Ingested Row
     row_id: str = ""
     raw_mfg_part_num: str = ""
@@ -75,6 +77,12 @@ class ProductEnrichmentState(BaseModel):
     application: str = ""
     prop_65: str = ""
     warranty: str = ""
+    upc: str = ""
+    country_of_origin: str = ""
+    weight: str = ""
+    weight_uom: str = ""
+    volume: str = ""
+    volume_uom: str = ""
     lov_compliance_score: float = 1.0
 
     # Agent 7: Multi-Channel Copy

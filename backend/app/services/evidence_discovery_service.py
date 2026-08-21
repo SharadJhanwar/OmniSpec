@@ -62,6 +62,16 @@ class EvidenceDiscoveryService:
         return 0.80
 
     @classmethod
+    def sanitize_search_token(cls, text: str) -> str:
+        """Strip dangerous search engine punctuation (quotes, hyphens, colons, wildcards)."""
+        if not text:
+            return ""
+        # Remove quotes, dashes, colons, slashes
+        clean = re.sub(r'["\'\-:;/\\]', ' ', str(text))
+        clean = re.sub(r"\s+", " ", clean).strip()
+        return clean
+
+    @classmethod
     def discover_web_evidence(
         cls,
         mpn: str,
@@ -70,39 +80,59 @@ class EvidenceDiscoveryService:
         max_results: int = 5
     ) -> List[Dict[str, Any]]:
         """
-        Targeted Evidence Discovery via DuckDuckGo:
-        Reformulates targeted queries to find authoritative manufacturer pages and PDF datasheets.
+        Targeted Evidence Discovery via DuckDuckGo with Sanitized Multi-Tier Queries.
         """
-        # Reformulate targeted query from brand, MPN, and description
-        query_parts = [brand, mpn, desc]
-        clean_query = " ".join([p.strip() for p in query_parts if p and p.strip() and p != "-- Unbranded --"])
-        search_query = re.sub(r"\s+", " ", clean_query).strip()
+        clean_mpn = cls.sanitize_search_token(mpn)
+        clean_brand = cls.sanitize_search_token(brand.replace("®", "").replace("™", ""))
+        clean_desc = cls.sanitize_search_token(desc)
+
+        if not clean_mpn and not clean_desc:
+            return []
+
+        # Construct hierarchical search queries
+        queries_to_try = []
+        if clean_brand and clean_mpn and clean_brand.lower() not in ["unbranded", "no unilog brand"]:
+            queries_to_try.append(f"{clean_brand} {clean_mpn} specifications")
+            queries_to_try.append(f"{clean_brand} {clean_mpn} datasheet")
+        elif clean_mpn:
+            queries_to_try.append(f"{clean_mpn} specifications")
+            queries_to_try.append(f"{clean_mpn} datasheet")
+        
+        if clean_desc:
+            # Take first 5 words of description
+            desc_words = " ".join(clean_desc.split()[:6])
+            queries_to_try.append(f"{clean_brand} {desc_words}")
 
         evidence_items: List[Dict[str, Any]] = []
 
-        try:
-            with DDGS(timeout=6) as ddgs:
-                results = list(ddgs.text(search_query, max_results=max_results))
-                for r in results:
-                    url = r.get("href") or r.get("link") or ""
-                    title = r.get("title") or ""
-                    snippet = r.get("body") or r.get("snippet") or ""
+        for q in queries_to_try:
+            if evidence_items:
+                break
+            try:
+                with DDGS(timeout=5) as ddgs:
+                    results = list(ddgs.text(q, max_results=max_results))
+                    for r in results:
+                        url = r.get("href") or r.get("link") or ""
+                        title = r.get("title") or ""
+                        snippet = r.get("body") or r.get("snippet") or ""
 
-                    # Filter against banned marketplaces
-                    if cls.is_banned_marketplace(url):
-                        continue
+                        # Filter against banned marketplaces
+                        if cls.is_banned_marketplace(url):
+                            continue
 
-                    quality_score = cls.evaluate_source_quality(url, title)
-                    if quality_score > 0.0:
-                        evidence_items.append({
-                            "title": title,
-                            "url": url,
-                            "snippet": snippet,
-                            "source_quality": quality_score,
-                            "is_pdf": url.lower().endswith(".pdf")
-                        })
-        except Exception as e:
-            logger.warning(f"[EvidenceDiscoveryService] Web evidence search fallback: {e}")
+                        quality_score = cls.evaluate_source_quality(url, title)
+                        if quality_score > 0.0:
+                            evidence_items.append({
+                                "title": title,
+                                "url": url,
+                                "snippet": snippet,
+                                "source_quality": quality_score,
+                                "is_pdf": url.lower().endswith(".pdf")
+                            })
+                if evidence_items:
+                    logger.info(f"    • Discovered {len(evidence_items)} authoritative web evidence sources for '{q}'")
+            except Exception as e:
+                logger.debug(f"[EvidenceDiscoveryService] Search query '{q}' fallback: {e}")
 
         return evidence_items
 

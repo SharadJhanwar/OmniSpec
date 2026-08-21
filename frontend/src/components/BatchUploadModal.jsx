@@ -80,7 +80,7 @@ export default function BatchUploadModal({ isOpen, onClose, onUploadSuccess }) {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
             <FileSpreadsheet className="h-5 w-5 text-cyan-400" />
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">Catalog CSV Batch Ingestion</h3>
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">Catalog Batch Ingestion (CSV / Excel / JSON)</h3>
           </div>
           <button onClick={onClose} className="p-1 rounded text-slate-400 hover:text-white hover:bg-surface-elevated">
             <X className="h-5 w-5" />
@@ -98,15 +98,15 @@ export default function BatchUploadModal({ isOpen, onClose, onUploadSuccess }) {
           <input
             id="csvFileInput"
             type="file"
-            accept=".csv"
+            accept=".csv,.xlsx,.xls,.json"
             onChange={handleFileChange}
             className="hidden"
           />
           <UploadCloud className="h-10 w-10 text-cyan-400 mx-auto mb-3" />
           <p className="text-xs font-semibold text-slate-200">
-            {file ? file.name : "Drag and drop your raw supplier CSV feed here"}
+            {file ? file.name : "Drag and drop your raw CSV, Excel (.xlsx, .xls), or JSON feed here"}
           </p>
-          <p className="text-[11px] text-slate-400 mt-1">Supports Unilog 6-column input standard (e.g. Sample-1000_Items.csv)</p>
+          <p className="text-[11px] text-slate-400 mt-1">Supports Unilog 6-column input standard (e.g. Sample-1000_Items.csv or test.xlsx)</p>
           {file && (
             <p className="text-[10px] font-mono text-emerald-400 mt-2">
               ✓ Ready for processing ({(file.size / 1024).toFixed(1)} KB)

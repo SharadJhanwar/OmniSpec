@@ -11,11 +11,11 @@
 
 Industrial product enrichment cannot be solved by a single monolithic LLM prompt. Pure generative models hallucinate technical dimensions, invent non-standard units of measure (UOM), miss legal brand trademarks (`®`/`™`), and violate strict character limits (e.g. Invoice $\le 40$ chars, Mobile $60\text{--}80$ chars).
 
-**OmniSpec AI** implements a **Decoupled 9-Agent Directed Acyclic Graph (DAG) Swarm** orchestrated by a central **ReAct Cognitive Brain**. Every agent is a specialized micro-service combining **deterministic algorithms** (C++ fuzzy matching, compiled regexes, mathematical fraction engines, relational lookups) with **generative reasoning** (Vision-Language Models, constrained extraction, semantic RAG).
+**OmniSpec AI** implements a **Decoupled 10-Agent Directed Acyclic Graph (DAG) Swarm** orchestrated by a central **ReAct Cognitive Brain**. Every agent is a specialized micro-service combining **deterministic algorithms** (C++ fuzzy matching, compiled regexes, mathematical fraction engines, relational lookups) with **generative reasoning** (Vision-Language Models, constrained extraction, semantic RAG).
 
 ```
 +-------------------------------------------------------------------------------------------------------------------------------+
-|                                            OMNISPEC AI 9-AGENT SWARM TOPOLOGY                                                  |
+|                                            OMNISPEC AI 10-AGENT SWARM TOPOLOGY                                                |
 |                                                                                                                               |
 |  [Raw Catalog Row]                                                                                                            |
 |         │                                                                                                                     |
@@ -28,10 +28,10 @@ Industrial product enrichment cannot be solved by a single monolithic LLM prompt
 |                                                                                                  │                            |
 |                                                                                                  ▼                            |
 |  ┌──────────────┐      ┌──────────────┐      ┌──────────────┐      ┌──────────────┐      ┌──────────────┐                     |
-|  │ Final Output │ ◄─── │   AGENT 9    │ ◄─── │   AGENT 8    │ ◄─── │   AGENT 7    │ ◄─── │   AGENT 6    │                     |
-|  │ (252 Columns)│      │Quality, Audit│      │Digital Asset │      │ Multi-Channel│      │ Constrained  │                     |
-|  │ & Analytics  │      │    & HITL    │      │ Synthesizer  │      │ Copy Builder │      │  LOV Mapper  │                     |
-|  └──────────────┘      └──────────────┘      └──────────────┘      └──────────────┘      └──────────────┘                     |
+|  │ Final Output │ ◄─── │   AGENT 10   │ ◄─── │   AGENT 9    │ ◄─── │   AGENT 8    │ ◄─── │   AGENT 7    │ ◄─── │   AGENT 6    │
+|  │ (252 Columns)│      │Quality, Audit│      │ReAct Attribute│     │Digital Asset │      │ Multi-Channel│      │ Constrained  │
+|  │ & Analytics  │      │    & HITL    │      │  Finalizer   │      │ Synthesizer  │      │ Copy Builder │      │  LOV Mapper  │
+|  └──────────────┘      └──────────────┘      └──────────────┘      └──────────────┘      └──────────────┘      └──────────────┘
 +-------------------------------------------------------------------------------------------------------------------------------+
 ```
 
@@ -49,7 +49,8 @@ Industrial product enrichment cannot be solved by a single monolithic LLM prompt
 | **6** | **Constrained LOV Mapper** | Binds raw specs to 161,000-row UniCat LOV & deep category LOVs across 50 triples. | Inverted index search, Many-to-One synonym dictionary, 50-slot triple padding. | Constrained value alignment & synonym resolution. | `ATTRIBUTE_LABEL 1..50`, `ATTRIBUTE_VALUE 1..50`, `ATTRIBUTE_UOM 1..50`. |
 | **7** | **Multi-Channel Copy Builder** | Generates 6 distinct formulaic descriptions adhering to strict character caps. | Character counter, uppercase transformer, strict template engine. | High-converting marketing copy & bullet point generator with latency tracing. | `INVOICE_DESC` ($\le 40$ ALL CAPS), `MOBILE_DESC` ($60\text{--}80$), `SHORT_DESC`, `LONG_DESC1`, `ITEM_FEATURES_1..20`. |
 | **8** | **Digital Asset Synthesizer** | Builds canonical asset filenames and validates technical doc links. | String formatters, MIME validators. | Visual asset relevance scorer. | `Product Image`, `Alternate Image 1..4`, `Specification Sheet`, `SDS`, `RoHS`. |
-| **9** | **Quality Audit & HITL** | Runs 12 integrity checks, computes Evidence-Aware confidence, routes to HITL. | 12-rule validation suite, Levenshtein distance scorer, 5-pillar confidence engine. | Explainable anomaly detector. | Confidence scores ($0\text{--}100\%$), audit flags, HITL review queue payload. |
+| **9** | **ReAct Attribute Finalizer** | 5-Loop Autonomous ReAct SubGraph densely populating up to 50 verified domain triples. | Physical UOM normalizer, 8-cluster domain knowledge engine, slot synthesizer. | Iterative search, cluster discovery, non-overwriting triple merge. | Complete 50-slot dense attribute triples with exact UOMs. |
+| **10** | **Quality Audit & HITL** | Runs 12 integrity checks, computes Evidence-Aware confidence, routes to HITL. | 12-rule validation suite, Levenshtein distance scorer, 5-pillar confidence engine. | Explainable anomaly detector. | Confidence scores ($0\text{--}100\%$), audit flags, HITL review queue payload. |
 
 ---
 

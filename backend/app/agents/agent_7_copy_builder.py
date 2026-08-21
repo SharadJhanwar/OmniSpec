@@ -23,6 +23,8 @@ class MultiChannelCopyAgent:
         trade = state.trade_name or ""
         dims = state.dimensions or {}
         elec = state.electrical_specs or {}
+        acoust = state.acoustic_specs or {}
+        pack = state.packaging_specs or {}
 
         # -------------------------------------------------------------
         # 1. INVOICE_DESC (<= 40 chars, ALL CAPS)
@@ -83,33 +85,143 @@ class MultiChannelCopyAgent:
             mob_desc = mob_raw
 
         # -------------------------------------------------------------
-        # 3. SHORT_DESC & 4. LONG_DESC1
+        # 3. SHORT_DESC & 4. LONG_DESC1 (Formulaic Architecture)
         # -------------------------------------------------------------
-        trade_part = f"{trade} " if trade else ""
-        short_desc = f"{brand_disp} {trade_part}{mpn} {prod_name}".strip()
-        long_desc1 = f"{brand_disp} {trade_part}{mpn} {prod_name}, engineered for reliable industrial performance."
+        with_str = state.with_features or ""
+        with_part = f"{with_str}" if with_str else ""
+        series_str = elec.get("Series", "")
+        series_part = f"{series_str} " if series_str else ""
+        mat_str = elec.get("Material", "")
+        mount_str = elec.get("Mounting Type", "")
+        sound_str = f"{acoust.get('Sound Level', '')} dBA Sound Level" if acoust.get("Sound Level") else ""
+
+        # Assemble Short Description
+        brand_symbol = brand_disp if ("®" in brand_disp or "™" in brand_disp or brand_disp == "Unbranded") else f"{brand_disp}®"
+        short_parts = [brand_symbol, series_part + mpn, prod_name]
+        if with_part:
+            short_parts.append(with_part)
+        if mount_str:
+            short_parts.append(f"{mount_str} Mounting")
+        if mat_str:
+            short_parts.append(mat_str)
+        short_desc = ", ".join([p for p in short_parts if p]).replace(" ,", ",").strip()
+
+        # Assemble Long Description 1
+        long_spec_items = []
+        if series_str:
+            long_spec_items.append(series_str)
+        if "Number of Wash Cycles" in elec:
+            long_spec_items.append(f"{elec['Number of Wash Cycles']} Wash Cycles")
+        if "Voltage Rating" in elec:
+            long_spec_items.append(f"{elec['Voltage Rating']} V")
+        if "Amperage Rating" in elec:
+            long_spec_items.append(f"{elec['Amperage Rating']} A")
+        if mount_str:
+            long_spec_items.append(f"{mount_str} Mounting")
+        if "LENGTH" in dims and "WIDTH" in dims:
+            long_spec_items.append(f"{dims['LENGTH']} in W x {dims['WIDTH']} in D")
+        if "Depth With Door Open" in elec:
+            long_spec_items.append(f"{elec['Depth With Door Open']} in Depth With Door Open")
+        if sound_str:
+            long_spec_items.append(sound_str)
+        if mat_str:
+            long_spec_items.append(mat_str)
+
+        addl_info = []
+        for k, v in elec.items():
+            if k not in ["Series", "Material", "Mounting Type", "Number of Wash Cycles", "Voltage Rating", "Amperage Rating", "Depth With Door Open", "Depth With Door Open UOM", "Voltage Rating UOM", "Amperage Rating UOM"]:
+                addl_info.append(f"{k}: {v}")
+
+        addl_str = f", Additional Information: {', '.join(addl_info[:4])}" if addl_info else ""
+        long_desc1 = f"{brand_disp} {prod_name}{(' ' + with_part) if with_part else ''}, {', '.join(long_spec_items)}{addl_str}."
 
         # -------------------------------------------------------------
         # 5. RETAIL_DESC & 6. MARKETING_DESC
         # -------------------------------------------------------------
-        retail_desc = f"{brand_disp} {prod_name}".strip()
-        marketing_desc = f"Professional-grade {prod_name} by {brand_disp}. MPN: {mpn}."
+        retail_parts = [series_part + prod_name]
+        if mount_str:
+            retail_parts.append(f"{mount_str} Mounting")
+        if mat_str:
+            retail_parts.append(mat_str)
+        retail_desc = ", ".join([p for p in retail_parts if p]).strip()
+
+        # Dynamic category-specific marketing description
+        prod_lower = prod_name.lower()
+        if "dryer" in prod_lower or "washer" in prod_lower or "laundry" in prod_lower:
+            marketing_desc = f"Experience heavy-duty laundry performance with the {brand_disp} {mpn} {prod_name}. Engineered with precision controls, high-capacity construction, and reliable operation for commercial and residential applications."
+        elif "sanding" in prod_lower or "cut-off" in prod_lower or "grinding" in prod_lower or "abrasive" in prod_lower or "disc" in prod_lower or "belt" in prod_lower or "wheel" in prod_lower:
+            marketing_desc = f"Experience superior cutting and finishing performance with the {brand_disp} {mpn} {prod_name}. Engineered with premium abrasives for maximum material removal, precision finish, and extended service life."
+        elif "mortar" in prod_lower or "cement" in prod_lower or "masonry" in prod_lower:
+            marketing_desc = f"Enhance your masonry construction with {brand_disp} {mpn} {prod_name}. Engineered for exceptional bond strength, consistent workability, and long-lasting durability in interior and exterior applications."
+        elif "tape" in prod_lower or "sealant" in prod_lower:
+            marketing_desc = f"Deliver dependable sealing and insulation with {brand_disp} {mpn} {prod_name}. Designed for high tensile strength, excellent adhesion, and heavy-duty industrial environmental protection."
+        elif "dishwasher" in prod_lower:
+            marketing_desc = f"Clean dishes thoroughly and quietly with the {brand_disp} {mpn} {prod_name}. Built with advanced wash cycles, high efficiency, and durable stainless steel construction."
+        else:
+            marketing_desc = f"Engineered for heavy-duty industrial performance and maximum service life, the {brand_disp} {mpn} {prod_name} delivers reliable operation, efficiency, and high precision."
 
         # -------------------------------------------------------------
-        # 7. ITEM_FEATURES (Bullet Points)
+        # 7. ITEM_FEATURES (Up to 20 Distinct Feature Bullet Points)
         # -------------------------------------------------------------
-        item_features = [
-            f"Manufacturer Part Number: {mpn}",
-            f"Product Type: {prod_name}"
-        ]
-        for k, v in list(elec.items())[:3]:
-            if not k.endswith(" UOM"):
+        item_features = []
+        if series_str:
+            item_features.append(f"Series: {series_str}")
+        item_features.append(f"Manufacturer Part Number: {mpn}")
+        item_features.append(f"Product Type: {prod_name}")
+
+        if mat_str:
+            item_features.append(f"Material / Construction: {mat_str}")
+        if mount_str:
+            item_features.append(f"Mounting Configuration: {mount_str}")
+        if sound_str:
+            item_features.append(sound_str)
+
+        # Specific attributes from elec
+        for k, v in elec.items():
+            if not k.endswith(" UOM") and k not in ["Series", "Material", "Mounting Type"]:
                 uom = elec.get(f"{k} UOM", "")
                 item_features.append(f"{k}: {v} {uom}".strip())
-        for k, v in list(dims.items())[:2]:
-            if not k.endswith(" UOM"):
-                uom = dims.get(f"{k} UOM", "in")
+
+        for k, v in dims.items():
+            if not k.endswith("_UOM") and v:
+                uom = dims.get(f"{k}_UOM", "in")
                 item_features.append(f"{k}: {v} {uom}".strip())
+
+        if state.standard_approvals:
+            item_features.append(f"Certifications & Approvals: {state.standard_approvals.replace('|', ', ')}")
+
+        if state.warranty:
+            item_features.append(f"Warranty: {state.warranty}")
+
+        # Category-specific capability bullets if needed
+        if "sanding" in prod_lower or "abrasive" in prod_lower or "wheel" in prod_lower or "disc" in prod_lower:
+            item_features.append("Premium abrasive grain formulation for fast cutting action")
+            item_features.append("Heavy-duty backing for superior tear resistance and extended lifespan")
+            item_features.append("Optimized for industrial metalworking, woodworking, and surface prep")
+        elif "dryer" in prod_lower or "washer" in prod_lower:
+            item_features.append("High-capacity drum engineered for commercial laundry cycles")
+            item_features.append("User-friendly control interface for effortless cycle selection")
+            item_features.append("Heavy-duty motor and drive mechanism built for continuous operation")
+        elif "mortar" in prod_lower:
+            item_features.append("High compressive strength Type N masonry formulation")
+            item_features.append("Excellent bond strength for interior and exterior stone and brick")
+        elif "tape" in prod_lower:
+            item_features.append("Pressure-sensitive adhesive backing for secure and permanent hold")
+            item_features.append("High resistance to moisture, abrasion, and temperature fluctuations")
+        else:
+            item_features.append("Commercial & Residential Grade Durability")
+            item_features.append("Precision Engineered Components for Extended Service Life")
+
+        # Deduplicate features
+        seen_f = set()
+        dedup_features = []
+        for f in item_features:
+            if f not in seen_f:
+                seen_f.add(f)
+                dedup_features.append(f)
+
+        app_str = state.application or f"Commercial & Residential {prod_name} Applications"
+        inc_str = state.includes or f"{prod_name} Unit, User Documentation"
 
         trace = AgentTrace(
             agent_name="Agent 7: Multi-Channel Copy Builder",
@@ -117,7 +229,8 @@ class MultiChannelCopyAgent:
             notes=[
                 f"Generated 6 copy tiers via universal dynamic formulas",
                 f"INVOICE_DESC length: {len(inv_desc)} chars (limit 40)",
-                f"MOBILE_DESC length: {len(mob_desc)} chars (window 60-80)"
+                f"MOBILE_DESC length: {len(mob_desc)} chars (window 60-80)",
+                f"ITEM_FEATURES count: {len(dedup_features[:20])}"
             ],
             extracted_data={
                 "invoice_desc": inv_desc,
@@ -125,7 +238,9 @@ class MultiChannelCopyAgent:
                 "short_desc": short_desc,
                 "long_desc1": long_desc1,
                 "retail_desc": retail_desc,
-                "marketing_desc": marketing_desc
+                "marketing_desc": marketing_desc,
+                "application": app_str,
+                "includes": inc_str
             }
         )
 
@@ -136,6 +251,8 @@ class MultiChannelCopyAgent:
             "long_desc1": long_desc1,
             "retail_desc": retail_desc,
             "marketing_desc": marketing_desc,
-            "item_features": item_features,
+            "item_features": dedup_features[:20],
+            "application": app_str,
+            "includes": inc_str,
             "traces": state.traces + [trace]
         }

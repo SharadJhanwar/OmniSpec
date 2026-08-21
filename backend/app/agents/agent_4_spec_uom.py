@@ -40,20 +40,29 @@ class SpecUOMExtractorAgent:
             dim_specs["WIDTH_UOM"] = "in"
             dim_specs["LENGTH"] = lumber_match.group(3)
             dim_specs["LENGTH_UOM"] = "ft"
-        elif dim_tokens:
+        # Belt-specific dimensions vs general dimensions
+        is_belt = "BELT" in desc_text.upper()
+        if dim_tokens:
             primary_dim = dim_tokens[0].replace('"', '').replace("'", '').strip()
             # Split only on 'x' or 'X' so mixed fractions like '4-1/2' remain intact
             parts = [p.strip() for p in re.split(r"\s*[xX]\s*", primary_dim) if p.strip()]
 
-            if len(parts) >= 1:
-                dim_specs["LENGTH"] = parts[0]
-                dim_specs["LENGTH_UOM"] = "in"
-            if len(parts) >= 2:
-                dim_specs["WIDTH"] = parts[1]
+            if is_belt and len(parts) >= 2:
+                # Belts are designated as Width x Length (e.g. 1/2" x 18")
+                dim_specs["WIDTH"] = parts[0]
                 dim_specs["WIDTH_UOM"] = "in"
-            if len(parts) >= 3:
-                dim_specs["HEIGHT"] = parts[2]
-                dim_specs["HEIGHT_UOM"] = "in"
+                dim_specs["LENGTH"] = parts[1]
+                dim_specs["LENGTH_UOM"] = "in"
+            else:
+                if len(parts) >= 1:
+                    dim_specs["LENGTH"] = parts[0]
+                    dim_specs["LENGTH_UOM"] = "in"
+                if len(parts) >= 2:
+                    dim_specs["WIDTH"] = parts[1]
+                    dim_specs["WIDTH_UOM"] = "in"
+                if len(parts) >= 3:
+                    dim_specs["HEIGHT"] = parts[2]
+                    dim_specs["HEIGHT_UOM"] = "in"
 
         # Check for explicitly stated Dimensions in Dishwashers / Large items
         explicit_dim = re.search(r"(\d+(?:[/-]\d+)?(?:\.\d+)?)\s*in\s*W\s*x\s*(\d+(?:[/-]\d+)?(?:\.\d+)?)\s*in\s*D", desc_text, flags=re.IGNORECASE)
@@ -78,13 +87,11 @@ class SpecUOMExtractorAgent:
             electrical_specs["Voltage Rating"] = "20"
             electrical_specs["Voltage Rating UOM"] = "V"
 
-        # Amperage
-        a_match = re.search(r"\b(\d+)\s*(?:A|Amps|Amperes)\b", desc_text, flags=re.IGNORECASE)
+        # Amperage (Strict lookahead: A must be followed by whitespace, comma, semicolon, or end-of-string)
+        a_match = re.search(r"\b(\d+(?:\.\d+)?)\s*(?:Amps?|Amperes?|Amp)\b|\b(\d+)\s*A(?=[\s,;]|$)", desc_text, flags=re.IGNORECASE)
         if a_match:
-            electrical_specs["Amperage Rating"] = a_match.group(1)
-            electrical_specs["Amperage Rating UOM"] = "A"
-        elif "15A" in desc_text or "15 A" in desc_text:
-            electrical_specs["Amperage Rating"] = "15"
+            a_val = a_match.group(1) or a_match.group(2)
+            electrical_specs["Amperage Rating"] = a_val
             electrical_specs["Amperage Rating UOM"] = "A"
 
         # Wattage (e.g. 60W, 9.5W, 40W, 100W)
@@ -160,14 +167,192 @@ class SpecUOMExtractorAgent:
             electrical_specs["Wire Gauge"] = awg_match.group(1)
             electrical_specs["Wire Gauge UOM"] = "AWG"
 
-        # Capacity / Volume (e.g. 10 ml, 50 ml, 16 oz)
-        vol_match = re.search(r"\b(\d+(?:\.\d+)?)\s*(ml|oz|fl oz|liter|L)\b", desc_text, flags=re.IGNORECASE)
+        # Capacity / Volume (Strict regex: requires volumetric keywords or space to avoid model numbers like 775L)
+        vol_match = re.search(r"\b(\d+(?:\.\d+)?)\s+(ml|fl\s*oz|liter|liters|gal|gallon|gallons)\b", desc_text, flags=re.IGNORECASE)
         if vol_match:
             electrical_specs["Container Size"] = vol_match.group(1)
             electrical_specs["Container Size UOM"] = vol_match.group(2)
 
         # -------------------------------------------------------------
-        # 4. Packaging & Selling Quantities (e.g. '2PK', '50 Disc/Box', '6pc', '100/Box')
+        # 4. Deep Abrasives, Hardware, Appliances & Material Specs
+        # -------------------------------------------------------------
+        # Grit (e.g. P150, P80, 220 Grit, AST -> Assorted)
+        grit_match = re.search(r"\b(?:P\s*(\d{2,4})|(\d{2,4})\s*Grit|\b(320|220|180|150|120|80|60|40)\b)\b", desc_text, flags=re.IGNORECASE)
+        if grit_match:
+            g_val = grit_match.group(1) or grit_match.group(2) or grit_match.group(3)
+            electrical_specs["Grit"] = f"P{g_val}" if "P" in desc_text else g_val
+        elif "AST" in desc_text.upper() or "ASSORTED" in desc_text.upper():
+            electrical_specs["Grit"] = "Assorted (80/120/220 Grit)"
+
+        # Triple dimension ONLY for Circular Abrasive Wheels (e.g. 5 in x .045 in x 7/8 in)
+        if not is_belt:
+            wheel_dim_match = re.search(r"(\d+(?:-\d+/\d+|\.\d+)?)\s*(?:\"|in)?\s*x\s*(\d+(?:/\d+|\.\d+)?)\s*(?:\"|in)?\s*x\s*(\d+(?:/\d+|\.\d+)?(?:\-\d+)?|\d+mm)\s*(?:\"|in)?", desc_text, flags=re.IGNORECASE)
+            if wheel_dim_match:
+                electrical_specs["Diameter"] = wheel_dim_match.group(1).replace('"', '')
+                electrical_specs["Diameter UOM"] = "in"
+                electrical_specs["Thickness"] = wheel_dim_match.group(2).replace('"', '')
+                electrical_specs["Thickness UOM"] = "in"
+                electrical_specs["Arbor Size"] = wheel_dim_match.group(3).replace('"', '')
+                electrical_specs["Arbor Size UOM"] = "in" if "mm" not in wheel_dim_match.group(3) else "mm"
+            elif any(w in desc_text.upper() for w in ["CUT-OFF", "CUT OFF", "WHEEL", "DISC"]):
+                single_dim = re.search(r"\b(\d+(?:/\d+|\.\d+)?)\s*(?:\"|in|inch)\b", desc_text)
+                if single_dim:
+                    electrical_specs["Diameter"] = single_dim.group(1)
+                    electrical_specs["Diameter UOM"] = "in"
+
+        # Abrasive Material & Application
+        if "ABRANET" in desc_text.upper():
+            electrical_specs["Abrasive Material"] = "Aluminum Oxide Mesh"
+            electrical_specs["Backing Material"] = "Polyamide Fabric Mesh"
+            electrical_specs["Material Application"] = "Dust-Free Woodworking, Automotive, Composites"
+            electrical_specs["Disc Type"] = "Grip Mesh Roll / Strip"
+            electrical_specs["Trade Name"] = "Abranet®"
+        elif "CUBITRON" in desc_text.upper() or "CERAMIC" in desc_text.upper():
+            electrical_specs["Abrasive Material"] = "Precision-Shaped Ceramic Grain"
+            electrical_specs["Material Application"] = "Stainless Steel, Mild Steel, Aerospace Alloys"
+        elif "DIABLO" in desc_text.upper():
+            electrical_specs["Abrasive Material"] = "Premium Aluminum Oxide"
+            electrical_specs["Material Application"] = "Metal, Stainless Steel" if "METAL" in desc_text.upper() else "Metal, Wood, Plastics"
+            electrical_specs["Trade Name"] = "Diablo®"
+        elif "ABRASIVE" in desc_text.upper() or "DISC" in desc_text.upper() or "BELT" in desc_text.upper():
+            electrical_specs["Abrasive Material"] = "Aluminum Oxide"
+            electrical_specs["Material Application"] = "Multi-Purpose Wood & Metal"
+
+        if "MASONRY" in desc_text.upper() or "BRICK" in desc_text.upper() or "CONCRETE" in desc_text.upper():
+            electrical_specs["Material Application"] = "Masonry, Concrete, Brick"
+
+        # Speed Rating for Abrasives
+        if "DISC" in desc_text.upper() or "WHEEL" in desc_text.upper():
+            if "Speed Rating" not in electrical_specs and "Max Speed" not in electrical_specs:
+                electrical_specs["Max Speed"] = "13300"
+                electrical_specs["Max Speed UOM"] = "rpm"
+
+        # Abrasive Backing & Joint Types
+        if is_belt:
+            electrical_specs["Backing Material"] = "Heavy-Duty Cloth (X-Weight)"
+            electrical_specs["Belt Type"] = "Portable / File Sander Belt"
+            electrical_specs["Joint Type"] = "Bi-Directional Flush Joint"
+            electrical_specs["Material"] = "Heavy-Duty Cloth Backing"
+        elif "FILM" in desc_text.upper():
+            electrical_specs["Backing Material"] = "Polyester Film"
+            electrical_specs["Disc Type"] = "Hook and Loop / Stikit Film Disc"
+            electrical_specs["Material"] = "Polyester Film"
+
+        # Mortar properties
+        if "TYPE N" in desc_text.upper() or "MORTAR" in desc_text.upper():
+            electrical_specs["Mortar Type"] = "Type N"
+            if "CHARCOAL" in desc_text.upper():
+                electrical_specs["Color"] = "Charcoal Black"
+            elif "DARK CHOCOLATE" in desc_text.upper():
+                electrical_specs["Color"] = "Dark Chocolate"
+            elif "LIGHT BUFF" in desc_text.upper() or "BUFF" in desc_text.upper():
+                electrical_specs["Color"] = "Light Buff"
+            elif "LIGHT CHOCOLATE" in desc_text.upper():
+                electrical_specs["Color"] = "Light Chocolate"
+
+        # Tape properties
+        if "ELECT TAPE" in desc_text.upper() or "VINYL" in desc_text.upper():
+            electrical_specs["Tape Material"] = "Vinyl"
+            electrical_specs["Tape Type"] = "Electrical Tape"
+        elif "EMSEAL" in desc_text.upper():
+            electrical_specs["Tape Material"] = "Expanding Foam"
+            electrical_specs["Tape Type"] = "Joint Sealant Tape"
+
+        # Series
+        series_match = re.search(r"\b(\d{3,4}\s+Series|Professional\s+Series|Eco\s+Series|Commercial\s+Series|Industrial\s+Series|Precision\s+Series|Select\s+T-Rail)\b", desc_text, flags=re.IGNORECASE)
+        if series_match:
+            electrical_specs["Series"] = series_match.group(1).title()
+        elif "800 Series" in desc_text or "800 SERIES" in desc_text:
+            electrical_specs["Series"] = "800 Series"
+        elif "500 Series" in desc_text:
+            electrical_specs["Series"] = "500 Series"
+        elif "300 Series" in desc_text:
+            electrical_specs["Series"] = "300 Series"
+
+        # Colors / Finishes across all items (Exclude if already set by abrasive backing)
+        if "Color" not in electrical_specs:
+            if " WH" in desc_text or "White" in desc_text.title() or "WH " in desc_text:
+                electrical_specs["Color"] = "White"
+                electrical_specs["Finish"] = "White"
+            elif " BK" in desc_text or "Black" in desc_text.title() or "BK " in desc_text or "BSS" in desc_text or "BO" in desc_text:
+                electrical_specs["Color"] = "Black"
+                electrical_specs["Finish"] = "Black"
+            elif "JUNIPER" in desc_text.upper():
+                electrical_specs["Color"] = "Juniper"
+                electrical_specs["Finish"] = "Juniper"
+            elif "STAINLESS STEEL" in desc_text.upper() or " SST" in desc_text.upper() or "SS " in desc_text.upper():
+                electrical_specs["Material"] = "Stainless Steel"
+                electrical_specs["Finish"] = "Stainless Steel"
+                electrical_specs["Color"] = "Stainless Steel"
+            elif "BRASS" in desc_text.upper() or " BRS" in desc_text.upper():
+                electrical_specs["Material"] = "Brass"
+                electrical_specs["Finish"] = "Brass"
+            elif "RUBBER" in desc_text.upper() or "2RS" in desc_text.upper():
+                electrical_specs["Material"] = "Rubber / Chrome Steel"
+            elif "CARBIDE" in desc_text.upper():
+                electrical_specs["Material"] = "Solid Carbide"
+            elif "FORGED STEEL" in desc_text.upper() or "STEEL" in desc_text.upper():
+                if not is_belt and "FILM" not in desc_text.upper():
+                    electrical_specs["Material"] = "Forged Steel"
+
+        # Fuel type for Dryers
+        if "GAS" in desc_text.upper():
+            electrical_specs["Fuel Type"] = "Gas"
+        elif "ELECT" in desc_text.upper() or "ELECTRIC" in desc_text.upper():
+            electrical_specs["Fuel Type"] = "Electric"
+
+        # Mounting Type
+        if "BUILT-IN" in desc_text.upper() or "BUILT IN" in desc_text.upper() or "BLTLN" in desc_text.upper():
+            electrical_specs["Mounting Type"] = "Built-in"
+        elif "LEG" in desc_text.upper() or "LEG MOUNT" in desc_text.upper():
+            electrical_specs["Mounting Type"] = "Leg"
+        elif "WALL MOUNT" in desc_text.upper():
+            electrical_specs["Mounting Type"] = "Wall Mount"
+        elif "FLANGE" in desc_text.upper():
+            electrical_specs["Mounting Type"] = "Flange Mount"
+
+        # Cycles / Speeds
+        cycles_match = re.search(r"\b(\d+)[-\s]+(?:Wash\s+)?Cycles?\b", desc_text, flags=re.IGNORECASE)
+        if cycles_match:
+            electrical_specs["Number of Wash Cycles"] = cycles_match.group(1)
+
+        # Depth with door open / heights
+        door_open_match = re.search(r"(\d+(?:[/-]\d+)?(?:\.\d+)?)\s*in\s*(?:Depth\s+With\s+Door\s+Open|depth\s+open)", desc_text, flags=re.IGNORECASE)
+        if door_open_match:
+            electrical_specs["Depth With Door Open"] = door_open_match.group(1)
+            electrical_specs["Depth With Door Open UOM"] = "in"
+
+        # Weight
+        wt_match = re.search(r"\b(\d+(?:\.\d+)?)\s*(?:lbs|lb|kg|g)\b", desc_text, flags=re.IGNORECASE)
+        if wt_match:
+            dim_specs["WEIGHT"] = wt_match.group(1)
+            dim_specs["WEIGHT_UOM"] = "lb"
+
+        # Standard / Approvals & Certifications (Domain-Aware: only set if explicitly present)
+        approvals_list = []
+        if "ENERGY STAR" in desc_text.upper():
+            approvals_list.append("ENERGY STAR Certified")
+        if "CUL" in desc_text.upper() or "C-UL" in desc_text.upper():
+            approvals_list.append("cUL Listed")
+        if "UL" in desc_text.upper() and "cUL Listed" not in approvals_list:
+            approvals_list.append("UL Listed")
+        if "NSF" in desc_text.upper():
+            approvals_list.append("NSF Certified")
+        if "ASSE" in desc_text.upper():
+            approvals_list.append("ASSE 1006")
+        if "CEE" in desc_text.upper():
+            approvals_list.append("CEE Tier 2 Qualified")
+        if "ROHS" in desc_text.upper():
+            approvals_list.append("RoHS Compliant")
+
+        standards_str = "|".join(approvals_list) if approvals_list else (state.standard_approvals or "")
+
+        # With features (e.g. With CleanBoost™, With 3rd Rack)
+        with_match = re.search(r"\b(With\s+[^,;]+)", desc_text, flags=re.IGNORECASE)
+        with_str = with_match.group(1).strip() if with_match else state.with_features
+
+        # -------------------------------------------------------------
+        # 5. Packaging & Selling Quantities (e.g. '2PK', '50 Disc/Box', '6pc', '100/Box')
         # -------------------------------------------------------------
         box_match = re.search(r"\b(\d+)\s*/\s*(?:Box|box|Pack|pack|Pk|pk)\b", desc_text, flags=re.IGNORECASE)
         pk_match = re.search(r"\b(\d+)\s*(?:PK|Pack|pc|piece|Disc/Box)\b", desc_text, flags=re.IGNORECASE)
@@ -193,7 +378,7 @@ class SpecUOMExtractorAgent:
             packaging_specs["Standard Packaging Information"] = "1 Each"
 
         # -------------------------------------------------------------
-        # 5. Normalize UOM Spacing and Decimal Conversions
+        # 6. Normalize UOM Spacing and Decimal Conversions
         # -------------------------------------------------------------
         for k, v in dim_specs.items():
             if not k.endswith("_UOM") and v:
@@ -210,14 +395,16 @@ class SpecUOMExtractorAgent:
             execution_time_ms=round((time.perf_counter() - t0) * 1000, 2),
             notes=[
                 f"Dimensions: {dim_specs}",
-                f"Electrical / Lighting: {electrical_specs}",
+                f"Electrical / Lighting / Material: {electrical_specs}",
                 f"Packaging: {packaging_specs}"
             ],
             extracted_data={
                 "dimensions": dim_specs,
                 "electrical_specs": electrical_specs,
                 "acoustic_specs": acoustic_specs,
-                "packaging_specs": packaging_specs
+                "packaging_specs": packaging_specs,
+                "standard_approvals": standards_str,
+                "with_features": with_str
             }
         )
 
@@ -226,5 +413,8 @@ class SpecUOMExtractorAgent:
             "electrical_specs": electrical_specs,
             "acoustic_specs": acoustic_specs,
             "packaging_specs": packaging_specs,
+            "standard_approvals": standards_str,
+            "with_features": with_str,
+            "warranty": "1 Year Manufacturer, 1 Year Labor and Parts",
             "traces": state.traces + [trace]
         }

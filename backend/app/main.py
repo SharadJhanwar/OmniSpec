@@ -12,6 +12,9 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
+import time
+from fastapi import Request
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
@@ -20,6 +23,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    t0 = time.perf_counter()
+    logger.info(f"🌐 [HTTP {request.method}] {request.url.path}")
+    response = await call_next(request)
+    elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
+    logger.info(f"🏁 [HTTP {response.status_code}] {request.method} {request.url.path} (Completed in {elapsed_ms} ms)")
+    return response
+
 
 # Include API Routers
 app.include_router(api_router, prefix="/api/v1")

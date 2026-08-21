@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import {
   Layers,
   ShieldAlert,
@@ -9,12 +9,13 @@ import {
   FileSpreadsheet,
   Download,
   Menu,
-  X
+  X,
+  Cpu
 } from 'lucide-react';
 import { useCatalog } from '../context/CatalogContext';
 
 export default function Navbar() {
-  const { hitlCount, items, handleExportCSV, handleExportExcel, setIsUploadOpen } = useCatalog();
+  const { hitlCount, items, activeBatchName, handleResetCatalog, handleExportCSV, handleExportExcel, setIsUploadOpen } = useCatalog();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navLinks = [
@@ -39,76 +40,85 @@ export default function Navbar() {
     {
       name: 'Intelligence Hub',
       path: '/intelligence',
-      icon: GitBranch
+      icon: Cpu
     }
   ];
 
   return (
-    <header className="sticky top-0 z-50 border-b border-surface-border bg-slate-950/90 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+    <header className="sticky top-0 z-50 w-full glass-panel border-b border-surface-border/80 backdrop-blur-xl">
+      <div className="max-w-[1780px] mx-auto flex items-center justify-between px-3 sm:px-6 h-16">
         
-        {/* Left: Brand Logo & Title (Navigates to Landing Page "/") */}
-        <div className="flex items-center space-x-3 sm:space-x-5 shrink-0 min-w-0">
-          <NavLink
-            to="/"
-            className="flex items-center space-x-2.5 group shrink-0"
-            title="Go to OmniSpec.AI Landing Page"
-          >
-            <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-gradient-to-tr from-cyan-600 via-sky-500 to-indigo-500 flex items-center justify-center shadow-md shadow-cyan-500/20 group-hover:scale-105 transition-transform shrink-0">
-              <Layers className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+        {/* Brand / Logo */}
+        <Link to="/" className="flex items-center space-x-2.5 group">
+          <div className="relative flex items-center justify-center h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-sky-400 text-slate-950 font-black shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform duration-200">
+            <Cpu className="h-5 w-5" />
+            <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-400 border-2 border-surface animate-pulse" />
+          </div>
+          <div className="flex flex-col">
+            <div className="flex items-center space-x-1.5">
+              <span className="font-extrabold text-base tracking-tight text-white group-hover:text-cyan-400 transition-colors font-mono">
+                OmniSpec
+              </span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-800/80 text-cyan-400 font-semibold tracking-wider uppercase">
+                v2.4 Enterprise
+              </span>
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center space-x-1.5">
-                <span className="text-base sm:text-lg font-bold tracking-tight text-white group-hover:text-cyan-300 transition-colors truncate">
-                  OmniSpec<span className="text-cyan-400">.AI</span>
-                </span>
-                <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 font-semibold hidden 2xl:inline">
-                  9-Agent Swarm
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-400 hidden sm:block truncate">
-                Industrial Product Intelligence
-              </p>
+            <span className="text-[11px] text-slate-400 hidden sm:inline">
+              252-Col Autonomous Swarm
+            </span>
+          </div>
+        </Link>
+
+        {/* Center: Desktop Navigation */}
+        <nav className="hidden lg:flex items-center space-x-1 bg-surface-elevated/80 p-1 rounded-xl border border-surface-border/60">
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            return (
+              <NavLink
+                key={link.path}
+                to={link.path}
+                className={({ isActive }) =>
+                  `flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
+                    isActive
+                      ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20 font-bold'
+                      : 'text-slate-300 hover:text-white hover:bg-surface'
+                  }`
+                }
+              >
+                <Icon className="h-4 w-4" />
+                <span>{link.name}</span>
+                {link.badge && (
+                  <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full border ${link.badgeColor || 'bg-surface border-surface-border text-slate-300'}`}>
+                    {link.badge}
+                  </span>
+                )}
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        {/* Right Utility Actions */}
+        <div className="flex items-center space-x-2 sm:space-x-2.5">
+          {/* Active Batch Indicator */}
+          {activeBatchName && (
+            <div className="hidden xl:flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-cyan-950/80 border border-cyan-700/60 text-cyan-300 text-[11px] font-mono">
+              <span className="truncate max-w-[120px]" title={activeBatchName}>📄 {activeBatchName}</span>
+              <span className="px-1 py-0.2 rounded bg-cyan-900 text-cyan-200 font-bold">{items.length}</span>
+              <button 
+                onClick={handleResetCatalog}
+                className="ml-1 text-slate-400 hover:text-white p-0.5 rounded"
+                title="Reset to full catalog"
+              >
+                <X className="h-3 w-3" />
+              </button>
             </div>
-          </NavLink>
+          )}
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center space-x-1 shrink-0">
-            {navLinks.map((link) => {
-              const Icon = link.icon;
-              return (
-                <NavLink
-                  key={link.path}
-                  to={link.path}
-                  className={({ isActive }) =>
-                    `flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold font-mono transition-all shrink-0 ${
-                      isActive
-                        ? 'bg-cyan-950/80 text-cyan-300 border border-cyan-800/90 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-100 hover:bg-surface'
-                    }`
-                  }
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span>{link.name}</span>
-                  {link.badge && (
-                    <span className={`text-[9px] px-1.5 py-0.2 rounded border font-mono ${link.badgeColor || 'bg-slate-900 text-slate-400 border-slate-800'}`}>
-                      {link.badge}
-                    </span>
-                  )}
-                </NavLink>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Right: Actions & Mobile Hamburger */}
-        <div className="flex items-center space-x-2 shrink-0">
-          
           {/* Action: Upload Feed */}
           <button
             onClick={() => setIsUploadOpen(true)}
             className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-surface hover:bg-surface-elevated border border-surface-border text-xs font-medium text-slate-200 transition-all shadow-sm cursor-pointer"
-            title="Batch Ingestion (CSV)"
+            title="Batch Ingestion (CSV / Excel)"
           >
             <Upload className="h-3.5 w-3.5 text-slate-400" />
             <span className="hidden sm:inline">Upload Feed</span>
@@ -118,20 +128,20 @@ export default function Navbar() {
           <button
             onClick={handleExportExcel}
             className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-emerald-950/80 hover:bg-emerald-900/90 border border-emerald-700/60 text-emerald-300 font-semibold text-xs transition-all shadow-sm cursor-pointer"
-            title="Export formatted multi-sheet Excel (.xlsx)"
+            title={activeBatchName ? `Export ${items.length} uploaded items as multi-sheet Excel (.xlsx)` : "Export formatted multi-sheet Excel (.xlsx)"}
           >
             <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-400" />
-            <span className="hidden md:inline">Excel (.xlsx)</span>
+            <span className="hidden md:inline">{activeBatchName ? "Export Batch (.xlsx)" : "Excel (.xlsx)"}</span>
           </button>
 
           {/* Action: Export CSV */}
           <button
             onClick={handleExportCSV}
             className="flex items-center space-x-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-sky-500 hover:from-cyan-400 hover:to-sky-400 text-slate-950 font-semibold text-xs transition-all shadow-md shadow-cyan-500/20 cursor-pointer"
-            title="Export 252-column delivery CSV"
+            title={activeBatchName ? `Export ${items.length} uploaded items as 252-column delivery CSV` : "Export 252-column delivery CSV"}
           >
             <Download className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Export CSV</span>
+            <span className="hidden sm:inline">{activeBatchName ? "Export Batch CSV" : "Export CSV"}</span>
           </button>
 
           {/* Hamburger Menu Trigger for Mobile */}

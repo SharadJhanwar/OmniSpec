@@ -34,9 +34,9 @@ Most hackathon solutions fall into one of two extremes:
                     ▼                                                   ▼
      ┌──────────────────────────────┐                   ┌──────────────────────────────┐
      │  SYMBOLIC FAST-PATH ENGINE   │                   │ TARGETED ReAct COGNITIVE RAG │
-     │  - In-Memory DuckDB (27K KB) │                   │ - LangGraph 9-Agent Swarm    │
+     │  - In-Memory DuckDB (27K KB) │                   │ - LangGraph 10-Agent Swarm   │
      │  - RapidFuzz C++ Matching    │                   │ - Multi-Hop Web/PDF Search   │
-     │  - 63 Decimal-Fraction Table │                   │ - OpenAI GPT-4o-mini Vision  │
+     │  - 63 Decimal-Fraction Table │                   │ - 5-Loop ReAct Finalizer     │
      │  - Master UOM Normalizer     │                   │ - Disambiguator for Unseen   │
      │  - Hard Constraint Enforcer  │                   │ - Only invoked when conf<85% │
      │  [ Latency: < 1 ms / SKU ]   │                   │ [ Latency: ~1.5 s / call ]   │
