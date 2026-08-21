@@ -86,8 +86,8 @@ Most hackathon solutions fall into one of two extremes:
 ---
 
 ## 📁 Key Source Links
-- **Master Pipeline DAG:** [`backend/app/agents/graph.py`](file:///c:/Users/yx084/OneDrive/UniHack/backend/app/agents/graph.py)
-- **ReAct Cognitive Brain:** [`backend/app/orchestrator/react_orchestrator.py`](file:///c:/Users/yx084/OneDrive/UniHack/backend/app/orchestrator/react_orchestrator.py)
-- **Evidence-Aware Audit Engine:** [`backend/app/services/audit_engine.py`](file:///c:/Users/yx084/OneDrive/UniHack/backend/app/services/audit_engine.py)
-- **DBOM Lineage Engine:** [`backend/app/services/dbom_service.py`](file:///c:/Users/yx084/OneDrive/UniHack/backend/app/services/dbom_service.py)
-- **Batch Evaluation Output:** [`output.json`](file:///c:/Users/yx084/OneDrive/UniHack/output.json)
+- **Master Pipeline DAG:** [`backend/app/agents/graph.py`](backend/app/agents/graph.py)
+- **ReAct Cognitive Brain:** [`backend/app/orchestrator/react_orchestrator.py`](backend/app/orchestrator/react_orchestrator.py)
+- **Evidence-Aware Audit Engine:** [`backend/app/services/audit_engine.py`](backend/app/services/audit_engine.py)
+- **DBOM Lineage Engine:** [`backend/app/services/dbom_service.py`](backend/app/services/dbom_service.py)
+- **Batch Evaluation Output:** [`output.json`](output.json)

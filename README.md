@@ -121,15 +121,15 @@ The brain is equipped with 7 modular domain tools:
 
 | # | Agent Name | Dedicated Architectural Specification | Primary Mission & Core Innovations | Key Deliverables |
 | :-: | :--- | :--- | :--- | :--- |
-| **1** | **Ingestion & De-Noising** | 📥 [**Agent 1 Architecture Blueprint**](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/README_Agent_1_Ingestion_Tokenization.md) | Cleans raw input, strips placeholders (`-- Unbranded --`), tokenizes dimensions, DuckDB slang thesaurus (`sawzall`, `romex`). | Cleaned MPN, de-noised `Part_Desc`, token bag, row hash. |
-| **2** | **Brand & Entity Resolution** | 🏷️ [**Agent 2 Architecture Blueprint**](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/README_Agent_2_Entity_Resolution.md) | Checks active reviewer overrides, resolves supplier names to canonical 27K UniCat brands with registered marks (`®`, `™`), live DDGS web search. | `MANUFACTURER_NAME`, `BRAND_NAME`, `TRADE_NAME`, `®`/`™`. |
-| **3** | **Taxonomy & Classification** | 🌲 [**Agent 3 Architecture Blueprint**](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/README_Agent_3_Taxonomy_Classification.md) | Classifies SKU into 4-tier Classpath and assigns 8-digit leaf UNSPSC commodity code. | `Classpath`, `UNSPSC`, `Dept`, `Class`, `Fine`, `Product Name`. |
-| **4** | **Spec, Dim & UOM Parser** | 📐 [**Agent 4 Architecture Blueprint**](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/README_Agent_4_Spec_UOM_Extractor.md) | Extracts physical dimensions, electrical specs, converts to 63 exact fractions (`50.25 in` $\rightarrow$ `50-1/4 in`), Master UOM single spacing. | `LENGTH`, `WIDTH`, `HEIGHT`, `WEIGHT`, normalized UOMs, electrical specs. |
-| **5** | **OEM Sourcing & CRAG RAG** | 🌐 [**Agent 5 Architecture Blueprint**](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/README_Agent_5_OEM_Sourcing_RAG.md) | Discovers official OEM URLs, blocks marketplaces (0%), ingests PDF technical datasheets, Corrective RAG (CRAG). | `MFR URL`, `Ref URL 1..5`, PDF datasheet link, certs. |
-| **6** | **Constrained LOV Mapper** | 🗄️ [**Agent 6 Architecture Blueprint**](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/README_Agent_6_Constrained_LOV_Mapper.md) | Binds raw specs to 161,000-row UniCat LOV schema across 50 triples (150 columns). | `ATTRIBUTE_LABEL 1..50`, `ATTRIBUTE_VALUE 1..50`, `ATTRIBUTE_UOM 1..50`. |
-| **7** | **Multi-Channel Copy Builder** | ✍️ [**Agent 7 Architecture Blueprint**](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/README_Agent_7_MultiChannel_Copy_Builder.md) | Generates 6 distinct formulaic descriptions: `INVOICE_DESC` ($\le 40$ ALL CAPS), `MOBILE_DESC` ($60\text{--}80$ chars), 20 bullet features. | `INVOICE_DESC`, `MOBILE_DESC`, `SHORT_DESC`, `LONG_DESC1`, `ITEM_FEATURES_1..20`. |
-| **8** | **Digital Asset Synthesizer** | 🖼️ [**Agent 8 Architecture Blueprint**](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/README_Agent_8_Digital_Asset_Synthesizer.md) | Builds canonical asset filenames (`<Brand>_<MPN>.jpg`), autonomous ReportLab 1-page engineering PDF submittal sheets. | `Product Image`, `Alternate Image 1..4`, `Specification Sheet`, `SDS`, `RoHS`. |
-| **9** | **Quality Audit & HITL** | 🛡️ [**Agent 9 Architecture Blueprint**](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/README_Agent_9_Quality_Audit_HITL.md) | Runs 12 integrity checks, computes 5-Pillar Evidence-Aware confidence, variable-level caching gate, routes to HITL. | Confidence scores ($0\text{--}100\%$), audit flags, HITL review queue payload. |
+| **1** | **Ingestion & De-Noising** | 📥 [**Agent 1 Architecture Blueprint**](Solution/agents/README_Agent_1_Ingestion_Tokenization.md) | Cleans raw input, strips placeholders (`-- Unbranded --`), tokenizes dimensions, DuckDB slang thesaurus (`sawzall`, `romex`). | Cleaned MPN, de-noised `Part_Desc`, token bag, row hash. |
+| **2** | **Brand & Entity Resolution** | 🏷️ [**Agent 2 Architecture Blueprint**](Solution/agents/README_Agent_2_Entity_Resolution.md) | Checks active reviewer overrides, resolves supplier names to canonical 27K UniCat brands with registered marks (`®`, `™`), live DDGS web search. | `MANUFACTURER_NAME`, `BRAND_NAME`, `TRADE_NAME`, `®`/`™`. |
+| **3** | **Taxonomy & Classification** | 🌲 [**Agent 3 Architecture Blueprint**](Solution/agents/README_Agent_3_Taxonomy_Classification.md) | Classifies SKU into 4-tier Classpath and assigns 8-digit leaf UNSPSC commodity code. | `Classpath`, `UNSPSC`, `Dept`, `Class`, `Fine`, `Product Name`. |
+| **4** | **Spec, Dim & UOM Parser** | 📐 [**Agent 4 Architecture Blueprint**](Solution/agents/README_Agent_4_Spec_UOM_Extractor.md) | Extracts physical dimensions, electrical specs, converts to 63 exact fractions (`50.25 in` $\rightarrow$ `50-1/4 in`), Master UOM single spacing. | `LENGTH`, `WIDTH`, `HEIGHT`, `WEIGHT`, normalized UOMs, electrical specs. |
+| **5** | **OEM Sourcing & CRAG RAG** | 🌐 [**Agent 5 Architecture Blueprint**](Solution/agents/README_Agent_5_OEM_Sourcing_RAG.md) | Discovers official OEM URLs, blocks marketplaces (0%), ingests PDF technical datasheets, Corrective RAG (CRAG). | `MFR URL`, `Ref URL 1..5`, PDF datasheet link, certs. |
+| **6** | **Constrained LOV Mapper** | 🗄️ [**Agent 6 Architecture Blueprint**](Solution/agents/README_Agent_6_Constrained_LOV_Mapper.md) | Binds raw specs to 161,000-row UniCat LOV schema across 50 triples (150 columns). | `ATTRIBUTE_LABEL 1..50`, `ATTRIBUTE_VALUE 1..50`, `ATTRIBUTE_UOM 1..50`. |
+| **7** | **Multi-Channel Copy Builder** | ✍️ [**Agent 7 Architecture Blueprint**](Solution/agents/README_Agent_7_MultiChannel_Copy_Builder.md) | Generates 6 distinct formulaic descriptions: `INVOICE_DESC` ($\le 40$ ALL CAPS), `MOBILE_DESC` ($60\text{--}80$ chars), 20 bullet features. | `INVOICE_DESC`, `MOBILE_DESC`, `SHORT_DESC`, `LONG_DESC1`, `ITEM_FEATURES_1..20`. |
+| **8** | **Digital Asset Synthesizer** | 🖼️ [**Agent 8 Architecture Blueprint**](Solution/agents/README_Agent_8_Digital_Asset_Synthesizer.md) | Builds canonical asset filenames (`<Brand>_<MPN>.jpg`), autonomous ReportLab 1-page engineering PDF submittal sheets. | `Product Image`, `Alternate Image 1..4`, `Specification Sheet`, `SDS`, `RoHS`. |
+| **9** | **Quality Audit & HITL** | 🛡️ [**Agent 9 Architecture Blueprint**](Solution/agents/README_Agent_9_Quality_Audit_HITL.md) | Runs 12 integrity checks, computes 5-Pillar Evidence-Aware confidence, variable-level caching gate, routes to HITL. | Confidence scores ($0\text{--}100\%$), audit flags, HITL review queue payload. |
 
 ---
 
@@ -357,8 +357,8 @@ python -m pytest tests/ -v
 
 ## 📚 Solution Documentation & Benchmark Artifacts
 
-- **Executive Summary & Benchmark Report:** [`summary.md`](file:///c:/Users/yx084/OneDrive/UniHack/summary.md)
-- **Master Multi-Agent Architecture Specification:** [`Solution/AGENTS.md`](file:///c:/Users/yx084/OneDrive/UniHack/Solution/AGENTS.md)
-- **Detailed Master MVP Architecture Plan:** [`Solution/MASTER_ARCHITECTURE_AND_MVP_PLAN.md`](file:///c:/Users/yx084/OneDrive/UniHack/Solution/MASTER_ARCHITECTURE_AND_MVP_PLAN.md)
-- **Individual Agent Deep Dives:** [`Solution/agents/`](file:///c:/Users/yx084/OneDrive/UniHack/Solution/agents/)
-- **Delivery Output Record:** [`output.json`](file:///c:/Users/yx084/OneDrive/UniHack/output.json)
+- **Executive Summary & Benchmark Report:** [`summary.md`](summary.md)
+- **Master Multi-Agent Architecture Specification:** [`Solution/AGENTS.md`](Solution/AGENTS.md)
+- **Detailed Master MVP Architecture Plan:** [`Solution/MASTER_ARCHITECTURE_AND_MVP_PLAN.md`](Solution/MASTER_ARCHITECTURE_AND_MVP_PLAN.md)
+- **Individual Agent Deep Dives:** [`Solution/agents/`](Solution/agents/)
+- **Delivery Output Record:** [`output.json`](output.json)
