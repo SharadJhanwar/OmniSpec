@@ -14,6 +14,7 @@ import {
   Layers,
   Cpu
 } from 'lucide-react';
+import { apiUrl } from '../config/api';
 
 export default function SingleSkuSandbox({ onEnrichSuccess, onInspectDbomClick, onOpenCompatibility, onOpenParametricSearch, onOpenFamilies }) {
   const [mfgPartNum, setMfgPartNum] = useState('9A-570-320');
@@ -76,7 +77,7 @@ export default function SingleSkuSandbox({ onEnrichSuccess, onInspectDbomClick, 
         DIB_Brand: ''
       };
 
-      const response = await fetch('/api/v1/enrich/single', {
+      const response = await fetch(apiUrl('/api/v1/enrich/single'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -93,7 +94,7 @@ export default function SingleSkuSandbox({ onEnrichSuccess, onInspectDbomClick, 
 
         // Run automated DPI risk evaluation
         try {
-          const dpiRes = await fetch('/api/v1/audit/dpi', {
+          const dpiRes = await fetch(apiUrl('/api/v1/audit/dpi'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ state: data.data })

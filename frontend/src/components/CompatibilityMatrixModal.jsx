@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GitCompare, CheckCircle2, AlertTriangle, XCircle, ArrowRightLeft, Sparkles, X, Layers, Cpu, Wrench } from 'lucide-react';
+import { apiUrl } from '../config/api';
 
 const PRESET_PRODUCTS = [
   {
@@ -86,7 +87,7 @@ export default function CompatibilityMatrixModal({ isOpen, onClose }) {
 
     setIsEvaluating(true);
     try {
-      const res = await fetch('/api/v1/compatibility/evaluate', {
+      const res = await fetch(apiUrl('/api/v1/compatibility/evaluate'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ product_a: prodA, product_b: prodB })
@@ -105,7 +106,7 @@ export default function CompatibilityMatrixModal({ isOpen, onClose }) {
   const handleFetchSubstitutes = async (mpn) => {
     setIsLoadingSubstitutes(true);
     try {
-      const res = await fetch(`/api/v1/compatibility/substitutes?mpn=${encodeURIComponent(mpn)}`);
+      const res = await fetch(apiUrl(`/api/v1/compatibility/substitutes?mpn=${encodeURIComponent(mpn)}`));
       const json = await res.json();
       if (json.success) {
         setSubstitutesData(json.data);

@@ -18,6 +18,7 @@ import {
   Zap
 } from 'lucide-react';
 import KnowledgeBaseExplorer from '../components/KnowledgeBaseExplorer';
+import { apiUrl } from '../config/api';
 
 const PRESET_PAIRINGS = [
   {
@@ -159,7 +160,7 @@ export default function IntelligencePage() {
   // Load Families on mount
   useEffect(() => {
     setIsFamiliesLoading(true);
-    fetch('/api/v1/families')
+    fetch(apiUrl('/api/v1/families'))
       .then(res => res.json())
       .then(data => {
         if (data.success && data.data) {
@@ -183,7 +184,7 @@ export default function IntelligencePage() {
   const handleRunEvaluation = async (productA = prodA, productB = prodB) => {
     setIsEvaluatingCompat(true);
     try {
-      const res = await fetch('/api/v1/compatibility/evaluate', {
+      const res = await fetch(apiUrl('/api/v1/compatibility/evaluate'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

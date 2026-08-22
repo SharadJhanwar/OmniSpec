@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, AlertTriangle, ShieldCheck, FileText, ArrowRight, Save, Download } from 'lucide-react';
+import { apiUrl } from '../config/api';
 
 export default function HITLReviewModal({ item, onClose, onSave }) {
   if (!item) return null;
@@ -29,7 +30,7 @@ export default function HITLReviewModal({ item, onClose, onSave }) {
   const handleDownloadPDF = async () => {
     setIsDownloadingPdf(true);
     try {
-      const response = await fetch('/api/v1/datasheet/generate-pdf', {
+      const response = await fetch(apiUrl('/api/v1/datasheet/generate-pdf'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -64,7 +65,7 @@ export default function HITLReviewModal({ item, onClose, onSave }) {
 
     // Active Learning Feedback Loop: Persist override in DuckDB
     try {
-      await fetch('/api/v1/hitl/override', {
+      await fetch(apiUrl('/api/v1/hitl/override'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

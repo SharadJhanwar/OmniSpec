@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Layers, GitBranch, AlertTriangle, CheckCircle2, X, Box, Tag, Zap, ArrowRight, ShieldCheck, ChevronRight } from 'lucide-react';
+import { apiUrl } from '../config/api';
 
 export default function ProductFamilyModal({ isOpen, onClose }) {
   const [familiesData, setFamiliesData] = useState(null);
@@ -10,7 +11,7 @@ export default function ProductFamilyModal({ isOpen, onClose }) {
   useEffect(() => {
     if (isOpen) {
       setIsLoading(true);
-      fetch('/api/v1/families')
+      fetch(apiUrl('/api/v1/families'))
         .then(res => res.json())
         .then(data => {
           if (data.success && data.data) {

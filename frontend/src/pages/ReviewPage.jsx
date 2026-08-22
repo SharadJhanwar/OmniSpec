@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldAlert, CheckCircle2, AlertTriangle, ArrowRight, Save, Check, RefreshCw, Sparkles, BookOpen, Layers } from 'lucide-react';
 import { useCatalog } from '../context/CatalogContext';
+import { apiUrl } from '../config/api';
 
 export default function ReviewPage() {
   const { items, handleSaveReviewedItem, handleOpenDbom } = useCatalog();
@@ -74,7 +75,7 @@ export default function ReviewPage() {
 
     try {
       // Send active learning override to backend
-      await fetch('/api/v1/hitl/override', {
+      await fetch(apiUrl('/api/v1/hitl/override'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

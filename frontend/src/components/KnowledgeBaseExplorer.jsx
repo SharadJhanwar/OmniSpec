@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Database, Search, Sparkles, BookOpen, ShieldCheck, Scale, Zap, RefreshCw } from 'lucide-react';
+import { apiUrl } from '../config/api';
 
 export default function KnowledgeBaseExplorer() {
   const [activeTab, setActiveTab] = useState('BRANDS'); // BRANDS, FRACTIONS, THESAURUS, OVERRIDES
@@ -13,27 +14,27 @@ export default function KnowledgeBaseExplorer() {
 
   const fetchStatsAndData = () => {
     setIsLoading(true);
-    fetch('/api/v1/kb/stats')
+    fetch(apiUrl('/api/v1/kb/stats'))
       .then(res => res.json())
       .then(data => setStats(data))
       .catch(err => console.log('Stats fallback:', err));
 
-    fetch('/api/v1/kb/brands')
+    fetch(apiUrl('/api/v1/kb/brands'))
       .then(res => res.json())
       .then(data => setBrands(data.brands || []))
       .catch(err => console.log('Brands fallback:', err));
 
-    fetch('/api/v1/kb/fractions')
+    fetch(apiUrl('/api/v1/kb/fractions'))
       .then(res => res.json())
       .then(data => setFractions(data.fractions || []))
       .catch(err => console.log('Fractions fallback:', err));
 
-    fetch('/api/v1/kb/thesaurus')
+    fetch(apiUrl('/api/v1/kb/thesaurus'))
       .then(res => res.json())
       .then(data => setThesaurus(data.terms || []))
       .catch(err => console.log('Thesaurus fallback:', err));
 
-    fetch('/api/v1/hitl/overrides')
+    fetch(apiUrl('/api/v1/hitl/overrides'))
       .then(res => res.json())
       .then(data => setOverrides(data.overrides || []))
       .catch(err => console.log('Overrides fallback:', err))
@@ -46,7 +47,7 @@ export default function KnowledgeBaseExplorer() {
 
   const handleSearchBrands = (q) => {
     setSearchTerm(q);
-    fetch(`/api/v1/kb/brands?q=${encodeURIComponent(q)}`)
+    fetch(apiUrl(`/api/v1/kb/brands?q=${encodeURIComponent(q)}`))
       .then(res => res.json())
       .then(data => setBrands(data.brands || []))
       .catch(err => console.log('Brand search error:', err));

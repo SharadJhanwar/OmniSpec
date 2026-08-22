@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { apiUrl } from '../config/api';
 
 const CatalogContext = createContext(null);
 
@@ -92,7 +93,7 @@ export function CatalogProvider({ children }) {
 
   // Load backend catalog on mount defensively
   useEffect(() => {
-    fetch('/api/v1/catalog?page=1&page_size=100')
+    fetch(apiUrl('/api/v1/catalog?page=1&page_size=100'))
       .then(res => res.json())
       .then(data => {
         if (data && Array.isArray(data.items) && data.items.length > 0) {
@@ -162,7 +163,7 @@ export function CatalogProvider({ children }) {
   const handleExportExcel = async () => {
     const validItems = (Array.isArray(items) ? items : []).filter(Boolean);
     try {
-      const response = await fetch('/api/v1/enrich/export-excel', {
+      const response = await fetch(apiUrl('/api/v1/enrich/export-excel'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -199,7 +200,7 @@ export function CatalogProvider({ children }) {
         E1_Brand: item.E1_Brand || "",
         Unilog_Brand: item.Unilog_Brand || item.BRAND_NAME || ""
       };
-      const res = await fetch('/api/v1/provenance/dbom', {
+      const res = await fetch(apiUrl('/api/v1/provenance/dbom'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

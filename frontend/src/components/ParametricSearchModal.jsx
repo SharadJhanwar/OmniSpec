@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Sliders, CheckCircle2, AlertTriangle, XCircle, Sparkles, Terminal, X, ArrowRight, Zap, Code, ShieldCheck } from 'lucide-react';
+import { apiUrl } from '../config/api';
 
 const SAMPLE_QUERIES = [
   {
@@ -36,7 +37,7 @@ export default function ParametricSearchModal({ isOpen, onClose }) {
     if (!targetQuery.trim()) return;
     setIsSearching(true);
     try {
-      const res = await fetch('/api/v1/search/parametric', {
+      const res = await fetch(apiUrl('/api/v1/search/parametric'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: targetQuery, enable_llm: enableLlm })

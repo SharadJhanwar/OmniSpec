@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, UploadCloud, FileSpreadsheet, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { apiUrl } from '../config/api';
 
 export default function BatchUploadModal({ isOpen, onClose, onUploadSuccess }) {
   if (!isOpen) return null;
@@ -43,7 +44,7 @@ export default function BatchUploadModal({ isOpen, onClose, onUploadSuccess }) {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/v1/enrich/batch-json', {
+      const response = await fetch(apiUrl('/api/v1/enrich/batch-json'), {
         method: 'POST',
         body: formData,
       });
