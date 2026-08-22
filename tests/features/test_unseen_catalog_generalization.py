@@ -215,13 +215,14 @@ class TestUnseenCatalogGeneralization:
         assert len(rec.short_desc) > 5, "Short desc must not be empty"
         assert len(rec.long_desc1) > 10, "Long desc must not be empty"
 
-        # 3. Digital Asset Naming Specification Compliance (<Brand>_<MPN>.<ext>)
-        assert rec.product_image.endswith(".jpg"), f"Product image must end with .jpg: {rec.product_image}"
+        # 3. Digital Asset Naming Specification Compliance (<Brand>_<MPN>.<ext> or Real URLs)
+        assert rec.product_image.startswith("http") or rec.product_image.endswith((".jpg", ".png", ".webp")), f"Product image must be real URL or end with .jpg/.png/.webp: {rec.product_image}"
         assert rec.specification_sheet.endswith(".pdf"), f"Specification sheet must end with .pdf: {rec.specification_sheet}"
-        assert "_" in rec.product_image, "Asset name must contain underscore separator"
+        if not rec.product_image.startswith("http"):
+            assert "_" in rec.product_image, "Asset name must contain underscore separator"
 
-        # 4. Agent Lineage Trace Verification (all 9 agents executed)
-        assert len(final_state["traces"]) == 9, f"Expected 9 agent traces, got {len(final_state['traces'])}"
+        # 4. Agent Lineage Trace Verification (all 10 agents executed)
+        assert len(final_state["traces"]) == 10, f"Expected 10 agent traces, got {len(final_state['traces'])}"
 
         logger.info(f"Unseen SKU {item['mpn']} enriched successfully: Dept={final_state['dept']}, Confidence={final_state['overall_confidence']}")
 

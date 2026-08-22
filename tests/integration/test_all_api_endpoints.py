@@ -44,7 +44,7 @@ def test_single_sku_enrichment_swarm():
     assert data.get("success") is True
     assert "delivery_record" in data
     assert "traces" in data
-    assert len(data["traces"]) == 9
+    assert len(data["traces"]) == 10
 
     record = data["delivery_record"]
     assert "FRIGIDAIRE" in record.get("BRAND_NAME", "")
