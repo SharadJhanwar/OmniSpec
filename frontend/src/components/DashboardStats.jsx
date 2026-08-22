@@ -1,11 +1,11 @@
 import React from 'react';
-import { Database, CheckCircle2, ShieldAlert, Zap, Layers, Sparkles, Cpu } from 'lucide-react';
+import { Database, CheckCircle2, ShieldAlert, Zap, Layers, Sparkles, Cpu, Image as ImageIcon } from 'lucide-react';
 
 export default function DashboardStats({ totalItems, avgConfidence, violationsCount, hitlQueueCount }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
       {/* Total Catalog Items */}
-      <div className="glass-panel p-4 rounded-xl relative overflow-hidden">
+      <div className="glass-panel p-4 rounded-xl relative overflow-hidden border border-slate-800 hover:border-cyan-500/40 transition-colors">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Catalog SKUs</p>
@@ -24,10 +24,10 @@ export default function DashboardStats({ totalItems, avgConfidence, violationsCo
       </div>
 
       {/* Accuracy & Confidence */}
-      <div className="glass-panel p-4 rounded-xl relative overflow-hidden">
+      <div className="glass-panel p-4 rounded-xl relative overflow-hidden border border-slate-800 hover:border-emerald-500/40 transition-colors">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Avg Confidence</p>
+            <p className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">5-Pillar Confidence</p>
             <p className="text-2xl font-bold text-emerald-400 mt-0.5 font-mono">{(avgConfidence * 100).toFixed(1)}%</p>
           </div>
           <div className="h-10 w-10 rounded-lg bg-emerald-950/80 border border-emerald-800/60 flex items-center justify-center text-emerald-400 shrink-0">
@@ -41,7 +41,7 @@ export default function DashboardStats({ totalItems, avgConfidence, violationsCo
       </div>
 
       {/* Human-In-The-Loop Review Queue */}
-      <div className="glass-panel p-4 rounded-xl relative overflow-hidden">
+      <div className="glass-panel p-4 rounded-xl relative overflow-hidden border border-slate-800 hover:border-amber-500/40 transition-colors">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">HITL Audit Queue</p>
@@ -58,20 +58,20 @@ export default function DashboardStats({ totalItems, avgConfidence, violationsCo
         </div>
       </div>
 
-      {/* Swarm Architecture */}
-      <div className="glass-panel p-4 rounded-xl relative overflow-hidden">
+      {/* 10-Agent Swarm Architecture */}
+      <div className="glass-panel p-4 rounded-xl relative overflow-hidden border border-slate-800 hover:border-indigo-500/40 transition-colors">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Architecture</p>
-            <p className="text-xl font-bold text-cyan-400 mt-0.5 font-mono">9-Agent DAG</p>
+            <p className="text-xl font-bold text-indigo-400 mt-0.5 font-mono">10-Agent Swarm</p>
           </div>
-          <div className="h-10 w-10 rounded-lg bg-sky-950/80 border border-sky-800/60 flex items-center justify-center text-sky-400 shrink-0">
+          <div className="h-10 w-10 rounded-lg bg-indigo-950/80 border border-indigo-800/60 flex items-center justify-center text-indigo-400 shrink-0">
             <Cpu className="h-5 w-5" />
           </div>
         </div>
         <div className="mt-2.5 flex items-center text-xs text-slate-400">
-          <span className="text-cyan-400 font-medium mr-1 font-mono">DuckDB + RAG</span>
-          <span>Hybrid Pipeline</span>
+          <span className="text-indigo-400 font-medium mr-1 font-mono">ReAct Subgraph</span>
+          <span>+ DuckDB KB</span>
         </div>
       </div>
     </div>

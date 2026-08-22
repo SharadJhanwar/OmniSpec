@@ -64,8 +64,8 @@ export default function DBOMModal({ isOpen, onClose, dbomData, isLoading }) {
             <div>
               <div className="flex items-center space-x-3">
                 <h2 className="text-lg font-bold text-white tracking-tight">Data Bill of Materials (DBOM) & Lineage Explorer</h2>
-                <span className="text-xs font-mono px-2.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800">
-                  Task 19 & 20
+                <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800 font-semibold">
+                  SHA-256 Cryptographic Lineage
                 </span>
               </div>
               <p className="text-xs text-slate-400">

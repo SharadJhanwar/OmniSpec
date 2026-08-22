@@ -73,8 +73,8 @@ export default function ParametricSearchModal({ isOpen, onClose }) {
             <div>
               <div className="flex items-center space-x-3">
                 <h2 className="text-lg font-bold text-white tracking-tight">Parametric Engineering Constraint Search</h2>
-                <span className="text-xs font-mono px-2.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800">
-                  Task 22, 23 & 24
+                <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800 font-semibold">
+                  AST Query Compiler & SQL Engine
                 </span>
               </div>
               <p className="text-xs text-slate-400">

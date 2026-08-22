@@ -10,7 +10,9 @@ import {
   Download,
   Menu,
   X,
-  Cpu
+  Cpu,
+  Activity,
+  Workflow
 } from 'lucide-react';
 import { useCatalog } from '../context/CatalogContext';
 
@@ -20,7 +22,12 @@ export default function Navbar() {
 
   const navLinks = [
     {
-      name: 'Studio & Grid',
+      name: 'Dashboard',
+      path: '/',
+      icon: Activity
+    },
+    {
+      name: '252 Studio',
       path: '/studio',
       icon: Layers,
       badge: `${items.length}`
@@ -51,20 +58,20 @@ export default function Navbar() {
         {/* Brand / Logo */}
         <Link to="/" className="flex items-center space-x-2.5 group">
           <div className="relative flex items-center justify-center h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-sky-400 text-slate-950 font-black shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform duration-200">
-            <Cpu className="h-5 w-5" />
+            <Workflow className="h-5 w-5" />
             <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-400 border-2 border-surface animate-pulse" />
           </div>
           <div className="flex flex-col">
             <div className="flex items-center space-x-1.5">
               <span className="font-extrabold text-base tracking-tight text-white group-hover:text-cyan-400 transition-colors font-mono">
-                OmniSpec
+                OmniSpec AI
               </span>
               <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-800/80 text-cyan-400 font-semibold tracking-wider uppercase">
-                v2.4 Enterprise
+                10-Agent Swarm
               </span>
             </div>
             <span className="text-[11px] text-slate-400 hidden sm:inline">
-              252-Col Autonomous Swarm
+              252-Column Industrial Master Intelligence
             </span>
           </div>
         </Link>

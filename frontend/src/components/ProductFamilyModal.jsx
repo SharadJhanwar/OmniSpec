@@ -71,8 +71,8 @@ export default function ProductFamilyModal({ isOpen, onClose }) {
             <div>
               <div className="flex items-center space-x-3">
                 <h2 className="text-lg font-bold text-white tracking-tight">Parent Product Family & Variant Induction Studio</h2>
-                <span className="text-xs font-mono px-2.5 py-0.5 rounded bg-indigo-950 text-indigo-400 border border-indigo-800">
-                  Tasks 25 & 26
+                <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-indigo-950 text-indigo-400 border border-indigo-800 font-semibold">
+                  Matrix Induction & Gap Detector
                 </span>
               </div>
               <p className="text-xs text-slate-400">

@@ -138,8 +138,8 @@ export default function CompatibilityMatrixModal({ isOpen, onClose }) {
             <div>
               <div className="flex items-center space-x-3">
                 <h2 className="text-lg font-bold text-white tracking-tight">Industrial Compatibility & Substitute Matrix</h2>
-                <span className="text-xs font-mono px-2.5 py-0.5 rounded bg-purple-950 text-purple-400 border border-purple-800">
-                  Task 21
+                <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-purple-950 text-purple-400 border border-purple-800 font-semibold">
+                  Multi-Domain Compatibility Engine
                 </span>
               </div>
               <p className="text-xs text-slate-400">
