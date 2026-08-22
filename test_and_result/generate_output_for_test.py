@@ -2,34 +2,44 @@ import asyncio
 import io
 import json
 import os
+import sys
+from pathlib import Path
 import pandas as pd
+from fastapi import UploadFile
+
+# Ensure repository root is on sys.path regardless of execution directory
+CURRENT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = CURRENT_DIR.parent if CURRENT_DIR.name == "test_and_result" else CURRENT_DIR
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 from backend.app.db.duckdb_client import kb
 from backend.app.api.routes import enrich_batch_csv_json
-from fastapi import UploadFile
+
 
 async def run_pipeline():
     print("===========================================================================")
     print("[OmniSpec AI] Running Complete 10-Agent Swarm for test.csv")
     print("===========================================================================")
 
-    # 1. Ensure test.csv exists in root
-    test_csv_path = "test.csv"
-    if not os.path.exists(test_csv_path):
-        if os.path.exists("test_and_result/test2.xlsx"):
-            df_source = pd.read_excel("test_and_result/test2.xlsx")
-            df_source.to_csv(test_csv_path, index=False)
-            print(f"[OmniSpec] Converted test_and_result/test2.xlsx -> {test_csv_path}")
-        elif os.path.exists("test_and_result/test2_enriched_252.csv"):
-            df_source = pd.read_csv("test_and_result/test2_enriched_252.csv")
-            df_source.to_csv(test_csv_path, index=False)
-            print(f"[OmniSpec] Copied test2_enriched_252.csv -> {test_csv_path}")
+    # 1. Locate test.csv in test_and_result/ or repository root
+    test_csv_path = CURRENT_DIR / "test.csv"
+    if not test_csv_path.exists():
+        test_csv_path = REPO_ROOT / "test.csv"
+    if not test_csv_path.exists():
+        test_csv_path = Path("test.csv")
 
-    # 2. Read test.csv
+    if not test_csv_path.exists():
+        raise FileNotFoundError(f"Could not locate test.csv in {CURRENT_DIR} or {REPO_ROOT}")
+
+    print(f"[OmniSpec] Ingesting test dataset from: {test_csv_path}")
+
+    # 2. Read test.csv into UploadFile format
     with open(test_csv_path, "rb") as f:
         file_bytes = f.read()
 
     upload_file = UploadFile(
-        filename="test.csv",
+        filename=test_csv_path.name,
         file=io.BytesIO(file_bytes)
     )
 
@@ -47,21 +57,19 @@ async def run_pipeline():
     df_out = pd.DataFrame(clean_delivery_records)
     print(f"[OmniSpec] Exact Delivery Column Count: {len(df_out.columns)} Columns (Standard 252)")
     
-    # Save CSV
-    out_csv = "output.csv"
+    # Save CSV, XLSX, and JSON directly in CURRENT_DIR (test_and_result/)
+    out_csv = CURRENT_DIR / "output.csv"
     df_out.to_csv(out_csv, index=False)
-    print(f"[OmniSpec] Saved 252-Column CSV Delivery Format to: {os.path.abspath(out_csv)}")
+    print(f"[OmniSpec] Saved 252-Column CSV Delivery Format to: {out_csv.resolve()}")
 
-    # Save XLSX
-    out_xlsx = "output.xlsx"
+    out_xlsx = CURRENT_DIR / "output.xlsx"
     df_out.to_excel(out_xlsx, index=False)
-    print(f"[OmniSpec] Saved 252-Column Excel Delivery Format to: {os.path.abspath(out_xlsx)}")
+    print(f"[OmniSpec] Saved 252-Column Excel Delivery Format to: {out_xlsx.resolve()}")
 
-    # Save JSON (preserves confidence, audit, and trace metadata)
-    out_json = "output.json"
+    out_json = CURRENT_DIR / "output.json"
     with open(out_json, "w", encoding="utf-8") as jf:
         json.dump(res, jf, indent=2)
-    print(f"[OmniSpec] Saved Complete Output JSON to: {os.path.abspath(out_json)}")
+    print(f"[OmniSpec] Saved Complete Output JSON to: {out_json.resolve()}")
 
     # 5. Print summary audit
     print("\n===========================================================================")
@@ -85,6 +93,7 @@ async def run_pipeline():
             uom = rec.get(f"ATTRIBUTE_UOM {slot}", "")
             uom_str = f" [{uom}]" if uom else " [No UOM]"
             print(f"      * Slot {slot:02d}: {lbl} = {val}{uom_str}")
+
 
 if __name__ == "__main__":
     asyncio.run(run_pipeline())
