@@ -263,7 +263,7 @@ flowchart TD
 UniHack/
 ├── backend/
 │   └── app/
-│       ├── agents/                         # 9 LangGraph Micro-Agents & DAG Workflow
+│       ├── agents/                         # 10 LangGraph Micro-Agents & DAG Workflow
 │       │   ├── agent_1_ingestion.py        # Tokenization & noise cleansing
 │       │   ├── agent_2_entity_resolution.py# Brand resolution & live web discovery
 │       │   ├── agent_3_taxonomy.py         # 4-tier category & UNSPSC classifier
@@ -271,25 +271,30 @@ UniHack/
 │       │   ├── agent_5_oem_sourcing.py     # OEM PDF crawler & CRAG
 │       │   ├── agent_6_lov_mapper.py       # 150-col EAV schema binder
 │       │   ├── agent_7_copy_builder.py     # Character-bounded copy generator
-│       │   ├── agent_8_digital_assets.py   # Standardized asset namer
+│       │   ├── agent_8_digital_assets.py   # Real image URL discovery & asset namer
 │       │   ├── agent_9_quality_audit.py    # 5-pillar audit & HITL routing
-│       │   └── graph.py                    # LangGraph StateGraph DAG
+│       │   └── graph.py                    # LangGraph 10-Agent Swarm DAG
 │       ├── api/routes.py                   # REST API Endpoints
 │       ├── db/duckdb_client.py             # DuckDB 27K KB & Overrides Client
-│       ├── orchestrator/                   # ReAct Multi-Hop Cognitive Orchestrator
+│       ├── orchestrator/                   # ReAct Multi-Hop Cognitive Orchestrator & Finalizer
 │       ├── schemas/                        # Pydantic State & Delivery Schemas
 │       └── services/                       # Intelligence Services (DBOM, DPI, AST, Search)
 ├── Solution/                               # 📑 Master Blueprints & Agent Deep-Dives
 │   ├── AGENTS.md                           # Master Multi-Agent Architecture Specification
 │   ├── MASTER_ARCHITECTURE_AND_MVP_PLAN.md # Complete Architecture Roadmap & Plan
-│   └── agents/                             # 9 Dedicated Agent Architecture Documents
+│   └── agents/                             # 10 Dedicated Agent Architecture Documents
+├── test_and_result/                        # 🧪 Test Dataset, Runner & 252-Column Outputs
+│   ├── test.csv                            # Raw input catalog test feed
+│   ├── generate_output_for_test.py         # Automated 10-Agent Swarm pipeline runner
+│   ├── output.csv                          # 252-Column delivery CSV standard output
+│   ├── output.xlsx                         # Formatted 252-Column Excel delivery output
+│   ├── output.json                         # Complete output JSON with traces & confidence
+│   └── README.md                           # Test folder instructions
 ├── frontend/                               # React 18 + Vite + TailwindCSS Web Studio
 ├── docs/dataset/                           # UniCat Reference CSVs & LOV Dictionaries
 ├── models/parametric_search/               # AST Constraint Compiler & Benchmark Tests
 ├── tests/                                  # Pytest Test Suite (63 Tests, 100% Passing)
-├── generate_output_json.py                 # Multi-Agent Batch Evaluation Script
-├── output.json                             # 252-Column Delivery Output with Agent Traces
-├── test.json                               # Mixed Evaluation Dataset (Cached + Uncached)
+├── summary.md                              # System Evaluation & Uniqueness Report
 └── README.md                               # Master Platform Documentation
 ```
 
@@ -319,11 +324,22 @@ PORT=8000
 HOST=0.0.0.0
 ```
 
-### 3. Run Batch Prediction on `test.json`
-```bash
-python generate_output_json.py
+### 3. Generate 252-Column Output for Test Dataset (`test.csv`)
+
+To run the complete **10-Agent Swarm** against `test_and_result/test.csv` and generate the final 252-column CSV, Excel, and JSON outputs:
+
+```powershell
+.venv\Scripts\python.exe test_and_result\generate_output_for_test.py
 ```
-This processes all SKUs in `test.json`, logs real-time traces (`Agent 1 ✓` through `Agent 9 ✓`), and exports the enriched records to `output.json`.
+
+This will automatically:
+1. Seed the in-memory **DuckDB Knowledge Base** (27K UniCat brands, 161K LOVs, 63 fractions).
+2. Process every row through all **10 DAG nodes** (Tokenization $\rightarrow$ Entity Resolution $\rightarrow$ Taxonomy $\rightarrow$ Specs $\rightarrow$ OEM Sourcing $\rightarrow$ LOV Mapping $\rightarrow$ 6 Copy Tiers $\rightarrow$ Real Image Discovery $\rightarrow$ ReAct Finalization $\rightarrow$ Quality Audit).
+3. Discover **real product image URLs** via DuckDuckGo Image Search.
+4. Export the clean, sanitized **252-column delivery files** to:
+   - `test_and_result/output.csv` (100% 252-column conformant)
+   - `test_and_result/output.xlsx` (Formatted Excel delivery workbook)
+   - `test_and_result/output.json` (Full confidence scores, audit flags & agent traces)
 
 ### 4. Launch the Web Studio
 ```bash

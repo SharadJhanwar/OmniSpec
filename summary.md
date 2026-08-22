@@ -67,8 +67,8 @@ Most hackathon solutions fall into one of two extremes:
 - Provides cell-level provenance for every single cell in the 252-column delivery record.
 - Tracks `source_type`, `locator`, `agent_name`, `confidence`, `is_cached`, and `needs_hitl` per cell, sealed with a SHA-256 cryptographic lineage hash.
 
-### 5. Full 252-Column Schema Conformance
-- Fully populates all 252 columns: 50 attribute triples (150 columns: `ATTRIBUTE_LABEL 1..50`, `ATTRIBUTE_VALUE 1..50`, `ATTRIBUTE_UOM 1..50`), 6 description tiers, 20 bullet features, and canonical digital asset filenames (`<Brand>_<MPN>.jpg` and `<Brand>_<MPN>_Specification_Sheet.pdf`).
+### 5. Full 252-Column Schema Conformance & Real Product Image Discovery
+- Fully populates all 252 columns: 50 attribute triples (150 columns: `ATTRIBUTE_LABEL 1..50`, `ATTRIBUTE_VALUE 1..50`, `ATTRIBUTE_UOM 1..50`), 6 description tiers, 20 bullet features, and **real product image URLs discovered via DuckDuckGo Image Search** (filtered against banned consumer marketplaces; falls back to canonical `<Brand>_<MPN>.jpg` filenames when offline). Sets `Actual Image (Yes/No) = Yes` when live image URLs are secured.
 
 ---
 
